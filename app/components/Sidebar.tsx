@@ -12,15 +12,20 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const isActive = (path: string) => pathname === path;
 
   return (
     <>
       {/* Hamburger for mobile */}
       <button
-        className="md:hidden fixed top-4 left-4 z-50 bg-secondary p-2 rounded-lg"
+        className={`${
+          open && "hidden"
+        } md:hidden fixed top-4 left-4 z-50 bg-secondary p-2 rounded-lg`}
         onClick={() => setOpen(true)}
         aria-label="Open sidebar"
       >
@@ -33,7 +38,7 @@ export default function Sidebar() {
       <aside className="hidden md:flex w-64 bg-secondary flex-col justify-between py-8 px-4 min-h-screen">
         {/* ...existing code... */}
         <div>
-          <div className="flex items-center mb-10">
+          <div className="flex items-center mb-10 border-b border-gray-700 pb-3">
             <Link href="/">
               <Image
                 src="/header-3.png"
@@ -44,34 +49,42 @@ export default function Sidebar() {
               />
             </Link>
           </div>
-          <nav className="space-y-2">
+          <nav className="space-y-2 transition-all">
             <Link
               href="/"
-              className="flex items-center px-4 py-3 rounded-lg bg-hover font-bold"
+              className={`flex items-center px-4 py-3 rounded-lg hover:bg-[#00466f] ${
+                isActive("/") ? "bg-hover" : ""
+              }`}
             >
               <Home className="mr-2 w-5 h-5" />
               Dashboard
             </Link>
             <Link
               href="/orders"
-              className="flex items-center px-4 py-3 rounded-lg hover:bg-hover"
+              className={`flex items-center px-4 py-3 rounded-lg hover:bg-[#00466f] ${
+                isActive("/orders") ? "bg-hover" : ""
+              }`}
             >
               <Package className="mr-2 w-5 h-5" />
               Orders
             </Link>
             <Link
               href="/production"
-              className="flex items-center px-4 py-3 rounded-lg hover:bg-hover"
+              className={`flex items-center px-4 py-3 rounded-lg hover:bg-[#00466f] ${
+                isActive("/production") ? "bg-hover" : ""
+              }`}
             >
               <Factory className="mr-2 w-5 h-5" />
               Production
             </Link>
             <Link
-              href="/clients"
-              className="flex items-center px-4 py-3 rounded-lg hover:bg-hover"
+              href="/in-clients"
+              className={`flex items-center px-4 py-3 rounded-lg hover:bg-[#00466f] ${
+                isActive("/in-clients") ? "bg-hover" : ""
+              }`}
             >
               <Users className="mr-2 w-5 h-5" />
-              Clients
+              In Clients
             </Link>
           </nav>
         </div>
@@ -81,28 +94,36 @@ export default function Sidebar() {
             <nav className="space-y-2 mt-2">
               <Link
                 href="/settings"
-                className="flex items-center px-4 py-2 rounded-lg hover:bg-hover-secondary"
+                className={`flex items-center px-4 py-2 rounded-lg hover:bg-[#00466f] ${
+                  isActive("/settings") ? "bg-hover" : ""
+                }`}
               >
                 <Settings className="mr-2 w-5 h-5" />
                 Settings
               </Link>
               <Link
                 href="/security"
-                className="flex items-center px-4 py-2 rounded-lg hover:bg-hover-secondary"
+                className={`flex items-center px-4 py-2 rounded-lg hover:bg-[#00466f] ${
+                  isActive("/security") ? "bg-hover" : ""
+                }`}
               >
                 <Shield className="mr-2 w-5 h-5" />
                 Security
               </Link>
               <Link
                 href="/support"
-                className="flex items-center px-4 py-2 rounded-lg hover:bg-hover-secondary"
+                className={`flex items-center px-4 py-2 rounded-lg hover:bg-[#00466f] ${
+                  isActive("/support") ? "bg-hover" : ""
+                }`}
               >
                 <MessageCircle className="mr-2 w-5 h-5" />
                 Support
               </Link>
               <Link
                 href="/theme"
-                className="flex items-center px-4 py-2 rounded-lg hover:bg-hover-secondary"
+                className={`flex items-center px-4 py-2 rounded-lg hover:bg-[#00466f] ${
+                  isActive("/theme") ? "bg-hover" : ""
+                }`}
               >
                 <Palette className="mr-2 w-5 h-5" />
                 Theme
@@ -113,8 +134,8 @@ export default function Sidebar() {
             <Image
               src="/admin-logo.jpg"
               alt="User"
-              width={40}
-              height={40}
+              width={30}
+              height={30}
               className="rounded-full mr-2"
             />
             <div>
@@ -132,7 +153,7 @@ export default function Sidebar() {
         } md:hidden`}
       >
         <button
-          className="absolute top-4 right-4 text-white text-2xl"
+          className="absolute top-7 right-4 text-white text-2xl"
           onClick={() => setOpen(false)}
           aria-label="Close sidebar"
         >
@@ -153,31 +174,39 @@ export default function Sidebar() {
           <nav className="space-y-2">
             <Link
               href="/"
-              className="flex items-center px-4 py-3 rounded-lg bg-hover font-bold"
+              className={`flex items-center px-4 py-3 rounded-lg hover:bg-[#00466f] ${
+                isActive("/") ? "bg-hover" : ""
+              }`}
             >
               <Home className="mr-2 w-5 h-5" />
               Dashboard
             </Link>
             <Link
               href="/orders"
-              className="flex items-center px-4 py-3 rounded-lg hover:bg-hover"
+              className={`flex items-center px-4 py-3 rounded-lg hover:bg-[#00466f] ${
+                isActive("/orders") ? "bg-hover" : ""
+              }`}
             >
               <Package className="mr-2 w-5 h-5" />
               Orders
             </Link>
             <Link
               href="/production"
-              className="flex items-center px-4 py-3 rounded-lg hover:bg-hover"
+              className={`flex items-center px-4 py-3 rounded-lg hover:bg-[#00466f] ${
+                isActive("/production") ? "bg-hover" : ""
+              }`}
             >
               <Factory className="mr-2 w-5 h-5" />
               Production
             </Link>
             <Link
-              href="/clients"
-              className="flex items-center px-4 py-3 rounded-lg hover:bg-hover"
+              href="/in-clients"
+              className={`flex items-center px-4 py-3 rounded-lg hover:bg-[#00466f] ${
+                isActive("/in-clients") ? "bg-hover" : ""
+              }`}
             >
               <Users className="mr-2 w-5 h-5" />
-              Clients
+              In Clients
             </Link>
           </nav>
         </div>
@@ -185,42 +214,42 @@ export default function Sidebar() {
           <div className="mb-4">
             <span className="text-xs text-gray-400">PREFERENCES</span>
             <nav className="space-y-2 mt-2">
-              <a
+              <Link
                 href="/settings"
                 className="flex items-center px-4 py-2 rounded-lg hover:bg-hover-secondary"
               >
                 <Settings className="mr-2 w-5 h-5" />
                 Settings
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/security"
                 className="flex items-center px-4 py-2 rounded-lg hover:bg-hover-secondary"
               >
                 <Shield className="mr-2 w-5 h-5" />
                 Security
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/support"
                 className="flex items-center px-4 py-2 rounded-lg hover:bg-hover-secondary"
               >
                 <MessageCircle className="mr-2 w-5 h-5" />
                 Support
-              </a>
-              <a
+              </Link>
+              <Link
                 href="#"
                 className="flex items-center px-4 py-2 rounded-lg hover:bg-hover-secondary"
               >
                 <Palette className="mr-2 w-5 h-5" />
                 Theme
-              </a>
+              </Link>
             </nav>
           </div>
           <div className="flex items-center mt-6">
             <Image
               src="/admin-logo.jpg"
               alt="User"
-              width={40}
-              height={40}
+              width={30}
+              height={30}
               className="rounded-full mr-2"
             />
             <div>
