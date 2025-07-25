@@ -1,103 +1,173 @@
 import Image from "next/image";
+import Sidebar from "./components/Sidebar";
 
 export default function Home() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="min-h-screen bg-main text-white font-exo flex flex-col md:flex-row">
+      {/* Sidebar */}
+      <Sidebar />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+      {/* Main Content */}
+      <main className="flex-1 p-4 md:p-8">
+        {/* Top Bar */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+          <input
+            type="text"
+            placeholder="Type here..."
+            className="bg-secondary rounded-lg px-4 py-2 w-full md:w-1/3 text-white placeholder-gray-400 focus:outline-none"
+          />
+          <div className="flex items-center space-x-2 md:space-x-4">
+            <button className="bg-hover-secondary p-2 rounded-full">
+              <span>⚙️</span>
+            </button>
             <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+              src=""
+              alt="User"
+              width={40}
+              height={40}
+              className="rounded-full"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+          <div className="bg-secondary rounded-xl p-6 flex flex-col items-center">
+            <div className="text-lg font-bold">Used Parts</div>
+            <div className="text-2xl mt-2">
+              2,300 <span className="text-green-400 text-sm">+5%</span>
+            </div>
+          </div>
+          <div className="bg-secondary rounded-xl p-6 flex flex-col items-center">
+            <div className="text-lg font-bold">New Parts</div>
+            <div className="text-2xl mt-2">
+              3,052 <span className="text-red-400 text-sm">-4%</span>
+            </div>
+          </div>
+          <div className="bg-secondary rounded-xl p-6 flex flex-col items-center">
+            <div className="text-lg font-bold">Total Profit</div>
+            <div className="text-2xl mt-2">₹3140.74</div>
+          </div>
+          <div className="bg-secondary rounded-xl p-6 flex flex-col items-center">
+            <div className="text-lg font-bold">Orders Per Day</div>
+            <div className="text-2xl mt-2">₹42.040</div>
+          </div>
+        </div>
+
+        {/* Charts and Top Products */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
+          {/* Sales Chart Placeholder */}
+          <div className="lg:col-span-2 bg-secondary rounded-xl p-4 md:p-6">
+            <div className="font-bold mb-2">Sales</div>
+            <div className="h-40 flex items-center justify-center text-gray-400">
+              [Sales Chart]
+            </div>
+          </div>
+          {/* Top Products */}
+          <div className="bg-secondary rounded-xl p-4 md:p-6 mt-4 lg:mt-0">
+            <div className="font-bold mb-2">Top Products</div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-gray-400">
+                  <th className="text-left py-1">Products</th>
+                  <th className="text-left py-1">Review</th>
+                  <th className="text-left py-1">Sold</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Engine</td>
+                  <td>⭐ 4.7</td>
+                  <td>1,200</td>
+                </tr>
+                <tr>
+                  <td>Transmission</td>
+                  <td>⭐ 4.7</td>
+                  <td>3,600</td>
+                </tr>
+                <tr>
+                  <td>Axle Assembly</td>
+                  <td>⭐ 4.7</td>
+                  <td>180,000</td>
+                </tr>
+                <tr>
+                  <td>Headlight</td>
+                  <td>⭐ 4.7</td>
+                  <td>1,200</td>
+                </tr>
+                <tr>
+                  <td>Transfer Case</td>
+                  <td>⭐ 4.7</td>
+                  <td>3,600</td>
+                </tr>
+                <tr>
+                  <td>Tail Light</td>
+                  <td>⭐ 4.7</td>
+                  <td>1,200</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Recent Sold Table */}
+        <div className="bg-secondary rounded-xl p-4 md:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="font-bold">Recent Sold</div>
+            <div className="text-sm text-gray-400">Last 7 Days</div>
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-gray-400">
+                <th className="text-left py-1">Products</th>
+                <th className="text-left py-1">Category</th>
+                <th className="text-left py-1">Amount</th>
+                <th className="text-left py-1">Date</th>
+                <th className="text-left py-1">Customer</th>
+                <th className="text-left py-1">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Air Flow Meter</td>
+                <td>Engine</td>
+                <td>500$</td>
+                <td>27-7-2025</td>
+                <td>Shiva</td>
+                <td>
+                  <span className="px-3 py-1 rounded-full bg-purple-500 text-white">
+                    Processing
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td>Carburetor</td>
+                <td>Engine</td>
+                <td>500$</td>
+                <td>27-7-2025</td>
+                <td>Ramjas</td>
+                <td>
+                  <span className="px-3 py-1 rounded-full bg-yellow-500 text-white">
+                    Shipped
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td>Fuel Injection Parts</td>
+                <td>Engine</td>
+                <td>500$</td>
+                <td>27-7-2025</td>
+                <td>Mani</td>
+                <td>
+                  <span className="px-3 py-1 rounded-full bg-green-500 text-white">
+                    Paid
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
