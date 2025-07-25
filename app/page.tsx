@@ -2,12 +2,6 @@ import Image from "next/image";
 import Sidebar from "./components/Sidebar";
 import CustomerCoverageCard from "./components/CustomerCoverage";
 import { Bell, DollarSign, File, Globe, MoreVertical, Package, Search, Settings, ShoppingBag, ShoppingCart, TrendingUp, Wallet } from "lucide-react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-} from 'recharts';
 import RecentSold from "./components/MainTable";
 
 const data = [
@@ -27,7 +21,7 @@ export default function Home() {
         {/* Top Bar */}
       <div className=" px-4 py-6  rounded-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4">
       {/* Left - Dashboard title */}
-      <h2 className="text-white font-semibold md:text-[32px] text-[20px] font-audiowide px-6">Dashboard</h2>
+      <h2 className="text-white font-semibold md:text-[30px] text-[20px] font-audiowide ">Dashboard</h2>
 
       {/* Middle - Search bar */}
        <div className="flex items-center justify-end gap-3 w-full md:w-[446px] md:h-[60px] ml-auto">
@@ -51,12 +45,12 @@ export default function Home() {
       <div className="flex items-center gap-3">
         {/* Settings button */}
         <button className=" text-white p-2 rounded-full transition">
-          <Settings size={40} />
+          <Settings size={30} />
         </button>
 
         {/* Notification button */}
         <button className=" text-white p-2 rounded-full transition">
-          <Bell size={40} />
+          <Bell size={30} />
         </button>
 
         {/* User Profile */}

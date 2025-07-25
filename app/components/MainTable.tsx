@@ -1,73 +1,98 @@
-// MainTable component
-import { MoreVertical } from "lucide-react";
+'use client';
+
+import { ChevronDown, MoreVertical } from 'lucide-react';
 
 const soldItems = [
   {
-    image: "/parts/airflow.png",
-    name: "Air Flow Meter",
-    category: "Engine",
-    amount: "500$",
-    date: "27-7-2025",
-    customer: "Shiva",
-    status: "Processing",
+    image: '/recent-sold/air-flow.png',
+    category: 'Air Flow Meter',
+    amount: '500$',
+    date: '27-7-2025',
+    customer: 'Shiva',
+    status: 'Processing',
   },
   {
-    image: "/parts/carburetor.png",
-    name: "Carburetor",
-    category: "Engine",
-    amount: "500$",
-    date: "27-7-2025",
-    customer: "Ramjas",
-    status: "Shipped",
+    image: '/recent-sold/carbourater.png',
+    category: 'Carburetor',
+    amount: '500$',
+    date: '27-7-2025',
+    customer: 'Ramjas',
+    status: 'Shipped',
   },
   {
-    image: "/parts/fuelinject.png",
-    name: "Fuel Injection Parts",
-    category: "Engine",
-    amount: "500$",
-    date: "27-7-2025",
-    customer: "Mani",
-    status: "Paid",
+    image: '/recent-sold/fuel-inject.png',
+    category: 'Fuel Injection Parts',
+    amount: '500$',
+    date: '27-7-2025',
+    customer: 'Mani',
+    status: 'Paid',
   },
 ];
 
 export default function RecentSold() {
   return (
-    <div className="bg-gradient-to-br from-[#092139] to-[#071C2F] rounded-xl p-4 md:p-6 w-full">
+    <div className="bg-gradient-to-br rounded-xl p-4 md:p-6 w-full text-white">
+      {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <div className="text-white font-semibold text-lg">Recent Sold</div>
-        <div className="text-sm text-gray-400">Last 7 Days</div>
+        <h2 className="text-lg font-semibold">Recent Sold</h2>
+        <div className="flex items-center gap-1 text-sm text-gray-300 cursor-pointer">
+          Last 7 Days
+          <ChevronDown className="w-4 h-4 mt-[1px]" />
+        </div>
       </div>
+
+      {/* Table Header */}
+      <div className="hidden md:grid grid-cols-6 gap-4 text-sm text-gray-400 pb-2">
+        <div>Products</div>
+        <div>Category</div>
+        <div>Amount</div>
+        <div>Date</div>
+        <div>Customer</div>
+        <div className="text-right">Status</div>
+      </div>
+
+      {/* Rows */}
       <div className="divide-y divide-[#1e2f45]">
         {soldItems.map((item, index) => (
-          <div key={index} className="flex items-center justify-between py-4">
-            {/* Product + Category */}
-            <div className="flex items-center gap-4 w-[200px]">
-              <div className="relative w-10 h-10">
+          <div
+            key={index}
+            className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center py-4"
+          >
+            {/* Product (Image + Name) */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br p-[6px]">
                 <img
                   src={item.image}
-                  alt={item.name}
-                  className="w-full h-full object-contain rounded-full bg-gradient-to-br from-blue-600 to-blue-900 p-1"
+               
+                  className="w-full h-full object-contain"
                 />
               </div>
-              <div>
-                <div className="text-white text-sm font-medium">{item.name}</div>
+              <div className="md:hidden">
+                
                 <div className="text-xs text-gray-400">{item.category}</div>
+              </div>
+              <div className="hidden md:block">
+               
               </div>
             </div>
 
+            {/* Category (desktop only) */}
+            <div className="hidden md:block text-sm text-gray-400">
+              {item.category}
+            </div>
+
             {/* Amount */}
-            <div className="text-sm text-white w-[80px]">{item.amount}</div>
+            <div className="text-sm">{item.amount}</div>
 
             {/* Date */}
-            <div className="text-sm text-white w-[100px]">{item.date}</div>
+            <div className="text-sm">{item.date}</div>
 
             {/* Customer */}
-            <div className="text-sm text-white w-[100px]">{item.customer}</div>
+            <div className="text-sm">{item.customer}</div>
 
-            {/* Status Icon */}
-            <div className="text-gray-400">
-              <MoreVertical size={18} />
+            {/* Status (3 dots) */}
+            <div className="flex justify-end">
+              <MoreVertical className="text-gray-400 w-5 h-5" />
             </div>
           </div>
         ))}
