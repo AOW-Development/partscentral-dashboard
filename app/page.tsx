@@ -1,5 +1,20 @@
 import Image from "next/image";
 import Sidebar from "./components/Sidebar";
+import CustomerCoverageCard from "./components/CustomerCoverage";
+import { Bell, DollarSign, File, Globe, MoreVertical, Package, Search, Settings, ShoppingBag, ShoppingCart, TrendingUp, Wallet } from "lucide-react";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+} from 'recharts';
+import RecentSold from "./components/MainTable";
+
+const data = [
+  { name: 'Engine', value: 400 ,color: '#FF6384'},
+  { name: 'Transmission', value: 300,color: '#FF6384' },
+  { name: 'Auto-Parts', value: 300,color: '#FF6384' },
+];
 
 export default function Home() {
   return (
@@ -8,54 +23,146 @@ export default function Home() {
       <Sidebar />
 
       {/* Main Content */}
-      <main className="flex-1 p-4 md:p-8">
+      <main className="flex-1 px-5 md:px-6 ">
         {/* Top Bar */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+      <div className=" px-4 py-6  rounded-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      {/* Left - Dashboard title */}
+      <h2 className="text-white font-semibold md:text-[32px] text-[20px] font-audiowide px-6">Dashboard</h2>
+
+      {/* Middle - Search bar */}
+       <div className="flex items-center justify-end gap-3 w-full md:w-[446px] md:h-[60px] ml-auto">
+    {/* Search Bar */}
+        <div className="relative w-full max-w-full md:max-w-xs">
+          <Search
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            size={16}
+          />
           <input
             type="text"
             placeholder="Type here..."
-            className="bg-secondary rounded-lg px-4 py-2 w-full md:w-1/3 text-white placeholder-gray-400 focus:outline-none"
+            className="w-full bg-secondary text-white placeholder-gray-400 rounded-full
+                      pl-9 pr-3 py-1.5 text-sm focus:outline-none
+                      md:py-2 md:text-base"
           />
-          <div className="flex items-center space-x-2 md:space-x-4">
-            <button className="bg-hover-secondary p-2 rounded-full">
-              <span>⚙️</span>
-            </button>
-            <Image
-              src=""
-              alt="User"
-              width={40}
-              height={40}
-              className="rounded-full"
-            />
+        </div>
+        </div>
+
+      {/* Right - Icons and User */}
+      <div className="flex items-center gap-3">
+        {/* Settings button */}
+        <button className=" text-white p-2 rounded-full transition">
+          <Settings size={40} />
+        </button>
+
+        {/* Notification button */}
+        <button className=" text-white p-2 rounded-full transition">
+          <Bell size={40} />
+        </button>
+
+        {/* User Profile */}
+        <div className="flex items-center gap-2">
+          <Image
+            src="/admin-logo.jpg" // Replace with actual image path
+            alt="User"
+            width={36}
+            height={36}
+            className="rounded-full"
+          />
+          <div className="text-white text-sm hidden sm:block">
+            <p className="font-medium leading-tight">Ashray</p>
+            <p className="text-xs text-gray-300">ashray@company.com</p>
           </div>
         </div>
+      </div>
+    </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-          <div className="bg-secondary rounded-xl p-6 flex flex-col items-center">
-            <div className="text-lg font-bold">Used Parts</div>
-            <div className="text-2xl mt-2">
-              2,300 <span className="text-green-400 text-sm">+5%</span>
+        <div className="space-y-4">
+      
+        <div className="flex flex-col lg:flex-row gap-4">
+        {/* Left Section */}
+        <div className="flex-1 flex flex-col gap-4">
+          {/* Row 1: Used Parts & New Parts */}
+          <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
+            <div className="bg-secondary rounded-xl p-4 flex justify-between items-center w-full sm:w-[300px] h-[80px]">
+              <div>
+                <p className="text-sm text-gray-300">Used Parts</p>
+                <h3 className="text-lg font-semibold text-white">
+                  2,300 <span className="text-green-400 text-sm">+5%</span>
+                </h3>
+              </div>
+              <div className="bg-hover-secondary p-2 rounded-lg text-white">
+                <Globe size={20} />
+              </div>
+            </div>
+
+            <div className="bg-secondary rounded-xl p-4 flex justify-between items-center w-full sm:w-[300px] h-[80px]">
+              <div>
+                <p className="text-sm text-gray-300">New Parts</p>
+                <h3 className="text-lg font-semibold text-white">
+                  3,052 <span className="text-red-400 text-sm">-14%</span>
+                </h3>
+              </div>
+              <div className="bg-hover-secondary p-2 rounded-lg text-white">
+                <File size={20} />
+              </div>
             </div>
           </div>
-          <div className="bg-secondary rounded-xl p-6 flex flex-col items-center">
-            <div className="text-lg font-bold">New Parts</div>
-            <div className="text-2xl mt-2">
-              3,052 <span className="text-red-400 text-sm">-4%</span>
+
+          {/* Row 2: Profit, Orders, Income */}
+          <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
+            <div className="bg-secondary rounded-xl p-5 flex flex-col justify-between w-full sm:w-[200px] h-[180px]">
+              <div className="flex justify-between items-start">
+                <div className="bg-blue-600 p-2 rounded-full text-white">
+                  <Wallet size={18} />
+                </div>
+                <MoreVertical size={16} className="text-gray-400" />
+              </div>
+              <div className="mt-6">
+                <p className="text-sm text-gray-300">Total Profit</p>
+                <h3 className="text-xl font-semibold text-white mt-1">₹3140.74</h3>
+              </div>
             </div>
-          </div>
-          <div className="bg-secondary rounded-xl p-6 flex flex-col items-center">
-            <div className="text-lg font-bold">Total Profit</div>
-            <div className="text-2xl mt-2">₹3140.74</div>
-          </div>
-          <div className="bg-secondary rounded-xl p-6 flex flex-col items-center">
-            <div className="text-lg font-bold">Orders Per Day</div>
-            <div className="text-2xl mt-2">₹42.040</div>
+
+            <div className="bg-secondary rounded-xl p-5 flex flex-col justify-between w-full sm:w-[200px] h-[180px]">
+              <div className="flex justify-between items-start">
+                <div className="bg-white p-2 rounded-full text-hover-secondary">
+                  <ShoppingBag size={18} />
+                </div>
+                <MoreVertical size={16} className="text-gray-400" />
+              </div>
+              <div className="mt-6">
+                <p className="text-sm text-gray-300">Orders Per Day</p>
+                <h3 className="text-xl font-semibold text-white mt-1">₹42.040</h3>
+              </div>
+            </div>
+
+            <div className="bg-secondary rounded-xl p-5 flex flex-col justify-between w-full sm:w-[200px] h-[180px]">
+              <div className="flex justify-between items-start">
+                <div className="bg-white p-2 rounded-full text-hover-secondary">
+                  <DollarSign size={18} />
+                </div>
+                <MoreVertical size={16} className="text-gray-400" />
+              </div>
+              <div className="mt-6">
+                <p className="text-sm text-gray-300">Income Per Day</p>
+                <h3 className="text-xl font-semibold text-white mt-1">₹501.074</h3>
+              </div>
+            </div>
           </div>
         </div>
 
+        {/* Right Section: Customer Coverage */}
+        <div className="w-full lg:w-[390px] h-auto lg:h-[280px] md:mb-4">
+          <div className="bg-secondary rounded-xl p-5 w-full h-full">
+            <CustomerCoverageCard />
+          </div>
+        </div>
+      </div>
+      </div>
+
         {/* Charts and Top Products */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-8 mt-4">
           {/* Sales Chart Placeholder */}
           <div className="lg:col-span-2 bg-secondary rounded-xl p-4 md:p-6">
             <div className="font-bold mb-2">Sales</div>
@@ -112,60 +219,7 @@ export default function Home() {
 
         {/* Recent Sold Table */}
         <div className="bg-secondary rounded-xl p-4 md:p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="font-bold">Recent Sold</div>
-            <div className="text-sm text-gray-400">Last 7 Days</div>
-          </div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-gray-400">
-                <th className="text-left py-1">Products</th>
-                <th className="text-left py-1">Category</th>
-                <th className="text-left py-1">Amount</th>
-                <th className="text-left py-1">Date</th>
-                <th className="text-left py-1">Customer</th>
-                <th className="text-left py-1">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Air Flow Meter</td>
-                <td>Engine</td>
-                <td>500$</td>
-                <td>27-7-2025</td>
-                <td>Shiva</td>
-                <td>
-                  <span className="px-3 py-1 rounded-full bg-purple-500 text-white">
-                    Processing
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td>Carburetor</td>
-                <td>Engine</td>
-                <td>500$</td>
-                <td>27-7-2025</td>
-                <td>Ramjas</td>
-                <td>
-                  <span className="px-3 py-1 rounded-full bg-yellow-500 text-white">
-                    Shipped
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td>Fuel Injection Parts</td>
-                <td>Engine</td>
-                <td>500$</td>
-                <td>27-7-2025</td>
-                <td>Mani</td>
-                <td>
-                  <span className="px-3 py-1 rounded-full bg-green-500 text-white">
-                    Paid
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <RecentSold/>
         </div>
       </main>
     </div>
