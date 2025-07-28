@@ -6,7 +6,7 @@ import useAuthStore from "@/store/auth";
 export default function Header() {
   const user = useAuthStore((state) => state.user);
   return (
-    <div className="w-full bg-secondary px-8 py-10 flex  md:flex-row md:items-center md:justify-start gap-65 z-10">
+    <div className="w-full bg-secondary px-8 py-3 flex  md:flex-row md:items-center md:justify-start gap-65 z-10">
       {/* Left - Dashboard title */}
       <h2 className="text-white font-semibold md:text-[30px] text-[20px] font-audiowide ">
         Dashboard
