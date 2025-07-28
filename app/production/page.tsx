@@ -8,6 +8,7 @@ import Pagination from "../components/Pagination";
 import ProtectRoute from "../components/ProtectRoute";
 
 import { useState } from "react";
+import Link from "next/link";
 
 export default function ProductionPage() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -132,20 +133,22 @@ export default function ProductionPage() {
 
               {/* Add Button: 248x73 */}
               <div className="flex-shrink-0 w-full sm:w-[200px] h-[60px]">
-                <button className="flex cursor-pointer items-center justify-center bg-[#091e36] rounded-lg w-full h-full text-white">
-                  Add
-                  <svg
-                    className="ml-2"
-                    width="16"
-                    height="16"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12 5v14M5 12h14" />
-                  </svg>
-                </button>
+                <Link href={"/production/add"}>
+                  <button className="flex cursor-pointer items-center justify-center bg-[#091e36] rounded-lg w-full h-full text-white">
+                    Add
+                    <svg
+                      className="ml-2"
+                      width="16"
+                      height="16"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
+                  </button>
+                </Link>
               </div>
             </div>
 
