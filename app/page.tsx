@@ -52,12 +52,13 @@ export default function Home() {
         {/* Sidebar */}
         <Sidebar />
         {/* Main Content */}
-        <div className="md:pl-64">
+       <div className="min-h-screen flex flex-col md:ml-64">
           {/* Header */}
           <Header />
           {/* Scrollable Content */}
-          <main className="pt-[5px] h-[calc(100vh-0px)] overflow-y-auto">
-            <div className="space-y-4 w-full px-5 md:px-6 pt-6">
+            <main className="flex-1 overflow-y-auto pt-1">
+
+            <div className="space-y-4 w-full px-5 md:px-6 pt-30 md:pt-6">
               <div className="flex flex-col lg:flex-row gap-4">
                 {/* Left Section */}
                 <div className="flex-1 flex flex-col gap-4">
