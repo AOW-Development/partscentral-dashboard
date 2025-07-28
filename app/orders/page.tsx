@@ -5,15 +5,15 @@ import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import Pagination from "../components/Pagination";
 import ProtectRoute from "../components/ProtectRoute";
-import Calendar from "react-calendar";
+// import Calendar from "react-calendar";
 
-type ValuePiece = Date | null;
+// type ValuePiece = Date | null;
 
-type Value = ValuePiece | [ValuePiece, ValuePiece];
+// type Value = ValuePiece | [ValuePiece, ValuePiece];
 
 export default function Orders() {
   const [currentPage, setCurrentPage] = useState(1);
-  const [value, onChange] = useState<Value>(new Date());
+  // const [value, onChange] = useState<Value>(new Date());
   // Order data
   const initialOrders = [
     {
@@ -299,8 +299,8 @@ export default function Orders() {
               <div>
                 {/* Date range selector placeholder */}
                 <div className="flex items-center bg-[#091e36] rounded-lg px-4 py-2 text-white w-full md:w-auto gap-2">
-                  <Calendar onChange={onChange} value={value} />
-                  {/* <input
+                  {/* <Calendar onChange={onChange} value={value} /> */}
+                  <input
                     type="text"
                     placeholder="From (e.g. 22Jun25)"
                     className="bg-transparent border-b border-gray-500 px-2 py-2 w-24 text-xs"
@@ -318,7 +318,7 @@ export default function Orders() {
                     onChange={(e) =>
                       setDateRange({ ...dateRange, to: e.target.value })
                     }
-                  /> */}
+                  />
                 </div>
               </div>
               <div className="relative">
