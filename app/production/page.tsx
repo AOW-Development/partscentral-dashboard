@@ -1,12 +1,16 @@
 "use client";
+"use client";
 import Header from "../components/Header";
 import Image from "next/image";
 import Sidebar from "../components/Sidebar";
+import Pagination from "../components/Pagination";
+// import { useState } from "react";
 import ProtectRoute from "../components/ProtectRoute";
 
 import { useState } from "react";
 
 export default function ProductionPage() {
+  const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
   const [engineType, setEngineType] = useState("Engines");
   const [stock, setStock] = useState("Instock");
@@ -244,6 +248,14 @@ export default function ProductionPage() {
                 ))}
               </div>
             </div>
+    <div className="pb-6">
+      {/* Your content here */}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={5}
+            onPageChange={setCurrentPage}
+          />
+        </div>
             {/* </div> */}
           </main>
         </div>

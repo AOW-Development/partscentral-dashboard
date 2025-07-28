@@ -3,8 +3,10 @@ import { useState, useEffect, useRef } from "react";
 import { Pencil } from "lucide-react";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
+import Pagination from "../components/Pagination";
 
 export default function Orders() {
+   const [currentPage, setCurrentPage] = useState(1);
   // Order data
   const initialOrders = [
     {
@@ -267,7 +269,7 @@ export default function Orders() {
                 <input
                   type="text"
                   placeholder="search"
-                  className="bg-[#091e36] rounded-lg pl-10 pr-4 py-2 w-full text-white placeholder-gray-400 focus:outline-none"
+                  className="bg-[#091e36] rounded-lg pl-10 pr-4 py-4 w-full text-white placeholder-gray-400 focus:outline-none"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
@@ -275,7 +277,7 @@ export default function Orders() {
             </div>
             <div>
               <select
-                className="bg-[#091e36] rounded-lg px-4 py-2 text-white focus:outline-none w-full md:w-auto"
+                className="bg-[#091e36] rounded-lg px-4 py-5 text-white focus:outline-none w-full md:w-auto"
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
               >
@@ -292,7 +294,7 @@ export default function Orders() {
                 <input
                   type="text"
                   placeholder="From (e.g. 22Jun25)"
-                  className="bg-transparent border-b border-gray-500 px-2 py-1 w-24 text-xs"
+                  className="bg-transparent border-b border-gray-500 px-2 py-2 w-24 text-xs"
                   value={dateRange.from}
                   onChange={(e) =>
                     setDateRange({ ...dateRange, from: e.target.value })
@@ -302,7 +304,7 @@ export default function Orders() {
                 <input
                   type="text"
                   placeholder="To (e.g. 30Jun25)"
-                  className="bg-transparent border-b border-gray-500 px-2 py-1 w-24 text-xs"
+                  className="bg-transparent border-b border-gray-500 px-2 py-3 w-24 text-xs"
                   value={dateRange.to}
                   onChange={(e) =>
                     setDateRange({ ...dateRange, to: e.target.value })
@@ -313,7 +315,7 @@ export default function Orders() {
             <div className="relative">
               <button
                 ref={filterBtnRef}
-                className="flex items-center cursor-pointer bg-[#091e36] rounded-lg px-4 py-2 text-white w-full md:w-auto justify-center"
+                className="flex items-center cursor-pointer bg-[#091e36] rounded-lg px-4 py-4 text-white w-full md:w-auto justify-center"
                 type="button"
                 onClick={() => setShowFilterModal((v) => !v)}
               >
@@ -411,14 +413,15 @@ export default function Orders() {
               )}
             </div>
           </div>
-
+          <div className="bg-[#091e36] rounded-lg p-6 sm:p-6 lg:p-10 mb-6">
           <h1 className="text-2xl font-bold mb-6">Orders</h1>
           {/* <p className="text-gray-400 mb-6">This is the orders page.</p> */}
-          <div className="overflow-x-auto rounded-lg shadow-lg bg-[#0a1e36]">
-            <table className="min-w-full text-sm text-left">
-              <thead className="bg-[#091627] text-gray-300">
+         
+          <div className="overflow-x-auto rounded-lg shadow-lg ">
+            <table className="min-w-full text-lg text-left">
+              <thead className=" text-gray-300">
                 <tr>
-                  <th className="px-4 py-3 font-semibold">
+                  <th className="px-4 py-6 font-semibold">
                     <input type="checkbox" />
                   </th>
                   <th className="px-4 py-3 font-semibold">ID</th>
@@ -435,35 +438,35 @@ export default function Orders() {
                 {filteredOrders.map((order, idx) => (
                   <tr
                     key={idx}
-                    className="border-b border-[#1a2b44] last:border-0"
+                    className="border-b border-gray-700 last:border-0"
                   >
                     <td className="px-4 py-3">
                       <input type="checkbox" />
                     </td>
-                    <td className="px-4 py-3">{order.id}</td>
-                    <td className="px-4 py-3">{order.name}</td>
-                    <td className="px-4 py-3">{order.buyer}</td>
-                    <td className="px-4 py-3">{order.date}</td>
-                    <td className="px-4 py-3">{order.qty}</td>
-                    <td className="px-4 py-3">{order.sum}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-6">{order.id}</td>
+                    <td className="px-4 py-6">{order.name}</td>
+                    <td className="px-4 py-6">{order.buyer}</td>
+                    <td className="px-4 py-6">{order.date}</td>
+                    <td className="px-4 py-6">{order.qty}</td>
+                    <td className="px-4 py-6">{order.sum}</td>
+                    <td className="px-4 py-6">
                       {order.status === "Processing" && (
-                        <span className="bg-[#8b88f9] text-white px-3 py-1 rounded-full text-xs">
+                        <span className="bg-[#8b88f9] text-white px-5 py-3 rounded-full text-xs">
                           Processing
                         </span>
                       )}
                       {order.status === "Shipped" && (
-                        <span className="bg-[#f6c244] text-white px-3 py-1 rounded-full text-xs">
+                        <span className="bg-[#f6c244] text-white px-5 py-3 rounded-full text-xs">
                           Shipped
                         </span>
                       )}
                       {order.status === "Paid" && (
-                        <span className="bg-[#1ecb4f] text-white px-3 py-1 rounded-full text-xs">
+                        <span className="bg-[#1ecb4f] text-white px-5 py-3 rounded-full text-xs">
                           Paid
                         </span>
                       )}
                       {order.status === "Cancelled" && (
-                        <span className="bg-[#f64e4e] text-white px-3 py-1 rounded-full text-xs">
+                        <span className="bg-[#f64e4e] text-white px-5 py-3 rounded-full text-xs">
                           Cancelled
                         </span>
                       )}
@@ -512,8 +515,19 @@ export default function Orders() {
               </tbody>
             </table>
           </div>
+         
+          </div>
+            <div className="pb-6">
+      {/* Your content here */}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={5}
+            onPageChange={setCurrentPage}
+          />
+        </div>
         </main>
       </div>
-    </div>
+     </div>
+  
   );
 }

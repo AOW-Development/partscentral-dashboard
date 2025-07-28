@@ -6,13 +6,13 @@ import useAuthStore from "@/store/auth";
 export default function Header() {
   const user = useAuthStore((state) => state.user);
   return (
-    <div className="fixed w-full bg-secondary px-4 py-4 flex flex-col md:flex-row md:items-center md:justify-start gap-45 z-10">
+    <div className="fixed w-full bg-secondary px-8 py-4 flex  md:flex-row md:items-center md:justify-start gap-65 z-10">
       {/* Left - Dashboard title */}
       <h2 className="text-white font-semibold md:text-[30px] text-[20px] font-audiowide ">
         Dashboard
       </h2>
 
-      <div className="flex items-center justify-end gap-3 w-full md:w-[446px] md:h-[60px] ">
+      <div className="flex items-center justify-end gap-4 w-full md:w-[446px] md:h-[60px] ">
         {/* Search Bar */}
         <div className="relative w-full max-w-full md:max-w-xs ">
           <Search
