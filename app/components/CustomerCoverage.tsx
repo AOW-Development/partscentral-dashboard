@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { MoreHorizontal } from 'lucide-react';
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
+import { MoreHorizontal } from "lucide-react";
 
 const data = [
-  { name: 'Internet', value: 500, color: '#FFEB3B' },       // Yellow
-  { name: 'Email', value: 150, color: '#FFFFFF' },          // White
-  { name: 'Social Media', value: 100, color: '#FF5722' },   // Red
+  { name: "Internet", value: 500, color: "#FFEB3B" }, // Yellow
+  { name: "Email", value: 150, color: "#FFFFFF" }, // White
+  { name: "Social Media", value: 100, color: "#FF5722" }, // Red
 ];
 
 export default function CustomerCoverageCard() {
@@ -15,7 +15,7 @@ export default function CustomerCoverageCard() {
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <p className="text-base font-semibold text-white">Customer Coverage</p>
-        <MoreHorizontal size={18} className="text-gray-400" />
+        <MoreHorizontal size={18} className="text-gray-400 cursor-pointer" />
       </div>
 
       {/* Main content: Chart left, legend right */}
@@ -24,6 +24,11 @@ export default function CustomerCoverageCard() {
         <div className="w-28 h-38 md:w-38">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
+              <Tooltip
+                contentStyle={{ backgroundColor: "#1e2f45", border: "none" }} //use a darker background
+                itemStyle={{ color: "#fff" }}
+                labelStyle={{ color: "#fff" }}
+              />
               <Pie
                 data={data}
                 dataKey="value"
@@ -31,6 +36,9 @@ export default function CustomerCoverageCard() {
                 outerRadius={65}
                 paddingAngle={3}
                 cornerRadius={5}
+                stroke="#1e2f45"
+                strokeWidth={2}
+                fill="#8884d8"
               >
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
