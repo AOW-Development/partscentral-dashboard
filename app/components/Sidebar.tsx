@@ -35,7 +35,7 @@ export default function Sidebar() {
       </button>
 
       {/* Sidebar for desktop */}
-      <aside className="hidden md:flex w-64 bg-secondary flex-col justify-between py-8 px-4 min-h-screen">
+      <aside className="hidden fixed z-10 md:flex w-64 bg-secondary flex-col justify-between py-8 px-4 min-h-screen">
         {/* ...existing code... */}
         <div>
           <div className="flex items-center mb-10 border-b border-gray-700 pb-3">

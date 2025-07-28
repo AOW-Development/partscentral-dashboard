@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import { ChevronDown, MoreVertical } from 'lucide-react';
-import React from 'react';
+import Image from "next/image";
+import { ChevronDown, MoreVertical } from "lucide-react";
+import React from "react";
 
 type SoldItem = {
   image: string;
@@ -15,28 +15,28 @@ type SoldItem = {
 
 const soldItems: SoldItem[] = [
   {
-    image: '/recent-sold/air-flow.png',
-    category: 'Air Flow Meter',
-    amount: '500$',
-    date: '27-7-2025',
-    customer: 'Shiva',
-    status: 'Processing',
+    image: "/recent-sold/air-flow.png",
+    category: "Air Flow Meter",
+    amount: "500$",
+    date: "27-7-2025",
+    customer: "Shiva",
+    status: "Processing",
   },
   {
-    image: '/recent-sold/carbourater.png',
-    category: 'Carburetor',
-    amount: '500$',
-    date: '27-7-2025',
-    customer: 'Ramjas',
-    status: 'Shipped',
+    image: "/recent-sold/carbourater.png",
+    category: "Carburetor",
+    amount: "500$",
+    date: "27-7-2025",
+    customer: "Ramjas",
+    status: "Shipped",
   },
   {
-    image: '/recent-sold/fuel-inject.png',
-    category: 'Fuel Injection Parts',
-    amount: '500$',
-    date: '27-7-2025',
-    customer: 'Mani',
-    status: 'Paid',
+    image: "/recent-sold/fuel-inject.png",
+    category: "Fuel Injection Parts",
+    amount: "500$",
+    date: "27-7-2025",
+    customer: "Mani",
+    status: "Paid",
   },
 ];
 
@@ -74,7 +74,7 @@ export default function RecentSold() {
             >
               {/* Product Image */}
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br p-[6px]">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#00A3FF] to-[#006299] p-[3px]">
                   <Image
                     src={image}
                     alt={category}
@@ -87,7 +87,6 @@ export default function RecentSold() {
 
               {/* Category title */}
               <div>
-             
                 <div className="text-sm font-medium">{category}</div>
               </div>
 
