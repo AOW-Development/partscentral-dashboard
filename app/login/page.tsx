@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import React from "react";
 import { useState } from "react";
+import useAuthStore from "@/store/auth";
 // import { Exo } from "next/font/google";
 // const exo = Exo({
 //   subsets: ["latin"],
@@ -16,6 +17,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const router = useRouter();
+  const login = useAuthStore((state) => state.login);
 
   const validate = () => {
     if (!email) return "Email is required.";
@@ -45,6 +47,8 @@ export default function LoginPage() {
       });
       if (res.ok) {
         setSuccess("Login successful (dummy API)");
+        login({ email, id: "dummy-id" }, "dummy-token");
+
         setTimeout(() => {
           router.push("/");
         }, 1000);
