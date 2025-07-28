@@ -56,7 +56,7 @@ export default function Home() {
           {/* Header */}
           <Header />
           {/* Scrollable Content */}
-          <main className="pt-[80px] h-[calc(100vh-0px)] overflow-y-auto">
+          <main className="pt-[10px] h-[calc(100vh-0px)] overflow-y-auto">
             <div className="space-y-4 w-full px-5 md:px-6 pt-6">
               <div className="flex flex-col lg:flex-row gap-4">
                 {/* Left Section */}
