@@ -48,7 +48,7 @@ const summaryCards = [
 export default function Home() {
   return (
     <ProtectRoute>
-      <div className="min-h-screen bg-main text-white font-exo">
+      <div className="md:min-h-screen bg-main text-white font-exo">
         {/* Sidebar */}
         <Sidebar />
         {/* Main Content */}
