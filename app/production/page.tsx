@@ -14,139 +14,162 @@ export default function ProductionPage() {
         {/* Scrollable Content */}
         <main className="pt-[120px] h-[calc(100vh-0px)] overflow-y-auto px-4 md:px-8">
           {/* Filters Row */}
-          <div className="flex flex-col md:flex-row gap-4 mb-8">
-            <div className="flex-1">
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                  <svg
-                    width="18"
-                    height="18"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="M21 21l-4.35-4.35" />
-                  </svg>
-                </span>
-                <input
-                  type="text"
-                  placeholder="search"
-                  className="bg-[#091e36] rounded-lg pl-10 pr-4 py-2 w-full text-white placeholder-gray-400 focus:outline-none"
-                />
-              </div>
-            </div>
-            <div>
-              <select className="bg-[#091e36] rounded-lg px-4 py-2 text-white focus:outline-none w-full md:w-auto">
-                <option>Engines</option>
-                <option>Transmission</option>
-                <option>Brakes</option>
-              </select>
-            </div>
-            <div>
-              <select className="bg-[#091e36] rounded-lg px-4 py-2 text-white focus:outline-none w-full md:w-auto">
-                <option>Instock</option>
-                <option>Outstock</option>
-              </select>
-            </div>
-            <div>
-              <button className="flex items-center bg-[#091e36] rounded-lg px-4 py-2 text-white w-full md:w-auto justify-center">
-                Add
+       <div className="flex flex-wrap sm:flex-nowrap items-center gap-4 mb-8">
+          {/* Search Input: 368x73 base */}
+          <div className="flex-1 min-w-[220px] sm:min-w-[300px]">
+            <div className="relative h-[60px]">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                 <svg
-                  className="ml-2"
-                  width="16"
-                  height="16"
+                  width="18"
+                  height="18"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
                   viewBox="0 0 24 24"
                 >
-                  <path d="M12 5v14M5 12h14" />
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="M21 21l-4.35-4.35" />
                 </svg>
-              </button>
+              </span>
+              <input
+                type="text"
+                placeholder="search"
+                className="bg-[#091e36] rounded-lg pl-10 pr-4 w-full h-full text-white placeholder-gray-400 focus:outline-none"
+              />
             </div>
           </div>
+
+          {/* Engines Dropdown: 248x73 */}
+          <div className="flex-shrink-0 w-full sm:w-[200px] h-[60px]">
+            <select className="bg-[#091e36] rounded-lg px-4 py-2 w-full h-full text-white focus:outline-none">
+              <option>Engines</option>
+              <option>Transmission</option>
+              <option>Brakes</option>
+            </select>
+          </div>
+
+          {/* Stock Dropdown: 248x73 */}
+          <div className="flex-shrink-0 w-full sm:w-[200px] h-[60px]">
+            <select className="bg-[#091e36] rounded-lg px-4 py-2 w-full h-full text-white focus:outline-none">
+              <option>Instock</option>
+              <option>Outstock</option>
+            </select>
+          </div>
+
+          {/* Add Button: 248x73 */}
+          <div className="flex-shrink-0 w-full sm:w-[200px] h-[60px]">
+            <button className="flex items-center justify-center bg-[#091e36] rounded-lg w-full h-full text-white">
+              Add
+              <svg
+                className="ml-2"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
           <h1 className="text-2xl font-bold mb-6">Production</h1>
-          {/* <div className="bg-[#0a1e36] rounded-xl p-4 md:p-6"> */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.from({ length: 6 }).map((_, idx) => (
-                <div
-                  key={idx}
-                  className="bg-gradient-to-br from-[#07182C] to-[#03101E] rounded-xl p-4 flex flex-col shadow-lg relative border border-[#1a2b44]"
-                >
-                  {/* Status badge */}
-                  <span
-                    className={`absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-semibold ${
-                      idx === 5 ? "bg-[#f64e4e]" : "bg-[#1ecb4f]"
-                    }`}
-                  >
-                    {idx === 5 ? "outstock" : "instock"}
-                  </span>
-                  {/* More icon */}
-                  <span className="absolute top-4 right-4 text-gray-400 cursor-pointer">
-                    <svg
-                      width="20"
-                      height="20"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle cx="12" cy="5" r="1.5" />
-                      <circle cx="12" cy="12" r="1.5" />
-                      <circle cx="12" cy="19" r="1.5" />
-                    </svg>
-                  </span>
-                  {/* Product image */}
-                  <div className="flex justify-center mb-4 mt-2">
-                    {/* <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#6ddcff] to-[#1e90ff] flex items-center justify-center"> */}
-                      <Image
-                        width={64}
-                        height={64}
-                        src="/engine.png"
-                        alt="Engine"
-                        className="w-full h-full object-contain"
-                      />
-                    {/* </div> */}
-                  </div>
-                  {/* Product info */}
-                  <div className="text-lg font-bold tracking-wide">
-                    GASOLINE
-                  </div>
-                  <div className="text-xs text-gray-400 mb-2">ENGINE</div>
-                  <div className="text-base font-semibold mb-2">100$</div>
-                  <div className="text-xs text-gray-300 mb-3">
-                    Get your favorite products delivered automatically, enjoy
-                    exclusive discounts, skip or cancel anytime. Convenience and
-                    savings in one click.
-                  </div>
-                  {/* Sales and Quantity */}
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span>Sales</span>
-                    <span className="flex items-center gap-1 text-green-400 font-semibold">
-                      220{" "}
-                      <svg
-                        width="14"
-                        height="14"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M6 15l6-6 6 6" />
-                      </svg>
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <span>Quantity</span>
-                    <div className="flex-1 h-2 bg-[#1a2b44] rounded-full overflow-hidden">
-                      <div className="h-2 bg-[#1ecb4f] w-3/4"></div>
-                    </div>
-                  </div>
+          <div className="bg-[#091e36] rounded-xl p-4 sm:p-6 lg:p-10">
+         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+        {Array.from({ length: 6 }).map((_, idx) => (
+          <div
+              key={idx}
+              className="w-full max-w-[437px] h-auto bg-gradient-to-br bg-main rounded-xl p-4 sm:p-6 flex flex-col shadow-lg relative border border-white hover:shadow-xl hover:scale-[1.01] transition duration-200 mx-auto"
+            >
+
+            {/* Status badge */}
+            <span
+              className={`absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-semibold capitalize ${
+                idx === 5 ? "bg-[#f64e4e]" : "bg-[#1ecb4f]"
+              }`}
+            >
+              {idx === 5 ? "Outstock" : "Instock"}
+            </span>
+
+            {/* More icon */}
+            <span className="absolute top-4 right-4 text-gray-400 cursor-pointer">
+              <svg
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <circle cx="12" cy="5" r="1.5" />
+                <circle cx="12" cy="12" r="1.5" />
+                <circle cx="12" cy="19" r="1.5" />
+              </svg>
+            </span>
+
+            {/* Top section: Image + Info side-by-side (or stacked on small screens) */}
+           <div className="flex flex-col sm:flex-row gap-4 items-start mb-4 mt-6">
+              {/* Image with white glow gradient and larger width */}
+              <div className="relative w-full sm:w-[280px] h-[149px] rounded-xl flex items-center justify-center before:absolute before:inset-0 before:rounded-xl before:bg-gradient-to-br before:from-white/20 before:via-white/10 before:to-transparent before:blur-lg ">
+                <Image
+                  src="/engine1.png"
+                  alt="Engine"
+                  width={280}
+                  height={149}
+                  className="object-contain relative "
+                />
+              </div>
+
+              {/* Info beside image */}
+              <div className="flex flex-col justify-start mt-6 text-white">
+                <div className="text-lg font-bold tracking-wide">GASOLINE</div>
+                <div className="text-sm text-gray-400 mb-2">ENGINE</div>
+                <div className="text-xl font-semibold tracking-tight">
+                  100<span className="text-white text-lg gap-1">$</span>
                 </div>
-              ))}
+              </div>
             </div>
+
+            {/* Description */}
+            <div className="text-sm text-white mb-6 leading-relaxed">
+              Get your favorite products delivered automatically, enjoy exclusive
+              discounts, skip or cancel anytime. Convenience and savings in one click.
+            </div>
+
+            {/* Separator line - full bleed */}
+            <div className="h-px bg-white/20 -mx-6 mb-4"></div>
+
+
+            {/* Sales and Quantity */}
+            <div className="flex items-center justify-between text-sm mb-2 text-white">
+              <span>Sales</span>
+              <span className="flex items-center gap-1 text-green-400 font-semibold">
+                220
+                <svg
+                  width="14"
+                  height="14"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M6 15l6-6 6 6" />
+                </svg>
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 text-sm text-white">
+              <span>Quantity</span>
+              <div className="flex-1 h-2 bg-[#1a2b44] rounded-full overflow-hidden">
+                <div className="h-2 bg-[#1ecb4f] w-3/4"></div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
           {/* </div> */}
         </main>
       </div>
