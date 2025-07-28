@@ -13,11 +13,13 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import useAuthStore from "@/store/auth";
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const isActive = (path: string) => pathname === path;
+  const user = useAuthStore((state) => state.user);
 
   return (
     <>
@@ -139,8 +141,8 @@ export default function Sidebar() {
               className="rounded-full mr-2"
             />
             <div>
-              <div className="font-bold">Adhitya</div>
-              <div className="text-xs text-gray-400">adhityaj@gmail.com</div>
+              <div className="font-bold">Admin</div>
+              <div className="text-xs text-gray-400">{user?.email}</div>
             </div>
           </div>
         </div>

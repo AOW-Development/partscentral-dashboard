@@ -1,7 +1,10 @@
-import { Bell, Search, Settings } from "lucide-react";
+"use client";
+import { Bell, LogOut, Search, Settings } from "lucide-react";
 import Image from "next/image";
+import useAuthStore from "@/store/auth";
 
 export default function Header() {
+  const user = useAuthStore((state) => state.user);
   return (
     <div className="fixed w-full bg-secondary px-4 py-4 flex flex-col md:flex-row md:items-center md:justify-start gap-45 z-10">
       {/* Left - Dashboard title */}
@@ -48,9 +51,17 @@ export default function Header() {
             className="rounded-full"
           />
           <div className="text-white text-sm hidden sm:block">
-            <p className="font-medium leading-tight">Ashray</p>
-            <p className="text-xs text-gray-300">ashray@company.com</p>
+            <p className="font-medium leading-tight">Admin</p>
+            <p className="text-xs text-gray-300">{user?.email}</p>
           </div>
+          {user && (
+            <button
+              onClick={() => useAuthStore.getState().logout()}
+              className="text-white p-2 cursor-pointer rounded-full transition"
+            >
+              <LogOut size={20} />
+            </button>
+          )}
         </div>
       </div>
     </div>
