@@ -5,12 +5,13 @@ import { Bell, MoreVertical,  Search, Settings, File, Globe, } from "lucide-reac
 import RecentSold from "./components/MainTable";
 import SalesChart from "./components/SalesChart";
 import TopProducts from "./components/TopProductCard";
+import MainCard from "./components/MainCards";
 
 
 const performanceCards = [
   {
     title: 'Total Profit',
-    value: '₹3,140.74',
+    value: '₹3140.74',
     icon: '/icons/bag.png',
     iconBg: 'bg-blue-600',
   },
@@ -83,12 +84,12 @@ export default function Home() {
           <div className="flex items-center gap-3">
             {/* Settings button */}
             <button className=" text-white p-2 rounded-full transition">
-              <Settings size={30} />
+              <Settings size={25} />
             </button>
 
             {/* Notification button */}
             <button className=" text-white p-2 rounded-full transition">
-              <Bell size={30} />
+              <Bell size={25} />
             </button>
 
             {/* User Profile */}
@@ -96,8 +97,8 @@ export default function Home() {
               <Image
                 src="/admin-logo.jpg" // Replace with actual image path
                 alt="User"
-                width={36}
-                height={36}
+                width={25}
+                height={30}
                 className="rounded-full"
               />
               <div className="text-white text-sm hidden sm:block">
@@ -109,71 +110,7 @@ export default function Home() {
         </div>
 
         {/* Stats Cards */}
-    <div className="space-y-4 w-full">
-      <div className="flex flex-col lg:flex-row gap-4">
-        {/* Left Section */}
-        <div className="flex-1 flex flex-col gap-4">
-          {/* Row 1: Used & New Parts */}
-          <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
-            {summaryCards.map((item, idx) => (
-              <div
-                key={idx}
-                className="bg-secondary rounded-xl p-4 flex justify-between items-center w-full sm:flex-1 min-w-[210px] h-[100px]"
-              >
-                <div>
-                  <p className="text-sm text-gray-300">{item.title}</p>
-                  <h3 className="text-lg font-semibold text-white">
-                    {item.value}{' '}
-                    <span className={`${item.trendColor} text-sm`}>
-                      {item.trend}
-                    </span>
-                  </h3>
-                </div>
-                <div className="bg-hover-secondary p-2 rounded-lg text-white">
-                  {item.icon}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Row 2: Profit, Orders, Income */}
-          <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
-            {performanceCards.map((item, idx) => (
-              <div
-                key={idx}
-                className="bg-secondary rounded-xl p-5 flex flex-col justify-between flex-1 min-w-[170px] h-[200px]"
-              >
-                <div className="flex justify-between items-start">
-                  <div className={`${item.iconBg} p-2 rounded-full`}>
-                    <Image
-                      src={item.icon}
-                      alt={item.title}
-                      width={20}
-                      height={20}
-                      className="object-contain"
-                    />
-                  </div>
-                  <MoreVertical size={16} className="text-gray-400" />
-                </div>
-                <div className="mt-6">
-                  <p className="text-sm text-gray-300">{item.title}</p>
-                  <h3 className="text-xl font-semibold text-white mt-1">
-                    {item.value}
-                  </h3>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Right Section: Customer Coverage */}
-        <div className="w-full lg:max-w-sm">
-          <div className="bg-secondary rounded-xl p-5 w-full h-full">
-            <CustomerCoverageCard />
-          </div>
-        </div>
-      </div>
-    </div>
+         <MainCard />
 
 
         {/* Charts and Top Products */}

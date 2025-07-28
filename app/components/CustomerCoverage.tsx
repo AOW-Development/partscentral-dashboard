@@ -19,9 +19,9 @@ export default function CustomerCoverageCard() {
       </div>
 
       {/* Main content: Chart left, legend right */}
-      <div className="flex items-center justify-between gap-4 md:mt-8 mt-4">
+      <div className="flex items-center justify-between md:gap-4 gap-2 md:mt-8 mt-4">
         {/* Pie Chart */}
-        <div className="w-38 h-38">
+        <div className="w-28 h-38 md:w-38">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
