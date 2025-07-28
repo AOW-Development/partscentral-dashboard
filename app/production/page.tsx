@@ -12,8 +12,8 @@ import { useState } from "react";
 export default function ProductionPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [engineType, setEngineType] = useState("Engines");
-  const [stock, setStock] = useState("Instock");
+  const [engineType, setEngineType] = useState("All");
+  const [stock, setStock] = useState("All");
 
   // Demo data for filtering
   const products = [
@@ -55,14 +55,14 @@ export default function ProductionPage() {
     },
   ];
 
-  const filteredProducts = products.filter(
-    (p) =>
-      (engineType === "Engines"
-        ? p.type === "Engines"
-        : engineType === p.type) &&
-      (stock === "Instock" ? p.stock === "Instock" : p.stock === stock) &&
-      p.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredProducts = products.filter((p) => {
+    // Show all if default selected
+    const engineMatch =
+      engineType === "" || engineType === "All" || p.type === engineType;
+    const stockMatch = stock === "" || stock === "All" || p.stock === stock;
+    const searchMatch = p.name.toLowerCase().includes(search.toLowerCase());
+    return engineMatch && stockMatch && searchMatch;
+  });
 
   return (
     <ProtectRoute>
@@ -106,11 +106,11 @@ export default function ProductionPage() {
               {/* Engines Dropdown: 248x73 */}
               <div className="flex-shrink-0 w-full sm:w-[200px] h-[60px]">
                 <select
-                  className="bg-[#091e36] rounded-lg px-4 py-2 w-full h-full text-white focus:outline-none"
+                  className="bg-[#091e36] cursor-pointer rounded-lg px-4 py-2 w-full h-full text-white focus:outline-none"
                   value={engineType}
                   onChange={(e) => setEngineType(e.target.value)}
                 >
-                  <option defaultValue="">Select Type</option>
+                  <option>All</option>
                   <option>Engines</option>
                   <option>Transmission</option>
                   <option>Brakes</option>
@@ -120,10 +120,11 @@ export default function ProductionPage() {
               {/* Stock Dropdown: 248x73 */}
               <div className="flex-shrink-0 w-full sm:w-[200px] h-[60px]">
                 <select
-                  className="bg-[#091e36] rounded-lg px-4 py-2 w-full h-full text-white focus:outline-none"
+                  className="bg-[#091e36] cursor-pointer rounded-lg px-4 py-2 w-full h-full text-white focus:outline-none"
                   value={stock}
                   onChange={(e) => setStock(e.target.value)}
                 >
+                  <option>All</option>
                   <option>Instock</option>
                   <option>Outstock</option>
                 </select>
@@ -131,7 +132,7 @@ export default function ProductionPage() {
 
               {/* Add Button: 248x73 */}
               <div className="flex-shrink-0 w-full sm:w-[200px] h-[60px]">
-                <button className="flex items-center justify-center bg-[#091e36] rounded-lg w-full h-full text-white">
+                <button className="flex cursor-pointer items-center justify-center bg-[#091e36] rounded-lg w-full h-full text-white">
                   Add
                   <svg
                     className="ml-2"
@@ -248,14 +249,14 @@ export default function ProductionPage() {
                 ))}
               </div>
             </div>
-    <div className="pb-6">
-      {/* Your content here */}
-          <Pagination
-            currentPage={currentPage}
-            totalPages={5}
-            onPageChange={setCurrentPage}
-          />
-        </div>
+            <div className="pb-6">
+              {/* Your content here */}
+              <Pagination
+                currentPage={currentPage}
+                totalPages={5}
+                onPageChange={setCurrentPage}
+              />
+            </div>
             {/* </div> */}
           </main>
         </div>
