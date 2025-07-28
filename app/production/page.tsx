@@ -74,7 +74,7 @@ export default function ProductionPage() {
           {/* Header */}
           <Header />
           {/* Scrollable Content */}
-          <main className="pt-[120px] h-[calc(100vh-0px)] overflow-y-auto px-4 md:px-8">
+          <main className="pt-[20px] h-[calc(100vh-0px)] overflow-y-auto px-4 md:px-8">
             {/* Filters Row */}
             <div className="flex flex-wrap sm:flex-nowrap items-center gap-4 mb-8">
               {/* Search Input: 368x73 base */}
