@@ -256,11 +256,12 @@ export default function Orders() {
           {/* Header */}
           <Header />
           {/* Scrollable Content */}
-          <main className="pt-[40px] h-[calc(100vh-0px)] overflow-y-auto px-4 md:px-8">
+          <main className="pt-[40px] min-h-screen px-4 md:px-8">
+
             {/* Filters Row */}
             <div className="flex flex-col md:flex-row gap-4 mb-8">
               <div className="flex-1">
-                <div className="relative">
+                <div className="relative mt-20 md:mt-0">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                     <svg
                       width="18"
@@ -277,7 +278,7 @@ export default function Orders() {
                   <input
                     type="text"
                     placeholder="search"
-                    className="bg-[#091e36] rounded-lg pl-10 pr-4 py-4 w-[50%] text-white placeholder-gray-400 focus:outline-none"
+                    className="bg-[#091e36] rounded-lg  pl-10 pr-4 py-4  w-full md:w-[50%] text-white placeholder-gray-400 focus:outline-none"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                   />
@@ -438,7 +439,7 @@ export default function Orders() {
               </div>
             </div>
             <div className="bg-[#091e36] rounded-lg p-6 sm:p-6 lg:p-10 mb-6">
-              <h1 className="text-2xl font-bold mb-6">Orders</h1>
+              <h1 className="text-2xl font-audiowide font-bold mb-6">Orders</h1>
               {/* <p className="text-gray-400 mb-6">This is the orders page.</p> */}
 
               <div className="overflow-x-auto rounded-lg shadow-lg ">

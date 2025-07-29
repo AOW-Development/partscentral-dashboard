@@ -83,12 +83,12 @@ export default function ProductionPage() {
           {/* Header */}
           <Header />
           {/* Scrollable Content */}
-          <main className="pt-[40px] h-[calc(100vh-0px)] overflow-y-auto px-4 md:px-8">
+          <main className="pt-[40px] min-h-screen px-4 md:px-8">
             {/* Filters Row */}
             <div className="flex flex-wrap sm:flex-nowrap items-center gap-4 mb-8">
               {/* Search Input: 368x73 base */}
               <div className="flex-1 min-w-[220px] sm:min-w-[300px]">
-                <div className="relative h-[60px]">
+                <div className="relative h-[60px] mt-20 md:mt-0">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                     <svg
                       width="18"
@@ -107,7 +107,7 @@ export default function ProductionPage() {
                     placeholder="search"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="bg-[#091e36] rounded-lg pl-10 pr-4 w-[50%] h-full text-white placeholder-gray-400 focus:outline-none"
+                    className="bg-[#091e36] rounded-lg pl-10 pr-4 w-full md:w-[50%] h-full text-white placeholder-gray-400 focus:outline-none"
                   />
                 </div>
               </div>
@@ -186,7 +186,7 @@ export default function ProductionPage() {
             </div>
 
             <div className="bg-[#091e36] rounded-xl p-4 sm:p-6 lg:p-10">
-              <h1 className="text-2xl font-bold mb-8">Production</h1>
+              <h1 className="text-2xl font-audiowide font-bold mb-8">Production</h1>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                 {filteredProducts.map((product, idx) => (
                   <Link key={idx} href={"/production/1"}>
