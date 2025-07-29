@@ -65,7 +65,15 @@ export default function Sidebar() {
             <Link
               href="/orders"
               className={`flex items-center px-4 py-3 rounded-lg hover:bg-[#00466f] ${
-                isActive("/orders") ? "bg-hover" : ""
+                isActive("/orders")
+                  ? "bg-hover"
+                  : isActive("/orders/")
+                  ? "bg-hover"
+                  : isActive("/dashboard/orders")
+                  ? "bg-hover"
+                  : isActive("/dashboard/orders/")
+                  ? "bg-hover"
+                  : ""
               }`}
             >
               <Package className="mr-2 w-5 h-5" />
@@ -74,7 +82,19 @@ export default function Sidebar() {
             <Link
               href="/production"
               className={`flex items-center px-4 py-3 rounded-lg hover:bg-[#00466f] ${
-                isActive("/production") ? "bg-hover" : ""
+                isActive("/production")
+                  ? "bg-hover"
+                  : isActive("/production/")
+                  ? "bg-hover"
+                  : isActive("/dashboard/production")
+                  ? "bg-hover"
+                  : isActive("/dashboard/production/")
+                  ? "bg-hover"
+                  : isActive("/production/add")
+                  ? "bg-hover"
+                  : isActive("/production/[id]")
+                  ? "bg-hover"
+                  : ""
               }`}
             >
               <Factory className="mr-2 w-5 h-5" />
@@ -83,7 +103,15 @@ export default function Sidebar() {
             <Link
               href="/in-clients"
               className={`flex items-center px-4 py-3 rounded-lg hover:bg-[#00466f] ${
-                isActive("/in-clients") ? "bg-hover" : ""
+                isActive("/in-clients")
+                  ? "bg-hover"
+                  : isActive("/in-clients/")
+                  ? "bg-hover"
+                  : isActive("/dashboard/in-clients")
+                  ? "bg-hover"
+                  : isActive("/dashboard/in-clients/")
+                  ? "bg-hover"
+                  : ""
               }`}
             >
               <Users className="mr-2 w-5 h-5" />
