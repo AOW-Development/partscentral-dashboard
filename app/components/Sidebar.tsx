@@ -43,7 +43,7 @@ export default function Sidebar() {
           <div className="flex items-center mb-10 border-b border-gray-700 pb-3">
             <Link href="/">
               <Image
-                src="/header-3.png"
+                src="/dashboard/header-3.png"
                 alt="Logo"
                 width={200}
                 height={60}
