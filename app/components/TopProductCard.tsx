@@ -48,7 +48,7 @@ export default function TopProducts() {
   return (
     <div className="w-full bg-secondary rounded-xl px-4 py-6 lg:px-1 lg:py-4">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-white font-semibold text-lg">Top Products</h2>
+        <h2 className="text-white font-audiowide font-semibold text-lg">Top Products</h2>
         <button className="text-white cursor-pointer bg-white/10 hover:bg-white/20 p-1 rounded-full">
           <Link href="/production">
             <span className="sr-only">Next</span>

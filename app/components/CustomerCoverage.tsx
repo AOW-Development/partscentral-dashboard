@@ -14,7 +14,7 @@ export default function CustomerCoverageCard() {
     <div className="w-full max-w-[350px] bg-secondary rounded-xl px-2 py-4 shadow-lg mx-auto">
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
-        <p className="text-base font-semibold text-white">Customer Coverage</p>
+        <p className="text-base font-audiowide font-semibold text-white">Customer Coverage</p>
         <MoreHorizontal size={18} className="text-gray-400 cursor-pointer" />
       </div>
 

@@ -46,7 +46,7 @@ export default function RecentSold() {
     <div className="bg-gradient-to-br from-[#07182C] to-[#03101E] rounded-xl p-4 md:p-6 w-full text-white">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">Recent Sold</h2>
+        <h2 className="text-lg font-audiowide font-semibold">Recent Sold</h2>
         <div className="flex items-center gap-1 text-sm text-gray-300 cursor-pointer">
           Last 7 Days
           <ChevronDown className="w-4 h-4 mt-[1px]" />
@@ -75,13 +75,13 @@ export default function RecentSold() {
             >
               {/* Product Image */}
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#00A3FF] to-[#006299] p-[3px]">
+                <div className="w-10 h-10 rounded-full bg-transparent shadow-[0_0_19px_rgba(0,170,200,0.5)] shadow-white/30 p-[3px]">
                   <Image
                     src={URL + image}
                     alt={category}
                     width={40}
                     height={40}
-                    className="w-full h-full object-contain"
+                    className="w-full h-full rounded-full object-contain"
                   />
                 </div>
               </div>
