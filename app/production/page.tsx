@@ -19,36 +19,44 @@ export default function ProductionPage() {
   // Demo data for filtering
   const products = [
     {
+      id:1,
       type: "Engines",
       stock: "Instock",
       name: "GASOLINE",
       image: "/engine1.png",
     },
     {
+      id:2,
+
       type: "Engines",
       stock: "Instock",
       name: "DIESEL",
       image: "/engine1.png",
     },
     {
+
+      id:3,
       type: "Transmission",
       stock: "Instock",
       name: "AUTO",
       image: "/engine1.png",
     },
     {
+      id:4,
       type: "Brakes",
       stock: "Outstock",
       name: "BRAKE KIT",
       image: "/engine1.png",
     },
     {
+      id:5,
       type: "Engines",
       stock: "Outstock",
       name: "GASOLINE",
       image: "/engine1.png",
     },
     {
+      id:6,
       type: "Transmission",
       stock: "Instock",
       name: "MANUAL",
@@ -75,7 +83,7 @@ export default function ProductionPage() {
           {/* Header */}
           <Header />
           {/* Scrollable Content */}
-          <main className="pt-[20px] h-[calc(100vh-0px)] overflow-y-auto px-4 md:px-8">
+          <main className="pt-[40px] h-[calc(100vh-0px)] overflow-y-auto px-4 md:px-8">
             {/* Filters Row */}
             <div className="flex flex-wrap sm:flex-nowrap items-center gap-4 mb-8">
               {/* Search Input: 368x73 base */}
@@ -99,7 +107,7 @@ export default function ProductionPage() {
                     placeholder="search"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="bg-[#091e36] rounded-lg pl-10 pr-4 w-full h-full text-white placeholder-gray-400 focus:outline-none"
+                    className="bg-[#091e36] rounded-lg pl-10 pr-4 w-[50%] h-full text-white placeholder-gray-400 focus:outline-none"
                   />
                 </div>
               </div>
@@ -156,6 +164,8 @@ export default function ProductionPage() {
               <h1 className="text-2xl font-bold mb-8">Production</h1>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                 {filteredProducts.map((product, idx) => (
+                 <Link href={`production/${product.id}`} >
+                  
                   <div
                     key={idx}
                     className="w-full cursor-pointer max-w-[437px] h-auto bg-gradient-to-br bg-main rounded-xl p-4 sm:p-6 flex flex-col shadow-lg relative border border-white hover:shadow-xl hover:scale-[1.01] transition duration-200 mx-auto"
@@ -190,7 +200,9 @@ export default function ProductionPage() {
                     {/* Top section: Image + Info side-by-side (or stacked on small screens) */}
                     <div className="flex flex-col sm:flex-row gap-4 items-start mb-4 mt-6">
                       {/* Image with white glow gradient and larger width */}
-                      <div className="relative w-full sm:w-[280px] h-[149px] rounded-xl flex items-center justify-center before:absolute before:inset-0 before:rounded-xl before:bg-gradient-to-br before:from-white/20 before:via-white/10 before:to-transparent before:blur-lg ">
+                      <div className="relative w-full sm:w-[280px] h-[149px] rounded-xl
+                       flex items-center justify-center before:absolute before:inset-0 before:rounded-xl
+                        before:bg-gradient-to-br before:from-white/20 before:via-white/10 before:to-transparent before:blur-lg ">
                         <Image
                           src={product.image}
                           alt={product.name}
@@ -249,6 +261,7 @@ export default function ProductionPage() {
                       </div>
                     </div>
                   </div>
+                  </Link>
                 ))}
               </div>
             </div>
