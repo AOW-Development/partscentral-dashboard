@@ -23,7 +23,7 @@ export default function Page() {
           <main className="pt-6 px-4 md:px-8 pb-12">
             <div className="flex flex-wrap sm:flex-nowrap items-center gap-4 mb-6">
             <div className="flex-1 min-w-[220px] sm:min-w-[300px]">
-              <div className="relative h-[60px] mt-6">
+              <div className="relative h-[60px] mt-24 md:mt-0">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                   <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <circle cx="11" cy="11" r="8" />
@@ -33,11 +33,11 @@ export default function Page() {
                 <input
                   type="text"
                   placeholder="search"
-                  className="bg-[#091e36] rounded-lg pl-10 pr-4 w-[50%] h-full text-white placeholder-gray-400 focus:outline-none cursor-text"
+                  className="bg-[#091e36] rounded-lg pl-10 pr-4 w-full md:w-[50%] h-full text-white placeholder-gray-400 focus:outline-none cursor-text"
                 />
               </div>
             </div>
-            <div className="flex-shrink-0 w-full sm:w-[200px] h-[60px] mt-6">
+            <div className="flex-shrink-0 w-full sm:w-[200px] h-[60px] mt-3">
               <Link href="/production/add">
                 <button className="flex items-center justify-center bg-[#091e36] rounded-lg w-full h-full text-white font-semibold cursor-pointer">
                   Add

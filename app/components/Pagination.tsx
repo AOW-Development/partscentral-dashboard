@@ -47,7 +47,7 @@ const Pagination: React.FC<PaginationProps> = ({
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
         aria-label="Next page"
-        className="w-9 h-9 flex items-center justify-center  text-white rounded-full hover:bg-[#0b2a4f] disabled:opacity-50 disabled:cursor-not-allowed transition"
+        className="w-9 h-9 flex items-center justify-center  text-white rounded-full hover:bg-[#0b2a4f] disabled:opacity-50 cursor-pointer transition"
       >
         <ChevronRight className="w-4 h-4" />
       </button>
