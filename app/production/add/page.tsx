@@ -3,6 +3,7 @@ import Header from "@/app/components/Header";
 import Sidebar from "@/app/components/Sidebar";
 import ProtectRoute from "@/app/components/ProtectRoute";
 import { useState } from "react";
+import Link from "next/link";
 
 export default function Page() {
   const [title, setTitle] = useState("");
@@ -15,14 +16,47 @@ export default function Page() {
 
   return (
     <ProtectRoute>
-      <div className="min-h-screen bg-[#031a32] text-white font-exo">
+      <div className="min-h-screen bg-main text-white font-exo">
         <Sidebar />
         <div className="md:pl-64">
           <Header />
           <main className="pt-6 px-4 md:px-8 pb-12">
-            <h2 className="text-2xl font-semibold mb-4">
-              Production &gt; Add Product
-            </h2>
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-4 mb-6">
+            <div className="flex-1 min-w-[220px] sm:min-w-[300px]">
+              <div className="relative h-[60px] mt-6">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="M21 21l-4.35-4.35" />
+                  </svg>
+                </span>
+                <input
+                  type="text"
+                  placeholder="search"
+                  className="bg-[#091e36] rounded-lg pl-10 pr-4 w-[50%] h-full text-white placeholder-gray-400 focus:outline-none cursor-text"
+                />
+              </div>
+            </div>
+            <div className="flex-shrink-0 w-full sm:w-[200px] h-[60px] mt-6">
+              <Link href="/production/add">
+                <button className="flex items-center justify-center bg-[#091e36] rounded-lg w-full h-full text-white font-semibold cursor-pointer">
+                  Add
+                  <svg className="ml-2" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                </button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Breadcrumb */}
+          <nav className="font-medium mb-6 space-x-1">
+            <span className="font-normal text-white/60">Production</span>
+            <span>&gt;</span>
+            <span className="font-semibold text-white">Add Product</span>
+            
+          </nav>
+
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Left Panel */}
