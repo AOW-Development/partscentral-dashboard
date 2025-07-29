@@ -6,6 +6,7 @@ import Sidebar from "../components/Sidebar";
 import Pagination from "../components/Pagination";
 // import { useState } from "react";
 import ProtectRoute from "../components/ProtectRoute";
+import { URL } from "@/utils//imageUrl";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -19,48 +20,47 @@ export default function ProductionPage() {
   // Demo data for filtering
   const products = [
     {
-      id:1,
+      id: 1,
       type: "Engines",
       stock: "Instock",
       name: "GASOLINE",
-      image: "/engine1.png",
+      image: "engine1.png",
     },
     {
-      id:2,
+      id: 2,
 
       type: "Engines",
       stock: "Instock",
       name: "DIESEL",
-      image: "/engine1.png",
+      image: "engine1.png",
     },
     {
-
-      id:3,
+      id: 3,
       type: "Transmission",
       stock: "Instock",
       name: "AUTO",
-      image: "/engine1.png",
+      image: "engine1.png",
     },
     {
-      id:4,
+      id: 4,
       type: "Brakes",
       stock: "Outstock",
       name: "BRAKE KIT",
-      image: "/engine1.png",
+      image: "engine1.png",
     },
     {
-      id:5,
+      id: 5,
       type: "Engines",
       stock: "Outstock",
       name: "GASOLINE",
-      image: "/engine1.png",
+      image: "engine1.png",
     },
     {
-      id:6,
+      id: 6,
       type: "Transmission",
       stock: "Instock",
       name: "MANUAL",
-      image: "/engine1.png",
+      image: "engine1.png",
     },
   ];
 
@@ -164,103 +164,105 @@ export default function ProductionPage() {
               <h1 className="text-2xl font-bold mb-8">Production</h1>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                 {filteredProducts.map((product, idx) => (
-                 <Link href={`production/${product.id}`} >
-                  
-                  <div
-                    key={idx}
-                    className="w-full cursor-pointer max-w-[437px] h-auto bg-gradient-to-br bg-main rounded-xl p-4 sm:p-6 flex flex-col shadow-lg relative border border-white hover:shadow-xl hover:scale-[1.01] transition duration-200 mx-auto"
-                  >
-                    {/* Status badge */}
-                    <span
-                      className={`absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-semibold capitalize ${
-                        product.stock === "Outstock"
-                          ? "bg-[#f64e4e]"
-                          : "bg-[#1ecb4f]"
-                      }`}
+                  <Link key={idx} href={`production/${product.id}`}>
+                    <div
+                      // key={idx}
+                      className="w-full cursor-pointer max-w-[437px] h-auto bg-gradient-to-br bg-main rounded-xl p-4 sm:p-6 flex flex-col shadow-lg relative border border-white hover:shadow-xl hover:scale-[1.01] transition duration-200 mx-auto"
                     >
-                      {product.stock}
-                    </span>
-
-                    {/* More icon */}
-                    <span className="absolute top-4 right-4 text-gray-400 cursor-pointer">
-                      <svg
-                        width="20"
-                        height="20"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
+                      {/* Status badge */}
+                      <span
+                        className={`absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-semibold capitalize ${
+                          product.stock === "Outstock"
+                            ? "bg-[#f64e4e]"
+                            : "bg-[#1ecb4f]"
+                        }`}
                       >
-                        <circle cx="12" cy="5" r="1.5" />
-                        <circle cx="12" cy="12" r="1.5" />
-                        <circle cx="12" cy="19" r="1.5" />
-                      </svg>
-                    </span>
+                        {product.stock}
+                      </span>
 
-                    {/* Top section: Image + Info side-by-side (or stacked on small screens) */}
-                    <div className="flex flex-col sm:flex-row gap-4 items-start mb-4 mt-6">
-                      {/* Image with white glow gradient and larger width */}
-                      <div className="relative w-full sm:w-[280px] h-[149px] rounded-xl
-                       flex items-center justify-center before:absolute before:inset-0 before:rounded-xl
-                        before:bg-gradient-to-br before:from-white/20 before:via-white/10 before:to-transparent before:blur-lg ">
-                        <Image
-                          src={product.image}
-                          alt={product.name}
-                          width={280}
-                          height={149}
-                          className="object-contain relative "
-                        />
-                      </div>
-
-                      {/* Info beside image */}
-                      <div className="flex flex-col justify-start mt-6 text-white">
-                        <div className="text-lg font-bold tracking-wide">
-                          {product.name}
-                        </div>
-                        <div className="text-sm text-gray-400 mb-2">
-                          {product.type}
-                        </div>
-                        <div className="text-xl font-semibold tracking-tight">
-                          100<span className="text-white text-lg gap-1">$</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Description */}
-                    <div className="text-sm text-white mb-6 leading-relaxed">
-                      Get your favorite products delivered automatically, enjoy
-                      exclusive discounts, skip or cancel anytime. Convenience
-                      and savings in one click.
-                    </div>
-
-                    {/* Separator line - full bleed */}
-                    <div className="h-px bg-white/20 -mx-6 mb-4"></div>
-
-                    {/* Sales and Quantity */}
-                    <div className="flex items-center justify-between text-sm mb-2 text-white">
-                      <span>Sales</span>
-                      <span className="flex items-center gap-1 text-green-400 font-semibold">
-                        220
+                      {/* More icon */}
+                      <span className="absolute top-4 right-4 text-gray-400 cursor-pointer">
                         <svg
-                          width="14"
-                          height="14"
+                          width="20"
+                          height="20"
                           fill="none"
                           stroke="currentColor"
                           strokeWidth="2"
                           viewBox="0 0 24 24"
                         >
-                          <path d="M6 15l6-6 6 6" />
+                          <circle cx="12" cy="5" r="1.5" />
+                          <circle cx="12" cy="12" r="1.5" />
+                          <circle cx="12" cy="19" r="1.5" />
                         </svg>
                       </span>
-                    </div>
 
-                    <div className="flex items-center gap-2 text-sm text-white">
-                      <span>Quantity</span>
-                      <div className="flex-1 h-2 bg-[#1a2b44] rounded-full overflow-hidden">
-                        <div className="h-2 bg-[#1ecb4f] w-3/4"></div>
+                      {/* Top section: Image + Info side-by-side (or stacked on small screens) */}
+                      <div className="flex flex-col sm:flex-row gap-4 items-start mb-4 mt-6">
+                        {/* Image with white glow gradient and larger width */}
+                        <div
+                          className="relative w-full sm:w-[280px] h-[149px] rounded-xl
+                       flex items-center justify-center before:absolute before:inset-0 before:rounded-xl
+                        before:bg-gradient-to-br before:from-white/20 before:via-white/10 before:to-transparent before:blur-lg "
+                        >
+                          <Image
+                            src={URL + product.image}
+                            alt={product.name}
+                            width={280}
+                            height={149}
+                            className="object-contain relative "
+                          />
+                        </div>
+
+                        {/* Info beside image */}
+                        <div className="flex flex-col justify-start mt-6 text-white">
+                          <div className="text-lg font-bold tracking-wide">
+                            {product.name}
+                          </div>
+                          <div className="text-sm text-gray-400 mb-2">
+                            {product.type}
+                          </div>
+                          <div className="text-xl font-semibold tracking-tight">
+                            100
+                            <span className="text-white text-lg gap-1">$</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      <div className="text-sm text-white mb-6 leading-relaxed">
+                        Get your favorite products delivered automatically,
+                        enjoy exclusive discounts, skip or cancel anytime.
+                        Convenience and savings in one click.
+                      </div>
+
+                      {/* Separator line - full bleed */}
+                      <div className="h-px bg-white/20 -mx-6 mb-4"></div>
+
+                      {/* Sales and Quantity */}
+                      <div className="flex items-center justify-between text-sm mb-2 text-white">
+                        <span>Sales</span>
+                        <span className="flex items-center gap-1 text-green-400 font-semibold">
+                          220
+                          <svg
+                            width="14"
+                            height="14"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M6 15l6-6 6 6" />
+                          </svg>
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 text-sm text-white">
+                        <span>Quantity</span>
+                        <div className="flex-1 h-2 bg-[#1a2b44] rounded-full overflow-hidden">
+                          <div className="h-2 bg-[#1ecb4f] w-3/4"></div>
+                        </div>
                       </div>
                     </div>
-                  </div>
                   </Link>
                 ))}
               </div>
