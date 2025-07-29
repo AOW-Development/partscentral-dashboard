@@ -5,6 +5,7 @@ import Image from "next/image";
 import React from "react";
 import { useState } from "react";
 import useAuthStore from "@/store/auth";
+import { URL } from "@/utils//imageUrl";
 // import { Exo } from "next/font/google";
 // const exo = Exo({
 //   subsets: ["latin"],
@@ -68,7 +69,7 @@ export default function LoginPage() {
       <header className="w-full py-6 px-6 bg-secondary flex items-center justify-start shadow-md">
         {/* <h2 className="text-xl font-bold tracking-wide">Login</h2> */}
         <Image
-          src="/header-3.png"
+          src={`${URL}header-3.png`}
           alt="Logo"
           width={200}
           height={60}

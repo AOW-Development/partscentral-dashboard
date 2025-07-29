@@ -7,24 +7,25 @@ import SalesChart from "./components/SalesChart";
 import TopProducts from "./components/TopProductCard";
 import Header from "./components/Header";
 import ProtectRoute from "./components/ProtectRoute";
+import { URL } from "@/utils//imageUrl";
 
 const performanceCards = [
   {
     title: "Total Profit",
     value: "₹3,140.74",
-    icon: "/icons/bag.png",
+    icon: "icons/bag.png",
     iconBg: "bg-blue-600",
   },
   {
     title: "Orders Per Day",
     value: "₹42.040",
-    icon: "/icons/wallet.png",
+    icon: "icons/wallet.png",
     iconBg: "bg-white text-hover-secondary",
   },
   {
     title: "Income Per Day",
     value: "₹501.074",
-    icon: "/icons/dollar.png",
+    icon: "icons/dollar.png",
     iconBg: "bg-white text-hover-secondary",
   },
 ];
@@ -52,12 +53,11 @@ export default function Home() {
         {/* Sidebar */}
         <Sidebar />
         {/* Main Content */}
-       <div className="min-h-screen flex flex-col md:ml-64">
+        <div className="min-h-screen flex flex-col md:ml-64">
           {/* Header */}
           <Header />
           {/* Scrollable Content */}
-            <main className="flex-1 overflow-y-auto pt-1">
-
+          <main className="flex-1 overflow-y-auto pt-1">
             <div className="space-y-4 w-full px-5 md:px-6 pt-30 md:pt-6">
               <div className="flex flex-col lg:flex-row gap-4">
                 {/* Left Section */}
@@ -90,12 +90,12 @@ export default function Home() {
                     {performanceCards.map((item, idx) => (
                       <div
                         key={idx}
-                        className="bg-secondary rounded-xl p-5 flex flex-col justify-between flex-1 min-w-[170px] h-[200px]"
+                        className="bg-secondary rounded-xl p-5 flex flex-col gap-1 md:gap-4 flex-1 min-w-[170px] h-full"
                       >
                         <div className="flex justify-between items-start">
                           <div className={`${item.iconBg} p-2 rounded-full`}>
                             <Image
-                              src={item.icon}
+                              src={URL + item.icon}
                               alt={item.title}
                               width={20}
                               height={20}

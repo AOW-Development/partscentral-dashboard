@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { ChevronDown, MoreVertical } from "lucide-react";
 import React from "react";
+import { URL } from "@/utils//imageUrl";
 
 type SoldItem = {
   image: string;
@@ -15,7 +16,7 @@ type SoldItem = {
 
 const soldItems: SoldItem[] = [
   {
-    image: "/recent-sold/air-flow.png",
+    image: "recent-sold/air-flow.png",
     category: "Air Flow Meter",
     amount: "500$",
     date: "27-7-2025",
@@ -23,7 +24,7 @@ const soldItems: SoldItem[] = [
     status: "Processing",
   },
   {
-    image: "/recent-sold/carbourater.png",
+    image: "recent-sold/carbourater.png",
     category: "Carburetor",
     amount: "500$",
     date: "27-7-2025",
@@ -31,7 +32,7 @@ const soldItems: SoldItem[] = [
     status: "Shipped",
   },
   {
-    image: "/recent-sold/fuel-inject.png",
+    image: "recent-sold/fuel-inject.png",
     category: "Fuel Injection Parts",
     amount: "500$",
     date: "27-7-2025",
@@ -76,7 +77,7 @@ export default function RecentSold() {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#00A3FF] to-[#006299] p-[3px]">
                   <Image
-                    src={image}
+                    src={URL + image}
                     alt={category}
                     width={40}
                     height={40}

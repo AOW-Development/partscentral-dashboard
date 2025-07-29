@@ -11,7 +11,7 @@ const data = [
 
 export default function CustomerCoverageCard() {
   return (
-    <div className="w-full max-w-[350px] bg-secondary rounded-xl px-4 py-4 shadow-lg mx-auto">
+    <div className="w-full max-w-[350px] bg-secondary rounded-xl px-2 py-4 shadow-lg mx-auto">
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <p className="text-base font-semibold text-white">Customer Coverage</p>
@@ -21,7 +21,7 @@ export default function CustomerCoverageCard() {
       {/* Main content: Chart left, legend right */}
       <div className="flex items-center justify-between md:gap-4 gap-2 md:mt-8 mt-4">
         {/* Pie Chart */}
-        <div className="w-28 h-38 md:w-38">
+        <div className="w-32 h-38 md:w-38">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Tooltip

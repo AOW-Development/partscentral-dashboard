@@ -1,45 +1,46 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import { MoreVertical } from 'lucide-react';
-import { Globe, File } from 'lucide-react';
-import CustomerCoverageCard from './CustomerCoverage';
+import Image from "next/image";
+import { MoreVertical } from "lucide-react";
+import { Globe, File } from "lucide-react";
+import CustomerCoverageCard from "./CustomerCoverage";
+import { URL } from "@/utils//imageUrl";
 
 const summaryCards = [
   {
-    title: 'Used Parts',
-    value: '2,300',
-    trend: '+5%',
-    trendColor: 'text-green-400',
+    title: "Used Parts",
+    value: "2,300",
+    trend: "+5%",
+    trendColor: "text-green-400",
     icon: <Globe size={20} />,
   },
   {
-    title: 'New Parts',
-    value: '3,052',
-    trend: '-14%',
-    trendColor: 'text-red-400',
+    title: "New Parts",
+    value: "3,052",
+    trend: "-14%",
+    trendColor: "text-red-400",
     icon: <File size={20} />,
   },
 ];
 
 const performanceCards = [
   {
-    title: 'Total Profit',
-    value: '₹3140.74',
-    icon: '/icons/bag.png',
-    iconBg: 'bg-blue-600',
+    title: "Total Profit",
+    value: "₹3140.74",
+    icon: "icons/bag.png",
+    iconBg: "bg-blue-600",
   },
   {
-    title: 'Orders Per Day',
-    value: '₹42.040',
-    icon: '/icons/wallet.png',
-    iconBg: 'bg-white text-hover-secondary',
+    title: "Orders Per Day",
+    value: "₹42.040",
+    icon: "icons/wallet.png",
+    iconBg: "bg-white text-hover-secondary",
   },
   {
-    title: 'Income Per Day',
-    value: '₹501.074',
-    icon: '/icons/dollar.png',
-    iconBg: 'bg-white text-hover-secondary',
+    title: "Income Per Day",
+    value: "₹501.074",
+    icon: "icons/dollar.png",
+    iconBg: "bg-white text-hover-secondary",
   },
 ];
 
@@ -59,7 +60,7 @@ export default function MainCard() {
                 <div>
                   <p className="text-sm text-gray-300">{item.title}</p>
                   <h3 className="text-lg font-semibold text-white">
-                    {item.value}{' '}
+                    {item.value}{" "}
                     <span className={`${item.trendColor} text-sm`}>
                       {item.trend}
                     </span>
@@ -82,7 +83,7 @@ export default function MainCard() {
                 <div className="flex justify-between items-start">
                   <div className={`${item.iconBg} p-2 rounded-full`}>
                     <Image
-                      src={item.icon}
+                      src={URL + item.icon}
                       alt={item.title}
                       width={20}
                       height={15}

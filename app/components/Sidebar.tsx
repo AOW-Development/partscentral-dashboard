@@ -14,6 +14,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import useAuthStore from "@/store/auth";
+import { URL } from "@/utils//imageUrl";
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
@@ -43,7 +44,7 @@ export default function Sidebar() {
           <div className="flex items-center mb-10 border-b border-gray-700 pb-3">
             <Link href="/">
               <Image
-                src="/dashboard/header-3.png"
+                src={`${URL}header-3.png`}
                 alt="Logo"
                 width={200}
                 height={60}
@@ -134,7 +135,7 @@ export default function Sidebar() {
           </div>
           <div className="flex items-center mt-6">
             <Image
-              src="/admin-logo.jpg"
+              src={`${URL}admin-logo.jpg`}
               alt="User"
               width={30}
               height={30}
@@ -165,7 +166,7 @@ export default function Sidebar() {
           <div className="flex items-center mb-10">
             <Link href="/">
               <Image
-                src="/header-3.png"
+                src={`${URL}header-3.png`}
                 alt="Logo"
                 width={200}
                 height={60}
@@ -248,7 +249,7 @@ export default function Sidebar() {
           </div>
           <div className="flex items-center mt-6">
             <Image
-              src="/admin-logo.jpg"
+              src={`${URL}admin-logo.jpg`}
               alt="User"
               width={30}
               height={30}
