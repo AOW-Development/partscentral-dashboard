@@ -256,7 +256,7 @@ export default function Orders() {
           {/* Header */}
           <Header />
           {/* Scrollable Content */}
-          <main className="pt-[20px] h-[calc(100vh-0px)] overflow-y-auto px-4 md:px-8">
+          <main className="pt-[40px] h-[calc(100vh-0px)] overflow-y-auto px-4 md:px-8">
             {/* Filters Row */}
             <div className="flex flex-col md:flex-row gap-4 mb-8">
               <div className="flex-1">
@@ -283,9 +283,9 @@ export default function Orders() {
                   />
                 </div>
               </div>
-              <div>
+                <div className="relative w-full md:w-auto">
                 <select
-                  className="bg-[#091e36] rounded-lg px-4 py-5 text-white focus:outline-none w-full md:w-auto"
+                  className="appearance-none bg-[#091e36] rounded-lg px-4 py-5 text-white focus:outline-none w-full md:w-auto pr-10"
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
                 >
@@ -295,7 +295,20 @@ export default function Orders() {
                   <option>Paid</option>
                   <option>Cancelled</option>
                 </select>
+
+              {/* Right-aligned custom arrow, after the text */}
+              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white">
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
               </div>
+            </div>
               <div>
                 {/* Date range selector placeholder */}
                 <div className="flex items-center bg-[#091e36] rounded-lg px-4 py-2 text-white w-full md:w-auto gap-2">
