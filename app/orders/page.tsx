@@ -277,7 +277,7 @@ export default function Orders() {
                   <input
                     type="text"
                     placeholder="search"
-                    className="bg-[#091e36] rounded-lg pl-10 pr-4 py-4 w-full text-white placeholder-gray-400 focus:outline-none"
+                    className="bg-[#091e36] rounded-lg pl-10 pr-4 py-4 w-[50%] text-white placeholder-gray-400 focus:outline-none"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                   />
@@ -285,7 +285,7 @@ export default function Orders() {
               </div>
                 <div className="relative w-full md:w-auto">
                 <select
-                  className="appearance-none bg-[#091e36] rounded-lg px-4 py-5 text-white focus:outline-none w-full md:w-auto pr-10"
+                  className="appearance-none bg-[#091e36] rounded-lg px-4 py-4 text-white focus:outline-none w-full md:w-auto pr-10"
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
                 >

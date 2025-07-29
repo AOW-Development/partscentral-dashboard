@@ -113,9 +113,9 @@ export default function ProductionPage() {
               </div>
 
               {/* Engines Dropdown: 248x73 */}
-              <div className="flex-shrink-0 w-full sm:w-[200px] h-[60px]">
+              <div className="flex-shrink-0 w-full sm:w-[200px] h-[60px] relative">
                 <select
-                  className="bg-[#091e36] cursor-pointer rounded-lg px-4 py-2 w-full h-full text-white focus:outline-none"
+                  className="bg-[#091e36] appearance-none cursor-pointer rounded-lg px-4 py-2 w-full h-full text-white focus:outline-none"
                   value={engineType}
                   onChange={(e) => setEngineType(e.target.value)}
                 >
@@ -124,20 +124,45 @@ export default function ProductionPage() {
                   <option>Transmission</option>
                   <option>Brakes</option>
                 </select>
+               <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white">
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </div>
               </div>
 
               {/* Stock Dropdown: 248x73 */}
-              <div className="flex-shrink-0 w-full sm:w-[200px] h-[60px]">
-                <select
-                  className="bg-[#091e36] cursor-pointer rounded-lg px-4 py-2 w-full h-full text-white focus:outline-none"
-                  value={stock}
-                  onChange={(e) => setStock(e.target.value)}
+              <div className="flex-shrink-0 w-full sm:w-[200px] h-[60px] relative">
+              <select
+                className="bg-[#091e36] appearance-none cursor-pointer rounded-lg px-4 py-2 w-full h-full text-white focus:outline-none pr-10"
+                value={stock}
+                onChange={(e) => setStock(e.target.value)}
+              >
+                <option>All</option>
+                <option>Instock</option>
+                <option>Outstock</option>
+              </select>
+
+              {/* Custom arrow on the right */}
+              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white">
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
                 >
-                  <option>All</option>
-                  <option>Instock</option>
-                  <option>Outstock</option>
-                </select>
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
               </div>
+            </div>
+
 
               {/* Add Button: 248x73 */}
               <div className="flex-shrink-0 w-full sm:w-[200px] h-[60px]">
