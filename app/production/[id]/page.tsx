@@ -6,6 +6,68 @@ import Header from "@/app/components/Header";
 import ProtectRoute from "@/app/components/ProtectRoute";
 import { URL } from "@/utils//imageUrl";
 
+const productDetails = {
+  name: "Name Engine Assembly",
+  option: "4.9L | from 2/3/91 (AIR inner manifold) | E4OD transmission",
+  price: "100$",
+  originalPrice: "100$",
+  stock: "2 parts in stock",
+  description: [
+    ["Make", "Volvo"],
+    ["Years", "2018"],
+    ["Part", "Engine Assembly"],
+    ["Miles", "80K"],
+    ["Genuine", "Genuine Dodge Part"],
+    ["Condition", "Excellent Condition"],
+    ["Warranty", "60 Days Warranty"],
+  ],
+};
+
+// import { useEffect, useState } from "react";
+// import { useParams } from "next/navigation";
+
+// type ProductDetails = {
+//   name: string;
+//   option: string;
+//   image: string;
+//   price: string;
+//   oldPrice: string;
+//   stock: string;
+//   description: [string, string][];
+// };
+
+// export function useProductDetails() {
+//   const { id } = useParams();
+//   const [productDetails, setProductDetails] = useState<ProductDetails | null>(null);
+
+//   useEffect(() => {
+//     // Replace with your actual fetch logic
+//     async function fetchProductDetails() {
+//       // Example static data, replace with API call
+//       setProductDetails({
+//         name: "Engine Assembly",
+//         option: "4.9L | from 2/3/91 (AIR inner manifold) | E4OD transmission",
+//         image: `${URL}axle.png`,
+//         price: "100$",
+//         oldPrice: "100$",
+//         stock: "2 parts in stock",
+//         description: [
+//           ["Make", "Volvo"],
+//           ["Years", "2018"],
+//           ["Part", "Engine Assembly"],
+//           ["Miles", "80K"],
+//           ["Genuine", "Genuine Dodge Part"],
+//           ["Condition", "Excellent Condition"],
+//           ["Warranty", "60 Days Warranty"],
+//         ],
+//       });
+//     }
+//     if (id) fetchProductDetails();
+//   }, [id]);
+
+//   return productDetails;
+// }
+
 export default function EngineProductDetailsPage() {
   return (
     <ProtectRoute>
@@ -60,7 +122,11 @@ export default function EngineProductDetailsPage() {
 
             {/* Breadcrumb */}
             <nav className="font-medium mb-6 space-x-1">
-              <span className="font-normal text-white/60">Production</span>
+              <Link href="/production/">
+                <span className="font-normal text-white/60 hover:text-gray-300">
+                  Production
+                </span>
+              </Link>
               <span>&gt;</span>
               <span className="font-normal text-white/60">Product Details</span>
               <span>&gt;</span>
@@ -73,17 +139,20 @@ export default function EngineProductDetailsPage() {
                 {/* Left Card */}
                 <div className="border border-white/30 rounded-lg p-6 w-full max-w-[483px] h-[500px] flex flex-col justify-between">
                   <div className="flex flex-col items-center justify-center text-center">
-                    <h3 className="text-white font-bold text-xl uppercase tracking-wide mb-2">
-                      Name Engine Assembly
+                    <h3 className="text-white font-bold text-xl uppercase tracking-wide mb-2 font-audiowide">
+                      {/* Name Engine Assembly */}
+                      {productDetails.name}
                     </h3>
                     <p className="text-white text-sm font-bold mb-6 leading-relaxed">
-                      <span className="text-white/70">Option:</span> 4.9L | from
-                      2/3/91 (AIR inner manifold) | E4OD transmission
+                      <span className="text-white/70">Option:</span>
+                      {/* 4.9L | from
+                      2/3/91 (AIR inner manifold) | E4OD transmission */}
+                      {productDetails.option}
                     </p>
 
                     {/* Engine Image with white shadow */}
                     <div
-                      className="relative w-full max-w-[360px] h-[300px] mb-6 mx-auto before:absolute before:inset-0 before:rounded-xl
+                      className="relative w-full max-w-[360px] h-[200px] md:h-[300px] mb-6 mx-auto before:absolute before:inset-0 before:rounded-xl
                         before:bg-gradient-to-br before:from-white/20 before:via-white/10 before:to-transparent before:blur-lg"
                     >
                       <Image
@@ -98,13 +167,18 @@ export default function EngineProductDetailsPage() {
                   {/* Price and Stock */}
                   <div className="flex justify-between items-center text-white">
                     <div>
-                      <span className="text-3xl font-bold mr-2 mb-8">100$</span>
-                      <span className="mb-8 line-through text-white/50 font-bold text-lg">
-                        100$
+                      <span className="text-2xl md:text-3xl font-bold mr-1 md:mr-2 mb-8 font-audiowide">
+                        {/* 100$ */}
+                        {productDetails.price}
+                      </span>
+                      <span className="mb-8 line-through text-white/50 font-bold md:text-lg ">
+                        {/* 100$ */}
+                        {productDetails.originalPrice}
                       </span>
                     </div>
-                    <div className="text-lg mb-4 font-bold">
-                      2 parts in stock
+                    <div className="text-md ml-1 md:text-lg mb-0 font-bold font-audiowide">
+                      {/* 2 parts in stock */}
+                      {productDetails.stock}
                     </div>
                   </div>
                 </div>
@@ -119,6 +193,8 @@ export default function EngineProductDetailsPage() {
                           Product Name
                         </label>
                         <input
+                          value={productDetails.name}
+                          readOnly
                           className="w-full bg-[#091e36] border border-white/20 rounded px-3 py-2 text-white font-semibold cursor-text"
                           placeholder="Enter product name"
                         />
@@ -130,6 +206,8 @@ export default function EngineProductDetailsPage() {
                         <input
                           className="w-full bg-[#091e36] border border-white/20 rounded px-3 py-2 text-white font-semibold cursor-text"
                           placeholder="Enter model"
+                          value={productDetails.option}
+                          readOnly
                         />
                       </div>
                     </div>
@@ -139,15 +217,7 @@ export default function EngineProductDetailsPage() {
                       Description
                     </h4>
                     <div className="text-[16px]">
-                      {[
-                        ["Make", "Volvo"],
-                        ["Years", "2018"],
-                        ["Part", "Engine Assembly"],
-                        ["Miles", "80K"],
-                        ["Genuine", "Genuine Dodge Part"],
-                        ["Condition", "Excellent Condition"],
-                        ["Warranty", "60 Days Warranty"],
-                      ].map(([label, value], idx) => (
+                      {productDetails.description.map(([label, value], idx) => (
                         <div
                           key={idx}
                           className={`flex justify-between py-3 px-4 ${
@@ -157,9 +227,14 @@ export default function EngineProductDetailsPage() {
                           <span className="w-1/2 text-white font-bold">
                             {label}
                           </span>
-                          <span className="w-1/2 text-right text-white font-bold">
+                          {/* <span className="w-1/2 text-right text-white font-bold">
                             {value}
-                          </span>
+                          </span> */}
+                          <input
+                            className="w-1/2 pl-20 bg-transparent text-white font-semibold border-none focus:outline-none cursor-text"
+                            value={value}
+                            readOnly
+                          />
                         </div>
                       ))}
                     </div>
@@ -169,7 +244,7 @@ export default function EngineProductDetailsPage() {
 
               {/* Warranty Section */}
               <div className="mt-10">
-                <h4 className="text-white md:text-2xl text-xl font-semibold mb-3">
+                <h4 className="text-white md:text-2xl text-xl font-semibold mb-3 font-audiowide">
                   Warranty
                 </h4>
                 <p className="text-[#E8F3FF] md:text-xl text-sm font-normal leading-relaxed mb-6">
@@ -188,9 +263,11 @@ export default function EngineProductDetailsPage() {
                   <button className="bg-sky-500 hover:bg-sky-600 text-white font-semibold px-6 py-2 rounded cursor-pointer">
                     Update
                   </button>
-                  <button className="bg-white/20 hover:bg-white/30 text-white font-semibold px-6 py-2 rounded cursor-pointer">
-                    Close
-                  </button>
+                  <Link href="/production/">
+                    <button className="bg-white/20 hover:bg-white/30 text-white font-semibold px-6 py-2 rounded cursor-pointer">
+                      Close
+                    </button>
+                  </Link>
                 </div>
               </div>
             </div>

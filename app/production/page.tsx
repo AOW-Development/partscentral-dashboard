@@ -124,45 +124,44 @@ export default function ProductionPage() {
                   <option>Transmission</option>
                   <option>Brakes</option>
                 </select>
-               <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white">
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M6 9l6 6 6-6" />
-                </svg>
-              </div>
+                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </div>
               </div>
 
               {/* Stock Dropdown: 248x73 */}
               <div className="flex-shrink-0 w-full sm:w-[200px] h-[60px] relative">
-              <select
-                className="bg-[#091e36] appearance-none cursor-pointer rounded-lg px-4 py-2 w-full h-full text-white focus:outline-none pr-10"
-                value={stock}
-                onChange={(e) => setStock(e.target.value)}
-              >
-                <option>All</option>
-                <option>Instock</option>
-                <option>Outstock</option>
-              </select>
-
-              {/* Custom arrow on the right */}
-              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white">
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
+                <select
+                  className="bg-[#091e36] appearance-none cursor-pointer rounded-lg px-4 py-2 w-full h-full text-white focus:outline-none pr-10"
+                  value={stock}
+                  onChange={(e) => setStock(e.target.value)}
                 >
-                  <path d="M6 9l6 6 6-6" />
-                </svg>
-              </div>
-            </div>
+                  <option>All</option>
+                  <option>Instock</option>
+                  <option>Outstock</option>
+                </select>
 
+                {/* Custom arrow on the right */}
+                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </div>
+              </div>
 
               {/* Add Button: 248x73 */}
               <div className="flex-shrink-0 w-full sm:w-[200px] h-[60px]">
@@ -186,14 +185,13 @@ export default function ProductionPage() {
             </div>
 
             <div className="bg-[#091e36] rounded-xl p-4 sm:p-6 lg:p-10">
-              <h1 className="text-2xl font-audiowide font-bold mb-8">Production</h1>
+              <h1 className="text-2xl font-audiowide font-bold mb-8">
+                Production
+              </h1>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                 {filteredProducts.map((product, idx) => (
-                  <Link key={idx} href={"/production/1"}>
-                    <div
-                      
-                      className="w-full cursor-pointer max-w-[437px] h-auto bg-gradient-to-br bg-main rounded-xl p-4 sm:p-6 flex flex-col shadow-lg relative border border-white hover:shadow-xl hover:scale-[1.01] transition duration-200 mx-auto"
-                    >
+                  <Link key={idx} href={`production/${product.id}`}>
+                    <div className="w-full cursor-pointer max-w-[437px] h-auto bg-gradient-to-br bg-main rounded-xl p-4 sm:p-6 flex flex-col shadow-lg relative border border-white hover:shadow-xl hover:scale-[1.01] transition duration-200 mx-auto">
                       {/* Status badge */}
                       <span
                         className={`absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-semibold capitalize ${
