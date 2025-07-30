@@ -6,6 +6,7 @@ import React from "react";
 import { useState } from "react";
 import useAuthStore from "@/store/auth";
 import { URL } from "@/utils//imageUrl";
+import { Eye, EyeClosed } from "lucide-react";
 // import { Exo } from "next/font/google";
 // const exo = Exo({
 //   subsets: ["latin"],
@@ -17,6 +18,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const login = useAuthStore((state) => state.login);
 
@@ -79,7 +81,9 @@ export default function LoginPage() {
       {/* Main Content */}
       <main className="flex-1 p-4 md:p-8 flex flex-col justify-center">
         <div className="flex flex-col items-center justify-center border border-gray-700 rounded-lg bg-secondary px-5 py-10 md:py-15 md:px-20 w-full md:w-1/3 mx-auto mt-10">
-          <h1 className="text-3xl font-bold mb-6">Admin Login</h1>
+          <h1 className="text-3xl font-bold mb-6 font-audiowide">
+            Admin Login
+          </h1>
           <form
             className="w-full max-w-sm space-y-4"
             onSubmit={handleSubmit}
@@ -94,7 +98,7 @@ export default function LoginPage() {
               autoComplete="username"
               disabled={loading}
             />
-            <input
+            {/* <input
               type="password"
               placeholder="Password"
               value={password}
@@ -102,7 +106,26 @@ export default function LoginPage() {
               className="bg-secondary border border-blue-300 rounded-lg px-4 py-2 w-full text-white placeholder-gray-400 focus:outline-none"
               autoComplete="current-password"
               disabled={loading}
-            />
+            /> */}
+            {/* // Password visibility toggle */}
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="bg-secondary border border-blue-300 rounded-lg px-4 py-2 w-full text-white placeholder-gray-400 focus:outline-none"
+                autoComplete="current-password"
+                disabled={loading}
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer"
+                onClick={() => setShowPassword((prev) => !prev)}
+              >
+                {showPassword ? <EyeClosed size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
             {error && (
               <div className="text-red-400 text-sm font-medium">{error}</div>
             )}

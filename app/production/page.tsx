@@ -190,7 +190,7 @@ export default function ProductionPage() {
               </h1>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                 {filteredProducts.map((product, idx) => (
-                  <Link key={idx} href={`production/${product.id}`}>
+                  <Link key={idx} href={`/${product.id}`}>
                     <div className="w-full cursor-pointer max-w-[437px] h-auto bg-gradient-to-br bg-main rounded-xl p-4 sm:p-6 flex flex-col shadow-lg relative border border-white hover:shadow-xl hover:scale-[1.01] transition duration-200 mx-auto">
                       {/* Status badge */}
                       <span

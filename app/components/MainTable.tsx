@@ -42,16 +42,65 @@ const soldItems: SoldItem[] = [
 ];
 
 export default function RecentSold() {
+  const [dropdownOpen, setDropdownOpen] = React.useState(false);
+  const [selected, setSelected] = React.useState("Last 7 Days");
+
   return (
     <div className="bg-gradient-to-br from-[#07182C] to-[#03101E] rounded-xl p-4 md:p-6 w-full text-white">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-audiowide font-semibold">Recent Sold</h2>
-        <div className="flex items-center gap-1 text-sm text-gray-300 cursor-pointer">
-          Last 7 Days
-          <ChevronDown className="w-4 h-4 mt-[1px]" />
+        <div className="relative">
+          <button
+            className="flex items-center gap-1 text-sm text-gray-300 cursor-pointer"
+            onClick={() => setDropdownOpen((open) => !open)}
+          >
+            {selected}
+            <ChevronDown className="w-4 h-4 mt-[1px]" />
+          </button>
+          {dropdownOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-white text-black rounded-lg shadow-lg z-10">
+              <ul className="py-2">
+                <li
+                  className={`px-4 py-2 hover:bg-gray-200 cursor-pointer ${
+                    selected === "Last 7 Days" ? "bg-gray-100" : ""
+                  }`}
+                  onClick={() => {
+                    setSelected("Last 7 Days");
+                    setDropdownOpen(false);
+                  }}
+                >
+                  Last 7 Days
+                </li>
+                <li
+                  className={`px-4 py-2 hover:bg-gray-200 cursor-pointer ${
+                    selected === "Last 30 Days" ? "bg-gray-100" : ""
+                  }`}
+                  onClick={() => {
+                    setSelected("Last 30 Days");
+                    setDropdownOpen(false);
+                  }}
+                >
+                  Last 30 Days
+                </li>
+                <li
+                  className={`px-4 py-2 hover:bg-gray-200 cursor-pointer ${
+                    selected === "Last 90 Days" ? "bg-gray-100" : ""
+                  }`}
+                  onClick={() => {
+                    setSelected("Last 90 Days");
+                    setDropdownOpen(false);
+                  }}
+                >
+                  Last 90 Days
+                </li>
+              </ul>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Table Header (mobile only) */}
 
       {/* Table Header (desktop only) */}
       <div className="hidden md:grid grid-cols-6 gap-4 text-sm text-gray-400 border-b border-[#1e2f45] pb-2">
