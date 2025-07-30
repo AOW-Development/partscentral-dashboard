@@ -62,9 +62,19 @@ export default function ProductionPage() {
       name: "MANUAL",
       image: "engine1.png",
     },
+    {
+      id: 7,
+      type: "Transmission",
+      stock: "Instock",
+      name: "MANUAL",
+      image: "engine1.png",
+    },
   ];
+  const startIndex = (currentPage - 1) * 6;
+  const endIndex = startIndex + 6;
+  const filtered = products.slice(startIndex, endIndex);
 
-  const filteredProducts = products.filter((p) => {
+  const filteredProducts = filtered.filter((p) => {
     // Show all if default selected
     const engineMatch =
       engineType === "" || engineType === "All" || p.type === engineType;

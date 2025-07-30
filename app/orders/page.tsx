@@ -191,6 +191,7 @@ export default function Orders() {
   // Filtering logic (now in useEffect)
   useEffect(() => {
     let filtered = [...orders];
+
     if (search.trim()) {
       filtered = filtered.filter(
         (order) =>
@@ -235,6 +236,9 @@ export default function Orders() {
         );
       }
     }
+    const startIndex = (currentPage - 1) * 5;
+    const endIndex = startIndex + 5;
+    filtered = filtered.slice(startIndex, endIndex);
     setFilteredOrders(filtered);
   }, [
     search,
@@ -243,6 +247,7 @@ export default function Orders() {
     orders,
     dropdownStatus,
     dropdownQty,
+    currentPage,
     dropdownPart,
   ]);
 
@@ -257,7 +262,6 @@ export default function Orders() {
           <Header />
           {/* Scrollable Content */}
           <main className="pt-[40px] min-h-screen px-4 md:px-8">
-
             {/* Filters Row */}
             <div className="flex flex-col md:flex-row gap-4 mb-8">
               <div className="flex-1">
@@ -284,7 +288,7 @@ export default function Orders() {
                   />
                 </div>
               </div>
-                <div className="relative w-full md:w-auto">
+              <div className="relative w-full md:w-auto">
                 <select
                   className="appearance-none bg-[#091e36] rounded-lg px-4 py-4 text-white focus:outline-none w-full md:w-auto pr-10"
                   value={status}
@@ -297,19 +301,19 @@ export default function Orders() {
                   <option>Cancelled</option>
                 </select>
 
-              {/* Right-aligned custom arrow, after the text */}
-              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white">
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M6 9l6 6 6-6" />
-                </svg>
+                {/* Right-aligned custom arrow, after the text */}
+                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </div>
               </div>
-            </div>
               <div>
                 {/* Date range selector placeholder */}
                 <div className="flex items-center bg-[#091e36] rounded-lg px-4 py-2 text-white w-full md:w-auto gap-2">
