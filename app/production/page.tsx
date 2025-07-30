@@ -238,7 +238,7 @@ export default function ProductionPage() {
 
                         {/* Info beside image */}
                         <div className="flex flex-col justify-start mt-6 text-white">
-                          <div className="text-lg font-bold tracking-wide">
+                          <div className="text-lg font-bold font-audiowide tracking-wide">
                             {product.name}
                           </div>
                           <div className="text-sm text-gray-400 mb-2">
@@ -252,7 +252,7 @@ export default function ProductionPage() {
                       </div>
 
                       {/* Description */}
-                      <div className="text-sm text-white mb-6 leading-relaxed">
+                      <div className="md:text-lg text-sm text-white mb-6 leading-relaxed">
                         Get your favorite products delivered automatically,
                         enjoy exclusive discounts, skip or cancel anytime.
                         Convenience and savings in one click.

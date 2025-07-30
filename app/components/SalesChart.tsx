@@ -28,7 +28,7 @@ const data = [
 export default function SalesChart() {
   return (
     <div className="bg-secondary rounded-xl w-full px-2 sm:px-4 md:px-6 pt-4 pb-6">
-      <div className="text-white font-bold text-base md:text-lg mb-1">Sales</div>
+      <div className="text-white font-bold font-audiowide text-base md:text-lg mb-1">Sales</div>
       <p className="text-green-400 text-sm mb-4">(+5%) more in 2025</p>
 
       <div className="w-full h-48 sm:h-56 md:h-64 lg:h-72">
