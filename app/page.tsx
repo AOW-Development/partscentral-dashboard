@@ -12,19 +12,19 @@ import { URL } from "@/utils//imageUrl";
 const performanceCards = [
   {
     title: "Total Profit",
-    value: "₹3,140.74",
+    value: "$ 3,140.74",
     icon: "icons/bag.png",
     iconBg: "bg-blue-600",
   },
   {
     title: "Orders Per Day",
-    value: "₹42.040",
+    value: "$ 42.040",
     icon: "icons/wallet.png",
     iconBg: "bg-white text-hover-secondary",
   },
   {
     title: "Income Per Day",
-    value: "₹501.074",
+    value: "$ 501.074",
     icon: "icons/dollar.png",
     iconBg: "bg-white text-hover-secondary",
   },

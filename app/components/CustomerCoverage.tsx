@@ -4,9 +4,9 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import { MoreHorizontal } from "lucide-react";
 
 const data = [
-  { name: "Internet", value: 500, color: "#FFEB3B" }, // Yellow
-  { name: "Email", value: 150, color: "#FFFFFF" }, // White
-  { name: "Social Media", value: 100, color: "#FF5722" }, // Red
+  { name: "Facebook", value: 500, color: "#FFEB3B" }, // Yellow
+  { name: "Google", value: 150, color: "#FFFFFF" }, // White
+  { name: "Others", value: 100, color: "#FF5722" }, // Red
 ];
 
 export default function CustomerCoverageCard() {
@@ -14,7 +14,9 @@ export default function CustomerCoverageCard() {
     <div className="w-full max-w-[350px] bg-secondary rounded-xl px-2 py-4 shadow-lg mx-auto">
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
-        <p className="text-base font-audiowide font-semibold text-white">Customer Coverage</p>
+        <p className="text-base font-audiowide font-semibold text-white">
+          Customer Coverage
+        </p>
         <MoreHorizontal size={18} className="text-gray-400 cursor-pointer" />
       </div>
 

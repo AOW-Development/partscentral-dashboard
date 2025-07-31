@@ -18,120 +18,93 @@ export default function Orders() {
   const initialOrders = [
     {
       id: "022705",
-      name: "Engine-GASOLINE",
-      buyer: "Shiva Kumar",
+      name: "Shiva",
       date: "27Jun25",
-      qty: 2,
       sum: "$1,200",
+      email: "s@gmail.com",
+      mobile: 8877665544,
       status: "Processing",
     },
     {
-      id: "022731",
-      name: "Trasmission",
-      buyer: "Ramjas",
-      date: "30Jun25",
-      qty: 2,
-      sum: "$1,200",
+      id: "022706",
+      name: "Shiva",
+      date: "28Jun25",
+      sum: "$800",
+      email: "priy@gmail.com",
+      mobile: 9988776655,
+      status: "Refunded",
+    },
+    {
+      id: "022707",
+      name: "Shiva",
+      date: "29Jun25",
+      sum: "$2,400",
+      email: "amit@gmail.com",
+      mobile: 8877661122,
       status: "Shipped",
     },
     {
-      id: "022732",
-      name: "Engine-DIESEL",
-      buyer: "Mani",
-      date: "22Jun25",
-      qty: 2,
-      sum: "$1,200",
-      status: "Paid",
-    },
-    {
-      id: "022732",
-      name: "Engine-DIESEL",
-      buyer: "Mani",
-      date: "22Jun25",
-      qty: 2,
-      sum: "$1,200",
+      id: "022708",
+      name: "Shiva",
+      date: "30Jun25",
+      sum: "$150",
+      email: "sunil@gmail.com",
+      mobile: 7766554433,
       status: "Cancelled",
     },
     {
-      id: "022705",
-      name: "Engine-GASOLINE",
-      buyer: "Shiva Kumar",
-      date: "27Jun25",
-      qty: 2,
-      sum: "$1,200",
+      id: "022709",
+      name: "Shiva",
+      date: "01Jul25",
+      sum: "$600",
+      email: "neha@gmail.com",
+      mobile: 6655443322,
+      status: "Paid",
+    },
+    {
+      id: "022710",
+      name: "Shiva",
+      date: "02Jul25",
+      sum: "$350",
+      email: "vikram@gmail.com",
+      mobile: 5544332211,
       status: "Processing",
     },
     {
-      id: "0227318",
-      name: "Trasmission",
-      buyer: "Ramjas",
-      date: "30Jun25",
-      qty: 2,
-      sum: "$1,200",
+      id: "022711",
+      name: "Shiva",
+      date: "03Jul25",
+      sum: "$900",
+      email: "deepa@gmail.com",
+      mobile: 4433221100,
       status: "Shipped",
     },
     {
-      id: "0227057",
-      name: "Engine-GASOLINE",
-      buyer: "Shiva Kumar",
-      date: "27Jun25",
-      qty: 2,
-      sum: "$1,200",
+      id: "022712",
+      name: "Shiva",
+      date: "04Jul25",
+      sum: "$250",
+      email: "rahul@gmail.com",
+      mobile: 3322110099,
+      status: "Paid",
+    },
+    {
+      id: "022713",
+      name: "Shiva",
+      date: "05Jul25",
+      sum: "$120",
+      email: "kiran@gmail.com",
+      mobile: 2211009988,
       status: "Processing",
     },
     {
-      id: "0227056",
-      name: "Engine-GASOLINE",
-      buyer: "Shiva Kumar",
-      date: "27Jun25",
-      qty: 2,
-      sum: "$1,200",
-      status: "Processing",
-    },
-    {
-      id: "0227055",
-      name: "Engine-GASOLINE",
-      buyer: "Shiva Kumar",
-      date: "27Jun25",
-      qty: 2,
-      sum: "$1,200",
-      status: "Processing",
-    },
-    {
-      id: "0227054",
-      name: "Engine-GASOLINE",
-      buyer: "Shiva Kumar",
-      date: "27Jun25",
-      qty: 2,
-      sum: "$1,200",
-      status: "Processing",
-    },
-    {
-      id: "0227053",
-      name: "Engine-GASOLINE",
-      buyer: "Shiva Kumar",
-      date: "27Jun25",
-      qty: 2,
-      sum: "$1,500",
-      status: "Processing",
-    },
-    {
-      id: "0227052",
-      name: "Engine-GASOLINE",
-      buyer: "Shiva Kumar",
-      date: "27Jun25",
-      qty: 1,
-      sum: "$1,200",
-      status: "Processing",
-    },
-    {
-      id: "0227051",
-      name: "Engine-GASOLINE",
-      buyer: "Shiva Kumar",
-      date: "27Jun25",
-      qty: 1,
-      sum: "$1,300",
-      status: "Processing",
+      id: "022714",
+      name: "Shiva",
+      date: "06Jul25",
+      sum: "$80",
+      email: "manoj@gmail.com",
+      mobile: 1100998877,
+      status: "Cancelled",
     },
   ];
 
@@ -149,6 +122,7 @@ export default function Orders() {
   const [dropdownStatus, setDropdownStatus] = useState<string | null>(null);
   const [dropdownQty, setDropdownQty] = useState<string | null>(null);
   const [dropdownPart, setDropdownPart] = useState<string | null>(null);
+  console.log(setDateRange, setDropdownQty);
 
   // State for action menu
   const [openActionMenu, setOpenActionMenu] = useState<number | null>(null);
@@ -196,8 +170,7 @@ export default function Orders() {
       filtered = filtered.filter(
         (order) =>
           order.id.toLowerCase().includes(search.toLowerCase()) ||
-          order.name.toLowerCase().includes(search.toLowerCase()) ||
-          order.buyer.toLowerCase().includes(search.toLowerCase())
+          order.name.toLowerCase().includes(search.toLowerCase())
       );
     }
     if (status && status !== "Order Status") {
@@ -215,15 +188,7 @@ export default function Orders() {
       );
     }
     // Dropdown Qty
-    if (dropdownQty) {
-      if (dropdownQty === "1" || dropdownQty === "2") {
-        filtered = filtered.filter(
-          (order) => order.qty === Number(dropdownQty)
-        );
-      } else if (dropdownQty === "more than 2") {
-        filtered = filtered.filter((order) => order.qty > 2);
-      }
-    }
+    // Removed qty filter since qty field is not needed
     // Dropdown Part
     if (dropdownPart) {
       if (dropdownPart === "Engines") {
@@ -299,6 +264,7 @@ export default function Orders() {
                   <option>Shipped</option>
                   <option>Paid</option>
                   <option>Cancelled</option>
+                  <option>Refunded</option>
                 </select>
 
                 {/* Right-aligned custom arrow, after the text */}
@@ -314,11 +280,35 @@ export default function Orders() {
                   </svg>
                 </div>
               </div>
-              <div>
-                {/* Date range selector placeholder */}
-                <div className="flex items-center bg-[#091e36] rounded-lg px-4 py-2 text-white w-full md:w-auto gap-2">
+              <div className="relative w-full md:w-auto">
+                <select
+                  className="appearance-none bg-[#091e36] rounded-lg px-4 py-4 text-white focus:outline-none w-full md:w-auto pr-10"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                >
+                  <option>Last 7 days</option>
+                  <option>Last 30 days</option>
+                  <option>Last 90 days</option>
+                </select>
+
+                {/* Right-aligned custom arrow, after the text */}
+                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </div>
+              </div>
+              {/* <div> */}
+              {/* Date range selector placeholder */}
+              {/* <div className="flex items-center bg-[#091e36] rounded-lg px-4 py-2 text-white w-full md:w-auto gap-2">
                   {/* <Calendar onChange={onChange} value={value} /> */}
-                  <input
+              {/* <input
                     type="text"
                     placeholder="From (e.g. 22Jun25)"
                     className="bg-transparent border-b border-gray-500 px-2 py-2 w-24 text-xs"
@@ -326,8 +316,8 @@ export default function Orders() {
                     onChange={(e) =>
                       setDateRange({ ...dateRange, from: e.target.value })
                     }
-                  />
-                  <span>-</span>
+                  /> */}
+              {/* <span>-</span>
                   <input
                     type="text"
                     placeholder="To (e.g. 30Jun25)"
@@ -336,9 +326,9 @@ export default function Orders() {
                     onChange={(e) =>
                       setDateRange({ ...dateRange, to: e.target.value })
                     }
-                  />
-                </div>
-              </div>
+                  /> */}
+              {/* </div> */}
+              {/* </div> */}
               <div className="relative">
                 <button
                   ref={filterBtnRef}
@@ -364,36 +354,38 @@ export default function Orders() {
                   <div
                     ref={filterPanelRef}
                     className="absolute z-50 mt-2 right-2  w-80 max-w-full bg-[#0a1e36] rounded-xl shadow-lg p-0 animate-fadeIn"
-                    style={{ minWidth: "340px" }}
+                    style={{ minWidth: "400px" }}
                   >
                     <div className="px-6 py-4 rounded-b-xl">
                       {/* Status pills */}
                       <div className="mb-4">
                         <div className="text-lg font-bold mb-2">Status</div>
-                        <div className="flex gap-3 mb-2">
-                          {["Paid", "Pending", "Cancelled"].map((s) => (
-                            <button
-                              key={s}
-                              className={`px-5 py-2 rounded-full cursor-pointer hover:bg-[#091627] font-semibold focus:outline-none shadow-md transition-colors ${
-                                dropdownStatus === s
-                                  ? "bg-[#091627] text-white"
-                                  : "bg-transparent text-white"
-                              }`}
-                              onClick={() =>
-                                setDropdownStatus(
-                                  dropdownStatus === s ? null : s
-                                )
-                              }
-                              type="button"
-                            >
-                              {s}
-                            </button>
-                          ))}
+                        <div className="flex gap-1 mb-2">
+                          {["Paid", "Pending", "Cancelled", "Refunded"].map(
+                            (s) => (
+                              <button
+                                key={s}
+                                className={`px-3 py-2 rounded-full cursor-pointer hover:bg-[#091627] font-semibold focus:outline-none shadow-md transition-colors ${
+                                  dropdownStatus === s
+                                    ? "bg-[#091627] text-white"
+                                    : "bg-transparent text-white"
+                                }`}
+                                onClick={() =>
+                                  setDropdownStatus(
+                                    dropdownStatus === s ? null : s
+                                  )
+                                }
+                                type="button"
+                              >
+                                {s}
+                              </button>
+                            )
+                          )}
                         </div>
                         <hr className="border-blue-300/40" />
                       </div>
                       {/* Qty pills */}
-                      <div className="mb-4">
+                      {/* <div className="mb-4">
                         <div className="text-lg font-bold mb-2">Qty</div>
                         <div className="flex gap-3 mb-2">
                           {["1", "2", "more than 2"].map((q) => (
@@ -414,7 +406,7 @@ export default function Orders() {
                           ))}
                         </div>
                         <hr className="border-blue-300/40" />
-                      </div>
+                      </div> */}
                       {/* Parts pills */}
                       <div className="mb-2">
                         <div className="text-lg font-bold mb-2">Parts</div>
@@ -455,10 +447,10 @@ export default function Orders() {
                       </th>
                       <th className="px-4 py-3 font-semibold">ID</th>
                       <th className="px-4 py-3 font-semibold">Name</th>
-                      <th className="px-4 py-3 font-semibold">Buyer</th>
                       <th className="px-4 py-3 font-semibold">Date</th>
-                      <th className="px-4 py-3 font-semibold">Qty</th>
-                      <th className="px-4 py-3 font-semibold">Sum</th>
+                      <th className="px-4 py-3 font-semibold">Email</th>
+                      <th className="px-4 py-3 font-semibold">Mobile</th>
+                      <th className="px-4 py-3 font-semibold">Amount</th>
                       <th className="px-4 py-3 font-semibold">Status</th>
                       <th className="px-4 py-3 font-semibold">Action</th>
                     </tr>
@@ -474,9 +466,9 @@ export default function Orders() {
                         </td>
                         <td className="px-4 py-6">{order.id}</td>
                         <td className="px-4 py-6">{order.name}</td>
-                        <td className="px-4 py-6">{order.buyer}</td>
                         <td className="px-4 py-6">{order.date}</td>
-                        <td className="px-4 py-6">{order.qty}</td>
+                        <td className="px-4 py-6">{order.email}</td>
+                        <td className="px-4 py-6">{order.mobile}</td>
                         <td className="px-4 py-6">{order.sum}</td>
                         <td className="px-4 py-6">
                           {order.status === "Processing" && (
@@ -497,6 +489,11 @@ export default function Orders() {
                           {order.status === "Cancelled" && (
                             <span className="bg-[#f64e4e] text-white px-5 py-3 rounded-full text-xs">
                               Cancelled
+                            </span>
+                          )}
+                          {order.status === "Refunded" && (
+                            <span className="bg-blue-600 text-white px-5 py-3 rounded-full text-xs">
+                              Refunded
                             </span>
                           )}
                         </td>
@@ -538,7 +535,7 @@ export default function Orders() {
                                 onClick={() => setOpenActionMenu(null)}
                                 type="button"
                               >
-                                Remove Product
+                                Remove Order
                               </button>
                             </div>
                           )}

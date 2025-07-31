@@ -98,7 +98,7 @@ export default function Sidebar() {
               }`}
             >
               <Factory className="mr-2 w-5 h-5" />
-              Production
+              Products
             </Link>
             <Link
               href="/in-clients"
@@ -115,7 +115,7 @@ export default function Sidebar() {
               }`}
             >
               <Users className="mr-2 w-5 h-5" />
-              In Clients
+              Leads
             </Link>
           </nav>
         </div>
