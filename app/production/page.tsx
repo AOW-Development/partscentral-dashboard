@@ -194,10 +194,8 @@ export default function ProductionPage() {
               </div>
             </div>
 
+            <h1 className="text-2xl font-audiowide font-bold mb-8">Products</h1>
             <div className="bg-[#091e36] rounded-xl p-4 sm:p-6 lg:p-10">
-              <h1 className="text-2xl font-audiowide font-bold mb-8">
-                Production
-              </h1>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                 {filteredProducts.map((product, idx) => (
                   <Link key={idx} href={"/production/" + product.id}>

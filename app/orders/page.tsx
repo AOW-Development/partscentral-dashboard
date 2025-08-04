@@ -1,10 +1,11 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Pencil } from "lucide-react";
+import { ChevronsLeftRight, Pencil } from "lucide-react";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import Pagination from "../components/Pagination";
 import ProtectRoute from "../components/ProtectRoute";
+import { redirect } from "next/navigation";
 // import Calendar from "react-calendar";
 
 // type ValuePiece = Date | null;
@@ -126,6 +127,11 @@ export default function Orders() {
 
   // State for action menu
   const [openActionMenu, setOpenActionMenu] = useState<number | null>(null);
+  const handleExpand = () => {
+    // Logic to handle expand/collapse
+    console.log("Expand/Collapse clicked");
+    redirect("/orderExpand");
+  };
 
   // Close panel when clicking outside
   useEffect(() => {
@@ -435,7 +441,13 @@ export default function Orders() {
               </div>
             </div>
             <div className="bg-[#091e36] rounded-lg p-6 sm:p-6 lg:p-10 mb-6">
-              <h1 className="text-2xl font-audiowide font-bold mb-6">Orders</h1>
+              <div className="flex items-center justify-between mb-6">
+                <h1 className="text-2xl font-audiowide font-bold">Orders</h1>
+                <ChevronsLeftRight
+                  onClick={() => handleExpand()}
+                  className="hover:text-slate-300 cursor-pointer md:mr-10"
+                />
+              </div>
               {/* <p className="text-gray-400 mb-6">This is the orders page.</p> */}
 
               <div className="overflow-x-auto rounded-lg shadow-lg ">

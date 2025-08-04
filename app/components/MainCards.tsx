@@ -25,19 +25,19 @@ const summaryCards = [
 
 const performanceCards = [
   {
-    title: "Total Profit",
-    value: "₹3140.74",
+    title: "Total Gross Profit",
+    value: "₹3145.74",
     icon: "icons/bag.png",
     iconBg: "bg-blue-600",
   },
   {
-    title: "Orders Per Day",
+    title: "Orders",
     value: "₹42.040",
     icon: "icons/wallet.png",
     iconBg: "bg-white text-hover-secondary",
   },
   {
-    title: "Income Per Day",
+    title: "Revenue",
     value: "₹501.074",
     icon: "icons/dollar.png",
     iconBg: "bg-white text-hover-secondary",
