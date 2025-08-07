@@ -1,24 +1,56 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { ChevronsLeftRight, Pencil } from "lucide-react";
+import { Calendar, ChevronDown, Pencil, Plus } from "lucide-react";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import Pagination from "../components/Pagination";
 import ProtectRoute from "../components/ProtectRoute";
-import { redirect } from "next/navigation";
+// import { redirect } from "next/navigation";
+// import MainCalendar from "react-calendar";
+import Link from "next/link";
+import CalendarMain from "../components/Calendar";
+
 // import Calendar from "react-calendar";
 
-// type ValuePiece = Date | null;
+type ValuePiece = Date | null;
 
-// type Value = ValuePiece | [ValuePiece, ValuePiece];
+type Value = ValuePiece | [ValuePiece, ValuePiece];
 
 export default function Orders() {
   const [currentPage, setCurrentPage] = useState(1);
-  // const [value, onChange] = useState<Value>(new Date());
+  const [open, setOpen] = useState(false);
+  const [value, onChange] = useState<Value>(new Date());
+  const [selectedDateRange, setSelectedDateRange] = useState<{
+    start: Date | null;
+    end: Date | null;
+  }>({
+    start: null,
+    end: null,
+  });
+  console.log(selectedDateRange.start, selectedDateRange.end, onChange);
+
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
+  const monthName = value instanceof Date ? monthNames[value.getMonth()] : null;
+  const year = value instanceof Date ? value.getFullYear() : null;
+  const date = value instanceof Date ? value.getDate() : null;
   // Order data
   const initialOrders = [
     {
-      id: "022705",
+      id: "PC#022705",
       name: "Shiva",
       date: "27Jun25",
       sum: "$1,200",
@@ -27,7 +59,7 @@ export default function Orders() {
       status: "Processing",
     },
     {
-      id: "022706",
+      id: "PC#022706",
       name: "Shiva",
       date: "28Jun25",
       sum: "$800",
@@ -36,7 +68,7 @@ export default function Orders() {
       status: "Refunded",
     },
     {
-      id: "022707",
+      id: "PC#022707",
       name: "Shiva",
       date: "29Jun25",
       sum: "$2,400",
@@ -45,7 +77,7 @@ export default function Orders() {
       status: "Shipped",
     },
     {
-      id: "022708",
+      id: "PC#022708",
       name: "Shiva",
       date: "30Jun25",
       sum: "$150",
@@ -54,7 +86,7 @@ export default function Orders() {
       status: "Cancelled",
     },
     {
-      id: "022709",
+      id: "PC#022709",
       name: "Shiva",
       date: "01Jul25",
       sum: "$600",
@@ -63,7 +95,7 @@ export default function Orders() {
       status: "Paid",
     },
     {
-      id: "022710",
+      id: "PC#022710",
       name: "Shiva",
       date: "02Jul25",
       sum: "$350",
@@ -72,7 +104,7 @@ export default function Orders() {
       status: "Processing",
     },
     {
-      id: "022711",
+      id: "PC#022711",
       name: "Shiva",
       date: "03Jul25",
       sum: "$900",
@@ -81,7 +113,7 @@ export default function Orders() {
       status: "Shipped",
     },
     {
-      id: "022712",
+      id: "PC#022712",
       name: "Shiva",
       date: "04Jul25",
       sum: "$250",
@@ -90,7 +122,7 @@ export default function Orders() {
       status: "Paid",
     },
     {
-      id: "022713",
+      id: "PC#022713",
       name: "Shiva",
       date: "05Jul25",
       sum: "$120",
@@ -99,7 +131,7 @@ export default function Orders() {
       status: "Processing",
     },
     {
-      id: "022714",
+      id: "PC#022714",
       name: "Shiva",
       date: "06Jul25",
       sum: "$80",
@@ -120,18 +152,13 @@ export default function Orders() {
   const filterPanelRef = useRef<HTMLDivElement | null>(null);
 
   // Add state for dropdown filters
-  const [dropdownStatus, setDropdownStatus] = useState<string | null>(null);
+  // const [dropdownStatus, setDropdownStatus] = useState<string | null>(null);
   const [dropdownQty, setDropdownQty] = useState<string | null>(null);
-  const [dropdownPart, setDropdownPart] = useState<string | null>(null);
+  // const [dropdownPart, setDropdownPart] = useState<string | null>(null);
   console.log(setDateRange, setDropdownQty);
 
   // State for action menu
   const [openActionMenu, setOpenActionMenu] = useState<number | null>(null);
-  const handleExpand = () => {
-    // Logic to handle expand/collapse
-    console.log("Expand/Collapse clicked");
-    redirect("/orderExpand");
-  };
 
   // Close panel when clicking outside
   useEffect(() => {
@@ -188,27 +215,27 @@ export default function Orders() {
       );
     }
     // Dropdown Status
-    if (dropdownStatus) {
-      filtered = filtered.filter(
-        (order) => order.status.toLowerCase() === dropdownStatus.toLowerCase()
-      );
-    }
+    // if (dropdownStatus) {
+    //   filtered = filtered.filter(
+    //     (order) => order.status.toLowerCase() === dropdownStatus.toLowerCase()
+    //   );
+    // }
     // Dropdown Qty
     // Removed qty filter since qty field is not needed
     // Dropdown Part
-    if (dropdownPart) {
-      if (dropdownPart === "Engines") {
-        filtered = filtered.filter((order) =>
-          order.name.toLowerCase().includes("engine")
-        );
-      } else if (dropdownPart === "Transmission") {
-        filtered = filtered.filter((order) =>
-          order.name.toLowerCase().includes("transmission")
-        );
-      }
-    }
-    const startIndex = (currentPage - 1) * 5;
-    const endIndex = startIndex + 5;
+    // if (dropdownPart) {
+    // if (dropdownPart === "Engines") {
+    //     filtered = filtered.filter((order) =>
+    //     order.name.toLowerCase().includes("engine")
+    //   );
+    // } else if (dropdownPart === "Transmission") {
+    //   filtered = filtered.filter((order) =>
+    //     order.name.toLowerCase().includes("transmission")
+    //   );
+    // }
+    // }
+    const startIndex = (currentPage - 1) * 50;
+    const endIndex = startIndex + 50;
     filtered = filtered.slice(startIndex, endIndex);
     setFilteredOrders(filtered);
   }, [
@@ -216,11 +243,36 @@ export default function Orders() {
     status,
     dateRange,
     orders,
-    dropdownStatus,
+    // dropdownStatus,
     dropdownQty,
     currentPage,
-    dropdownPart,
+    // dropdownPart,
   ]);
+
+  // Handle date range change from calendar
+  const handleDateRangeChange = (
+    startDate: Date | null,
+    endDate: Date | null
+  ) => {
+    setSelectedDateRange({ start: startDate, end: endDate });
+    console.log(selectedDateRange);
+
+    // Update the date range for filtering
+    if (startDate && endDate) {
+      const formatDate = (date: Date) => {
+        const day = date.getDate().toString().padStart(2, "0");
+        const month = monthNames[date.getMonth()];
+        const year = date.getFullYear().toString().slice(-2);
+        return `${day}${month}${year}`;
+      };
+
+      setDateRange({
+        from: formatDate(startDate),
+        to: formatDate(endDate),
+      });
+      console.log(dateRange);
+    }
+  };
 
   return (
     <ProtectRoute>
@@ -286,30 +338,29 @@ export default function Orders() {
                   </svg>
                 </div>
               </div>
-              <div className="relative w-full md:w-auto">
-                <select
-                  className="appearance-none bg-[#091e36] rounded-lg px-4 py-4 text-white focus:outline-none w-full md:w-auto pr-10"
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                >
-                  <option>Last 7 days</option>
-                  <option>Last 30 days</option>
-                  <option>Last 90 days</option>
-                </select>
-
-                {/* Right-aligned custom arrow, after the text */}
-                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white">
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M6 9l6 6 6-6" />
-                  </svg>
+              <div
+                onClick={() => setOpen(!open)}
+                className="calendar-trigger bg-[#091e36] rounded-xl p-3 flex items-center justify-between cursor-pointer hover:bg-secondary/90 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="bg-white/10 rounded-lg p-2">
+                    <Calendar className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="text-white flex flex-row gap-2">
+                    <p className="text-sm font-medium">Today</p>
+                    <p className="text-sm opacity-80">
+                      {monthName} {date} • {year}
+                    </p>
+                  </div>
                 </div>
+                <ChevronDown className="w-4 h-4 text-white/60" />
               </div>
+              {open && (
+                <CalendarMain
+                  onClose={() => setOpen(false)}
+                  onDateRangeChange={handleDateRangeChange}
+                />
+              )}
               {/* <div> */}
               {/* Date range selector placeholder */}
               {/* <div className="flex items-center bg-[#091e36] rounded-lg px-4 py-2 text-white w-full md:w-auto gap-2">
@@ -335,118 +386,21 @@ export default function Orders() {
                   /> */}
               {/* </div> */}
               {/* </div> */}
-              <div className="relative">
-                <button
-                  ref={filterBtnRef}
-                  className="flex items-center cursor-pointer bg-[#091e36] rounded-lg px-4 py-4 text-white w-full md:w-auto justify-center"
-                  type="button"
-                  onClick={() => setShowFilterModal((v) => !v)}
-                >
-                  Filter
-                  <svg
-                    className="ml-2"
-                    width="16"
-                    height="16"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M4 4h16M6 8v8m12-8v8M8 16h8" />
-                  </svg>
-                </button>
-                {/* Filter Dropdown Panel */}
-                {showFilterModal && (
-                  <div
-                    ref={filterPanelRef}
-                    className="absolute z-50 mt-2 right-2  w-80 max-w-full bg-[#0a1e36] rounded-xl shadow-lg p-0 animate-fadeIn"
-                    style={{ minWidth: "400px" }}
-                  >
-                    <div className="px-6 py-4 rounded-b-xl">
-                      {/* Status pills */}
-                      <div className="mb-4">
-                        <div className="text-lg font-bold mb-2">Status</div>
-                        <div className="flex gap-1 mb-2">
-                          {["Paid", "Pending", "Cancelled", "Refunded"].map(
-                            (s) => (
-                              <button
-                                key={s}
-                                className={`px-3 py-2 rounded-full cursor-pointer hover:bg-[#091627] font-semibold focus:outline-none shadow-md transition-colors ${
-                                  dropdownStatus === s
-                                    ? "bg-[#091627] text-white"
-                                    : "bg-transparent text-white"
-                                }`}
-                                onClick={() =>
-                                  setDropdownStatus(
-                                    dropdownStatus === s ? null : s
-                                  )
-                                }
-                                type="button"
-                              >
-                                {s}
-                              </button>
-                            )
-                          )}
-                        </div>
-                        <hr className="border-blue-300/40" />
-                      </div>
-                      {/* Qty pills */}
-                      {/* <div className="mb-4">
-                        <div className="text-lg font-bold mb-2">Qty</div>
-                        <div className="flex gap-3 mb-2">
-                          {["1", "2", "more than 2"].map((q) => (
-                            <button
-                              key={q}
-                              className={`px-4 py-2 rounded-full cursor-pointer hover:bg-[#091627] font-semibold focus:outline-none shadow-md transition-colors ${
-                                dropdownQty === q
-                                  ? "bg-[#091627] text-white"
-                                  : "bg-transparent text-white"
-                              }`}
-                              onClick={() =>
-                                setDropdownQty(dropdownQty === q ? null : q)
-                              }
-                              type="button"
-                            >
-                              {q}
-                            </button>
-                          ))}
-                        </div>
-                        <hr className="border-blue-300/40" />
-                      </div> */}
-                      {/* Parts pills */}
-                      <div className="mb-2">
-                        <div className="text-lg font-bold mb-2">Parts</div>
-                        <div className="flex gap-3 mb-2">
-                          {["Engines", "Transmission"].map((p) => (
-                            <button
-                              key={p}
-                              className={`px-6 py-2 cursor-pointer hover:bg-[#091627] rounded-full font-semibold focus:outline-none shadow-md transition-colors ${
-                                dropdownPart === p
-                                  ? "bg-[#091627] text-white"
-                                  : "bg-transparent text-white"
-                              }`}
-                              onClick={() =>
-                                setDropdownPart(dropdownPart === p ? null : p)
-                              }
-                              type="button"
-                            >
-                              {p}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
             </div>
             <div className="bg-[#091e36] rounded-lg p-6 sm:p-6 lg:p-10 mb-6">
               <div className="flex items-center justify-between mb-6">
                 <h1 className="text-2xl font-audiowide font-bold">Orders</h1>
-                <ChevronsLeftRight
+                {/* <ChevronsLeftRight
                   onClick={() => handleExpand()}
                   className="hover:text-slate-300 cursor-pointer md:mr-10"
-                />
+                /> */}
+                <Link
+                  href="/orders/create"
+                  className="bg-secondary flex items-center gap-2 hover:bg-secondary/90 text-white px-8 py-4 rounded-lg hover:text-slate-300 cursor-pointer"
+                >
+                  Create Order
+                  <Plus />
+                </Link>
               </div>
               {/* <p className="text-gray-400 mb-6">This is the orders page.</p> */}
 
@@ -471,7 +425,7 @@ export default function Orders() {
                     {filteredOrders.map((order, idx) => (
                       <tr
                         key={idx}
-                        className="border-b border-gray-700 last:border-0"
+                        className="border-b border-gray-700 last:border-0 cursor-pointer"
                       >
                         <td className="px-4 py-3">
                           <input type="checkbox" />
@@ -528,13 +482,14 @@ export default function Orders() {
                                 boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
                               }}
                             >
-                              <button
+                              <Link
+                                href={`/orders/${order.id}`}
                                 className="text-black text-base px-2 py-1 text-left rounded hover:bg-gray-200"
                                 onClick={() => setOpenActionMenu(null)}
                                 type="button"
                               >
                                 Details
-                              </button>
+                              </Link>
                               <button
                                 className="text-black text-base px-2 py-1 text-left rounded hover:bg-gray-200"
                                 onClick={() => setOpenActionMenu(null)}

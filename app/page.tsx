@@ -1,13 +1,20 @@
+"use client";
 import Image from "next/image";
 import Sidebar from "./components/Sidebar";
 import CustomerCoverageCard from "./components/CustomerCoverage";
-import { MoreVertical, File, Globe } from "lucide-react";
+import { MoreVertical, File, Globe, Calendar, ChevronDown } from "lucide-react";
 import RecentSold from "./components/MainTable";
 import SalesChart from "./components/SalesChart";
 import TopProducts from "./components/TopProductCard";
 import Header from "./components/Header";
 import ProtectRoute from "./components/ProtectRoute";
 import { URL } from "@/utils//imageUrl";
+// import MainCalendar from "react-calendar";
+import { useEffect, useState } from "react";
+import CalendarMain from "./components/Calendar";
+
+type ValuePiece = Date | null;
+type Value = ValuePiece | [ValuePiece, ValuePiece];
 
 const performanceCards = [
   {
@@ -47,6 +54,34 @@ const summaryCards = [
 ];
 
 export default function Home() {
+  const [open, setOpen] = useState(false);
+  const [value, onChange] = useState<Value>(new Date());
+  console.log(onChange);
+
+  // Extract month name, year, and date separately
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  useEffect(() => {
+    if (window.onmouseenter) {
+      setOpen(false);
+    }
+  }, [setOpen]);
+
+  const monthName = value instanceof Date ? monthNames[value.getMonth()] : null;
+  const year = value instanceof Date ? value.getFullYear() : null;
+  const date = value instanceof Date ? value.getDate() : null;
   return (
     <ProtectRoute>
       <div className="md:min-h-screen bg-main text-white font-exo">
@@ -115,12 +150,41 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Right Section: Customer Coverage */}
-                <div className="w-full lg:max-w-sm">
-                  <div className="bg-secondary rounded-xl p-5 w-full h-full">
-                    <CustomerCoverageCard />
+                {/* Right Section: Date Button and Customer Coverage */}
+                {/* <button
+                  onClick={() => {
+                    setOpen(!open);
+                  }}
+                > */}
+                <div className="w-full lg:max-w-sm space-y-4">
+                  {/* Date Button */}
+                  <div
+                    className="bg-secondary rounded-xl p-3 flex items-center justify-between cursor-pointer hover:bg-secondary/90 transition-colors"
+                    onClick={() => {
+                      setOpen(!open);
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="bg-white/10 rounded-lg p-2">
+                        <Calendar className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="text-white flex flex-row gap-2">
+                        <p className="text-sm font-medium">Today</p>
+                        <p className="text-sm opacity-80">
+                          {monthName} {date} • {year}
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronDown className="w-4 h-4 text-white/60" />
                   </div>
+
+                  {/* Customer Coverage Card */}
+                  {/* <div className="bg-secondary rounded-xl p-5 w-full h-full"> */}
+                  <CustomerCoverageCard />
+                  {/* </div> */}
                 </div>
+                {open && <CalendarMain onClose={() => setOpen(false)} />}
+                {/* </button> */}
               </div>
             </div>
 

@@ -1,18 +1,42 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { ChevronsLeftRight } from "lucide-react";
+import { Calendar, ChevronDown, ChevronsLeftRight } from "lucide-react";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import Pagination from "../components/Pagination";
 import { redirect } from "next/navigation";
+import MainCalendar from "react-calendar";
+
+type ValuePiece = Date | null;
+type Value = ValuePiece | [ValuePiece, ValuePiece];
 
 export default function Orders() {
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [dropdownStatus, setDropdownStatus] = useState<string | null>(null);
-  const [dropdownPart, setDropdownPart] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const [value, onChange] = useState<Value>(new Date());
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
+  const monthName = value instanceof Date ? monthNames[value.getMonth()] : null;
+  const year = value instanceof Date ? value.getFullYear() : null;
+  const date = value instanceof Date ? value.getDate() : null;
+  // const [dropdownStatus, setDropdownStatus] = useState<string | null>(null);
+  // const [dropdownPart, setDropdownPart] = useState<string | null>(null);
 
   const filterBtnRef = useRef<HTMLButtonElement | null>(null);
   const filterPanelRef = useRef<HTMLDivElement | null>(null);
@@ -387,84 +411,28 @@ export default function Orders() {
                 </svg>
               </div>
             </div>
-            <div className="relative">
-              <button
-                ref={filterBtnRef}
-                className="flex items-center cursor-pointer bg-[#091e36] rounded-lg px-4 py-4 text-white w-full md:w-auto justify-center"
-                type="button"
-                onClick={() => setShowFilterModal((v) => !v)}
-              >
-                Filter
-                <svg
-                  className="ml-2"
-                  width="16"
-                  height="16"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M4 4h16M6 8v8m12-8v8M8 16h8" />
-                </svg>
-              </button>
-              {showFilterModal && (
-                <div
-                  ref={filterPanelRef}
-                  className="absolute z-50 mt-2 right-2 w-80 max-w-full bg-[#0a1e36] rounded-xl shadow-lg p-0"
-                  style={{ minWidth: "400px" }}
-                >
-                  <div className="px-6 py-4 rounded-b-xl">
-                    <div className="mb-4">
-                      <div className="text-lg font-bold mb-2">Status</div>
-                      <div className="flex gap-1 mb-2">
-                        {["Paid", "Pending", "Cancelled", "Refunded"].map(
-                          (s) => (
-                            <button
-                              key={s}
-                              className={`px-3 py-2 rounded-full cursor-pointer hover:bg-[#091627] font-semibold focus:outline-none shadow-md transition-colors ${
-                                dropdownStatus === s
-                                  ? "bg-[#091627] text-white"
-                                  : "bg-transparent text-white"
-                              }`}
-                              onClick={() =>
-                                setDropdownStatus(
-                                  dropdownStatus === s ? null : s
-                                )
-                              }
-                              type="button"
-                            >
-                              {s}
-                            </button>
-                          )
-                        )}
-                      </div>
-                      <hr className="border-blue-300/40" />
-                    </div>
-                    <div className="mb-2">
-                      <div className="text-lg font-bold mb-2">Parts</div>
-                      <div className="flex gap-3 mb-2">
-                        {["Engines", "Transmission"].map((p) => (
-                          <button
-                            key={p}
-                            className={`px-6 py-2 cursor-pointer hover:bg-[#091627] rounded-full font-semibold focus:outline-none shadow-md transition-colors ${
-                              dropdownPart === p
-                                ? "bg-[#091627] text-white"
-                                : "bg-transparent text-white"
-                            }`}
-                            onClick={() =>
-                              setDropdownPart(dropdownPart === p ? null : p)
-                            }
-                            type="button"
-                          >
-                            {p}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+            <div
+              onClick={() => setOpen(!open)}
+              className="bg-[#091e36] rounded-xl p-3 flex items-center justify-between cursor-pointer hover:bg-secondary/90 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="bg-white/10 rounded-lg p-2">
+                  <Calendar className="w-4 h-4 text-white" />
                 </div>
-              )}
+                <div className="text-white flex flex-row gap-2">
+                  <p className="text-sm font-medium">Today</p>
+                  <p className="text-sm opacity-80">
+                    {monthName} {date} • {year}
+                  </p>
+                </div>
+              </div>
+              <ChevronDown className="w-4 h-4 text-white/60" />
             </div>
+            {open && (
+              <div className="md:max-w-sm z-5 bg-white/50 text-black backdrop-blur-sm rounded-xl absolute top-35 right-5 p-5 w-full">
+                <MainCalendar onChange={onChange} value={value} />
+              </div>
+            )}
           </div>
 
           <div className="bg-[#091e36] rounded-lg p-6 sm:p-6 lg:p-10 mb-6">
