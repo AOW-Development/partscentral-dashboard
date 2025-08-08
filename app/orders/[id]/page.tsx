@@ -2,26 +2,23 @@
 import Header from "@/app/components/Header";
 import ProtectRoute from "@/app/components/ProtectRoute";
 import Sidebar from "@/app/components/Sidebar";
-import { ChevronDown, X } from "lucide-react";
+import { ChevronDown, X, Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import React from "react"; // Added missing import for React
+import { useEffect, useState } from "react";
+import { URL } from "@/utils/imageUrl";
 
 const OrderDetails = () => {
-  const [isProcessing, setIsProcessing] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
-
-  // Form state
   const [formData, setFormData] = useState({
     email: "",
     mobile: "",
-    sellingPrice: "",
+    partPrice: "",
+    taxesPrice: "",
+    handlingPrice: "",
+    processingPrice: "",
+    corePrice: "",
     shippingAddressType: "",
+    company: "",
     shippingAddress: "",
     billingAddress: "",
     cardHolderName: "",
@@ -35,6 +32,8 @@ const OrderDetails = () => {
     year: "",
     parts: "",
     specification: "",
+    totalSellingPrice: "",
+    totalPrice: "",
     merchantMethod: "",
     approvalCode: "",
     entity: "",
@@ -50,11 +49,56 @@ const OrderDetails = () => {
     yardShipping: "",
     yardCost: "",
     pictureStatus: "",
+    carrierName: "",
     trackingNumber: "",
+    notes: "",
   });
+  const [isProcessing, setIsProcessing] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [totalPrice, setTotalPrice] = useState(0);
+  const [showCompany, setShowCompany] = useState(false);
+  const [showCharge, setShowCharge] = useState(false);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  useEffect(() => {
+    setTotalPrice(
+      Number(formData.partPrice) +
+        Number(formData.handlingPrice) +
+        Number(formData.corePrice) +
+        Number(formData.taxesPrice) +
+        Number(formData.processingPrice)
+    );
+    setFormData((prev) => ({
+      ...prev,
+      totalSellingPrice: totalPrice.toString(),
+      totalPrice: totalPrice.toString(),
+    }));
+  }, [
+    totalPrice,
+    formData.partPrice,
+    formData.handlingPrice,
+    formData.corePrice,
+    formData.taxesPrice,
+    formData.processingPrice,
+  ]);
 
   // Field-specific error states
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
+
+  // Payment entries state for dynamic payment fields
+  const [paymentEntries, setPaymentEntries] = useState([
+    {
+      id: 1,
+      merchantMethod: "",
+      totalPrice: "",
+      approvalCode: "",
+      entity: "",
+      charged: "No",
+    },
+  ]);
 
   // Handle form field changes
   const handleInputChange = (field: string, value: string) => {
@@ -69,6 +113,43 @@ const OrderDetails = () => {
         ...prev,
         [field]: "",
       }));
+    }
+  };
+
+  // Handle payment entry field changes
+  const handlePaymentEntryChange = (
+    id: number,
+    field: string,
+    value: string
+  ) => {
+    setPaymentEntries((prevEntries) =>
+      prevEntries.map((entry) =>
+        entry.id === id ? { ...entry, [field]: value } : entry
+      )
+    );
+  };
+
+  // Add a new payment entry
+  const addPaymentEntry = () => {
+    setPaymentEntries((prevEntries) => [
+      ...prevEntries,
+      {
+        id: Date.now(), // Use timestamp as unique ID
+        merchantMethod: "",
+        totalPrice: "",
+        approvalCode: "",
+        entity: "",
+        charged: "No",
+      },
+    ]);
+  };
+
+  // Remove a payment entry
+  const removePaymentEntry = (id: number) => {
+    if (paymentEntries.length > 1) {
+      setPaymentEntries((prevEntries) =>
+        prevEntries.filter((entry) => entry.id !== id)
+      );
     }
   };
 
@@ -88,8 +169,8 @@ const OrderDetails = () => {
           return "Mobile number must be at least 10 digits";
         return "";
 
-      case "sellingPrice":
-        if (!value) return "Selling price is required";
+      case "partPrice":
+        if (!value) return "Part price is required";
         if (isNaN(Number(value)) || Number(value) <= 0)
           return "Please enter a valid price";
         return "";
@@ -139,13 +220,27 @@ const OrderDetails = () => {
     const requiredFields = [
       "email",
       "mobile",
-      "sellingPrice",
+      "partPrice",
       "shippingAddress",
       "billingAddress",
       "make",
       "model",
       "year",
       "parts",
+      "saleMadeBy",
+      // "yardName",
+      // "yardMobile",
+      // "yardAddress",
+      // "yardEmail",
+      // "yardPrice",
+      // "yardWarranty",
+      // "yardMiles",
+      // "yardShipping",
+      // "yardCost",
+      // "pictureStatus",
+      // "carrierName",
+      // "trackingNumber",
+      // "notes",
     ];
 
     const newErrors: { [key: string]: string } = {};
@@ -183,7 +278,7 @@ const OrderDetails = () => {
           name: "Shiva Shankar Reddy",
           email: formData.email,
           mobile: formData.mobile,
-          sellingPrice: formData.sellingPrice,
+          partPrice: formData.partPrice,
           shippingAddress: formData.shippingAddress,
           billingAddress: formData.billingAddress,
           shippingAddressType: formData.shippingAddressType,
@@ -254,12 +349,15 @@ const OrderDetails = () => {
 
   const handleCharge = async () => {
     setIsLoading(true);
-    console.log("Charging...");
+    // console.log("Charging...");
+    setShowCharge(true);
+    setFormData((prev) => ({ ...prev, approvalCode: "123456" }));
+    setFormData((prev) => ({ ...prev, charged: "Yes" }));
     setIsLoading(false);
   };
 
   // Clear message after 5 seconds
-  React.useEffect(() => {
+  useEffect(() => {
     if (message) {
       const timer = setTimeout(() => setMessage(null), 5000);
       return () => clearTimeout(timer);
@@ -272,7 +370,7 @@ const OrderDetails = () => {
   const [showPreviousYard, setShowPreviousYard] = useState(false);
   const [previousYards, setPreviousYards] = useState([
     {
-      yardName: "Old Yard Name",
+      yardName: "Old Yard Name1",
       yardAddress: "Old Address",
       yardMobile: "1234567890",
       yardEmail: "oldyard@email.com",
@@ -283,9 +381,24 @@ const OrderDetails = () => {
       yardCost: "800",
       reason: "Better price from new yard",
     },
+    {
+      yardName: "Old Yard Name2",
+      yardAddress: "Old Address",
+      yardMobile: "1234567890",
+      yardEmail: "oldyard@email.com",
+      yardPrice: "1000",
+      yardWarranty: "30 Days",
+      yardMiles: "70000",
+      yardShipping: "Own Shipping",
+      yardCost: "800",
+      reason: "Better price from new yard",
+    },
   ]);
   const [selectedPrevYardIdx, setSelectedPrevYardIdx] = useState(0);
   console.log(setPreviousYards, setShowPreviousYard);
+
+  // Add state for uploaded picture file
+  const [uploadedPicture, setUploadedPicture] = useState<File | null>(null);
 
   return (
     <ProtectRoute>
@@ -329,7 +442,7 @@ const OrderDetails = () => {
                 <div className="relative flex items-center gap-4">
                   <div className="absolute top-[-60px] left-5 rounded-full bg-gradient-to-br from-pink-400 to-orange-400 flex items-center justify-center">
                     <Image
-                      src="/dummyImg.png"
+                      src={URL + "dummyImg.png"}
                       alt="Customer"
                       width={120}
                       height={120}
@@ -423,24 +536,118 @@ const OrderDetails = () => {
                   </div>
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
-                      Selling Price *
+                      Part Price *
                     </label>
                     <input
                       type="number"
                       className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                        fieldErrors.sellingPrice
+                        fieldErrors.partPrice
                           ? "border-red-500 focus:border-red-500"
                           : "border-gray-600 focus:border-blue-500"
                       }`}
                       placeholder="Enter price"
-                      value={formData.sellingPrice}
+                      value={formData.partPrice}
                       onChange={(e) =>
-                        handleInputChange("sellingPrice", e.target.value)
+                        handleInputChange("partPrice", e.target.value)
                       }
                     />
-                    {fieldErrors.sellingPrice && (
+                    {fieldErrors.partPrice && (
                       <p className="text-red-400 text-xs mt-1">
-                        {fieldErrors.sellingPrice}
+                        {fieldErrors.partPrice}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Taxes Price
+                    </label>
+                    <input
+                      type="number"
+                      className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                        fieldErrors.taxesPrice
+                          ? "border-red-500 focus:border-red-500"
+                          : "border-gray-600 focus:border-blue-500"
+                      }`}
+                      placeholder="Enter price"
+                      value={formData.taxesPrice}
+                      onChange={(e) =>
+                        handleInputChange("taxesPrice", e.target.value)
+                      }
+                    />
+                    {fieldErrors.taxesPrice && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {fieldErrors.taxesPrice}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Handling Price
+                    </label>
+                    <input
+                      type="number"
+                      className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                        fieldErrors.handlingPrice
+                          ? "border-red-500 focus:border-red-500"
+                          : "border-gray-600 focus:border-blue-500"
+                      }`}
+                      placeholder="Enter price"
+                      value={formData.handlingPrice}
+                      onChange={(e) =>
+                        handleInputChange("handlingPrice", e.target.value)
+                      }
+                    />
+                    {fieldErrors.handlingPrice && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {fieldErrors.handlingPrice}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Processing Price
+                    </label>
+                    <input
+                      type="number"
+                      className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                        fieldErrors.processingPrice
+                          ? "border-red-500 focus:border-red-500"
+                          : "border-gray-600 focus:border-blue-500"
+                      }`}
+                      placeholder="Enter price"
+                      value={formData.processingPrice}
+                      onChange={(e) =>
+                        handleInputChange("processingPrice", e.target.value)
+                      }
+                    />
+                    {fieldErrors.processingPrice && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {fieldErrors.processingPrice}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Core Price
+                    </label>
+                    <input
+                      type="number"
+                      className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                        fieldErrors.corePrice
+                          ? "border-red-500 focus:border-red-500"
+                          : "border-gray-600 focus:border-blue-500"
+                      }`}
+                      placeholder="Enter price"
+                      value={formData.corePrice}
+                      onChange={(e) =>
+                        handleInputChange("corePrice", e.target.value)
+                      }
+                    />
+                    {fieldErrors.corePrice && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {fieldErrors.corePrice}
                       </p>
                     )}
                   </div>
@@ -448,31 +655,54 @@ const OrderDetails = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {/* Row 2 */}
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Shipping Address Type
-                    </label>
-                    <div className="relative">
-                      <select
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                        value={formData.shippingAddressType}
-                        onChange={(e) =>
-                          handleInputChange(
-                            "shippingAddressType",
-                            e.target.value
-                          )
-                        }
-                      >
-                        <option value="">Select address type</option>
-                        <option>Residential</option>
-                        <option>Non Residential</option>
-                        <option>Terminal</option>
-                        <option>Commercial</option>
-                      </select>
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                        size={16}
-                      />
+                  <div className="col-span-1">
+                    <div>
+                      <label className="block text-white/60 text-sm mb-2">
+                        Shipping Address Type
+                      </label>
+                      <div className="relative">
+                        <select
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                          value={formData.shippingAddressType}
+                          onChange={(e) => {
+                            handleInputChange(
+                              "shippingAddressType",
+                              e.target.value
+                            );
+                            if (e.target.value === "Commercial") {
+                              setShowCompany(true);
+                            } else {
+                              setShowCompany(false);
+                            }
+                          }}
+                        >
+                          <option value="">Select address type</option>
+                          <option>Residential</option>
+                          <option>Non Residential</option>
+                          <option>Terminal</option>
+                          <option>Commercial</option>
+                        </select>
+                        <ChevronDown
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                          size={16}
+                        />
+                      </div>
+                      {showCompany && (
+                        <div className="mt-2 relative">
+                          <label className="block text-white/60 text-sm mb-2">
+                            Company Name
+                          </label>
+                          <input
+                            type="text"
+                            className="block bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
+                            placeholder="Company name"
+                            value={formData.company}
+                            onChange={(e) =>
+                              handleInputChange("company", e.target.value)
+                            }
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div>
@@ -790,6 +1020,20 @@ const OrderDetails = () => {
                       />
                     </div>
                   </div>
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Total Selling Price
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                      placeholder="Total Selling Price"
+                      value={formData.totalSellingPrice}
+                      onChange={(e) =>
+                        handleInputChange("totalSellingPrice", e.target.value)
+                      }
+                    />
+                  </div>
                 </div>
 
                 {/* Send Invoice Button */}
@@ -830,111 +1074,177 @@ const OrderDetails = () => {
                   </div>
                 </div>
 
-                {/* Invoice Status */}
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Merchant Method
-                    </label>
-                    <div className="relative">
-                      <select
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                        value={formData.merchantMethod}
-                        onChange={(e) =>
-                          handleInputChange("merchantMethod", e.target.value)
-                        }
-                      >
-                        <option value="">Select merchant</option>
-                        <option>Paypal</option>
-                        <option>Wire Transfer</option>
-                        <option>Zelle</option>
-                        <option>EMS</option>
-                        <option>EPX</option>
-                        <option>CLOVER</option>
-                        <option>MAVRICK</option>
-                        <option>ALTRUPAY</option>
-                        <option>Stripe</option>
-                        <option>Bank Transfer</option>
-                        <option>Cash</option>
-                        <option>Cheque</option>
-                        <option>Other</option>
-                      </select>
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                        size={16}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <button
-                      className={`cursor-pointer w-full mt-7 px-6 py-3 rounded-lg font-medium transition-colors ${
-                        isLoading
-                          ? "bg-gray-500 cursor-not-allowed"
-                          : "bg-[#006BA9] hover:bg-[#006BA9]/90"
-                      } text-white`}
-                      onClick={handleCharge}
-                      disabled={isLoading}
+                {/* Payment Entries */}
+                <div className="space-y-6">
+                  {paymentEntries.map((entry, index) => (
+                    <div
+                      key={entry.id}
+                      className="relative bg-[#0f1e35] p-4 rounded-lg border border-gray-700"
                     >
-                      {isLoading ? "processing..." : "Charge"}
+                      {index > 0 && (
+                        <button
+                          onClick={() => removePaymentEntry(entry.id)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                          title="Remove payment"
+                        >
+                          <X size={16} />
+                        </button>
+                      )}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-white/60 text-sm mb-2">
+                            Merchant Method
+                          </label>
+                          <div className="relative">
+                            <select
+                              className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                              value={entry.merchantMethod}
+                              onChange={(e) =>
+                                handlePaymentEntryChange(
+                                  entry.id,
+                                  "merchantMethod",
+                                  e.target.value
+                                )
+                              }
+                            >
+                              <option value="">Select merchant</option>
+                              <option>Paypal</option>
+                              <option>Wire Transfer</option>
+                              <option>Zelle</option>
+                              <option>EMS</option>
+                              <option>EPX</option>
+                              <option>CLOVER</option>
+                              <option>MAVRICK</option>
+                              <option>ALTRUPAY</option>
+                              <option>Stripe</option>
+                              <option>Bank Transfer</option>
+                              <option>Cash</option>
+                              <option>Cheque</option>
+                              <option>Other</option>
+                            </select>
+                            <ChevronDown
+                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                              size={16}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-white/60 text-sm mb-2">
+                            Total Price
+                          </label>
+                          {index > 0 ? (
+                            <input
+                              type="text"
+                              className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                              placeholder="Total Price"
+                              value={entry.totalPrice}
+                              onChange={(e) =>
+                                handlePaymentEntryChange(
+                                  entry.id,
+                                  "totalPrice",
+                                  e.target.value
+                                )
+                              }
+                            />
+                          ) : (
+                            <input
+                              type="text"
+                              className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                              placeholder="Total Price"
+                              value={formData.totalPrice}
+                              onChange={(e) =>
+                                handlePaymentEntryChange(
+                                  entry.id,
+                                  "totalPrice",
+                                  e.target.value
+                                )
+                              }
+                            />
+                          )}
+                        </div>
+                        <div>
+                          <button
+                            className={`cursor-pointer w-full mt-7 px-6 py-3 rounded-lg font-medium transition-colors ${
+                              isLoading
+                                ? "bg-gray-500 cursor-not-allowed"
+                                : "bg-[#006BA9] hover:bg-[#006BA9]/90"
+                            } text-white`}
+                            onClick={handleCharge}
+                            disabled={isLoading}
+                          >
+                            {/* {isLoading ? "processing..." : "Charge"} */}
+                            {showCharge ? "Re-charge" : "Charge"}
+                          </button>
+                        </div>
+                        <div>
+                          <label className="block text-white/60 text-sm mb-2">
+                            Approval Code
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                            placeholder="Enter approval code"
+                            value={formData.approvalCode}
+                            onChange={(e) =>
+                              handleInputChange("approvalCode", e.target.value)
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-white/60 text-sm mb-2">
+                            Entity
+                          </label>
+                          <div className="relative">
+                            <select
+                              className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                              value={formData.entity}
+                              onChange={(e) =>
+                                handleInputChange("entity", e.target.value)
+                              }
+                            >
+                              <option value="">Select entity</option>
+                              <option>WY</option>
+                              <option>IL</option>
+                            </select>
+                            <ChevronDown
+                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                              size={16}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-white/60 text-sm mb-2">
+                            Charged
+                          </label>
+                          <div className="relative">
+                            <select
+                              className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                              value={formData.charged}
+                              onChange={(e) =>
+                                handleInputChange("charged", e.target.value)
+                              }
+                            >
+                              <option>No</option>
+                              <option>Yes</option>
+                            </select>
+                            <ChevronDown
+                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                              size={16}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="flex justify-end">
+                    <button
+                      onClick={addPaymentEntry}
+                      className="flex items-center gap-2 bg-[#006BA9] hover:bg-[#006BA9]/90 text-white px-4 py-2 rounded-lg transition-colors"
+                    >
+                      <Plus size={18} />
+                      Add Payment
                     </button>
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Approval Code
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                      placeholder="Enter approval code"
-                      value={formData.approvalCode}
-                      onChange={(e) =>
-                        handleInputChange("approvalCode", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Entity
-                    </label>
-                    <div className="relative">
-                      <select
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                        value={formData.entity}
-                        onChange={(e) =>
-                          handleInputChange("entity", e.target.value)
-                        }
-                      >
-                        <option value="">Select entity</option>
-                        <option>WY</option>
-                        <option>IL</option>
-                      </select>
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                        size={16}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Charged
-                    </label>
-                    <div className="relative">
-                      <select
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                        value={formData.charged}
-                        onChange={(e) =>
-                          handleInputChange("charged", e.target.value)
-                        }
-                      >
-                        <option>No</option>
-                        <option>Yes</option>
-                        {/* <option value="">Select option</option> */}
-                      </select>
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                        size={16}
-                      />
-                    </div>
                   </div>
                 </div>
                 {/* Yard Info Section */}
@@ -943,14 +1253,14 @@ const OrderDetails = () => {
                     <h3 className="text-white text-lg font-semibold">
                       Yard Info
                     </h3>
-                    {/* <button
+                    <button
                       className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
                       onClick={() => setShowPreviousYard((prev) => !prev)}
                     >
                       {showPreviousYard
                         ? "Hide Previous Yard"
                         : "Show Previous Yard"}
-                    </button> */}
+                    </button>
                   </div>
                   {showPreviousYard && previousYards.length > 0 && (
                     <div className="mb-6 bg-[#222c3a] rounded-lg p-4 border border-blue-700">
@@ -1246,7 +1556,7 @@ const OrderDetails = () => {
                     </div>
                     <div>
                       <label className="block text-white/60 text-sm mb-2">
-                        Yard Cost
+                        Yard Shipping Cost
                       </label>
                       <input
                         type="number"
@@ -1260,7 +1570,6 @@ const OrderDetails = () => {
                     </div>
                   </div>
                 </div>
-                {/* Send PO Button */}
                 <div className="flex justify-end gap-2">
                   <button className="bg-[#006BA9] hover:bg-[#006BA9]/90 cursor-pointer mt-8 w-40 h-10 px-2 py-1 text-white  rounded-lg font-medium transition-colors">
                     Send PO
@@ -1288,21 +1597,246 @@ const OrderDetails = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+                <div className="grid md:grid-cols-2 gap-10 my-2">
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Picture Status
+                    </label>
+                    <select
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                      value={formData.pictureStatus}
+                      onChange={(e) =>
+                        handleInputChange("pictureStatus", e.target.value)
+                      }
+                    >
+                      <option value="">Select</option>
+                      <option value="Yes">Yes</option>
+                      <option value="No">No</option>
+                    </select>
+                    {formData.pictureStatus === "Yes" && (
+                      <div className="mt-4 p-4 bg-[#1a2636] rounded-lg border border-blue-700 flex flex-col items-center gap-4 shadow-lg">
+                        <label
+                          htmlFor="picture-upload"
+                          className="w-full flex flex-col items-center justify-center cursor-pointer bg-[#22304a] border-2 border-dashed border-blue-400 rounded-lg p-6 hover:bg-[#2a3a5a] transition-colors text-white/80 text-center"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-10 w-10 mb-2 text-blue-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"
+                            />
+                          </svg>
+                          <span className="font-semibold">
+                            Click to upload picture
+                          </span>
+                          <span className="text-xs text-white/50 mt-1">
+                            (JPG, PNG, or GIF)
+                          </span>
+                          <input
+                            id="picture-upload"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files[0]) {
+                                setUploadedPicture(e.target.files[0]);
+                              }
+                            }}
+                          />
+                        </label>
+                        {uploadedPicture && (
+                          <div className="text-white/80 text-sm mt-2">
+                            Selected:{" "}
+                            <span className="font-semibold">
+                              {uploadedPicture.name}
+                            </span>
+                          </div>
+                        )}
+                        <button
+                          className="bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white px-6 py-2 rounded-lg font-semibold shadow-md transition-colors w-full"
+                          // onClick handler for sending picture
+                        >
+                          Send Picture
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-              {/* Action Buttons */}
-              <div className="grid grid-cols-2 gap-10">
+                <h3 className="text-white text-lg font-semibold mb-4">
+                  Own Shipping Info
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-[#FFFFFF33] rounded-lg p-2 my-4">
+                  {/* Name */}
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Product type
+                    </label>
+                    <div className="relative">
+                      <select
+                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                        // value={formData.yardShipping}
+                        // onChange={(e) =>
+                        //   handleInputChange("yardShipping", e.target.value)
+                        // }
+                      >
+                        <option value="">Select Product Type</option>
+                        <option>LTL</option>
+                        <option>Parcel</option>
+                      </select>
+                      <ChevronDown
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                        size={16}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Package type
+                    </label>
+                    <div className="relative">
+                      <select
+                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                        // value={formData.yardShipping}
+                        // onChange={(e) =>
+                        //   handleInputChange("yardShipping", e.target.value)
+                        // }
+                      >
+                        <option value="">Select Package Type</option>
+                        <option>Pallet</option>
+                        <option>Box</option>
+                        <option>Crate</option>
+                      </select>
+                      <ChevronDown
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                        size={16}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Weight
+                    </label>
+                    <input
+                      type="number"
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                      placeholder="Enter weight"
+                      // value={formData.weight}
+                      // onChange={(e) =>
+                      // handleInputChange("weight", e.target.value)
+                      // }
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Dimensions
+                    </label>
+                    <input
+                      type="number"
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                      placeholder="Enter dimensions"
+                      // value={formData.dimensions}
+                      // onChange={(e) =>
+                      // handleInputChange("dimensions", e.target.value)
+                      // }
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Pick Up Date
+                    </label>
+                    <input
+                      type="date"
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                      placeholder="Enter pick up date"
+                      // value={formData.dimensions}
+                      // onChange={(e) =>
+                      // handleInputChange("dimensions", e.target.value)
+                      // }
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Carrier
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                      placeholder="Enter carrier"
+                      // value={formData.weight}
+                      // onChange={(e) =>
+                      // handleInputChange("weight", e.target.value)
+                      // }
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Price
+                    </label>
+                    <input
+                      type="number"
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                      placeholder="Enter price"
+                      // value={formData.price}
+                      // onChange={(e) =>
+                      // handleInputChange("price", e.target.value)
+                      // }
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Variance
+                    </label>
+                    <input
+                      type="number"
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                      placeholder="Enter variance"
+                      // value={formData.variance}
+                      // onChange={(e) =>
+                      // handleInputChange("variance", e.target.value)
+                      // }
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <button className="bg-[#006BA9] hover:bg-[#006BA9]/90 cursor-pointer mt-8 w-40 h-10 px-2 py-2 text-white  rounded-lg font-medium transition-colors">
+                      Create BOL
+                    </button>
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      BOL Number
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:border-blue-500 focus:outline-none"
+                      placeholder="Enter BOL number"
+                      // value={formData.carrierName}
+                      // onChange={(e) =>
+                      // handleInputChange("carrierName", e.target.value)
+                      // }
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="grid md:grid-cols-3 gap-10">
                 <div>
                   <label className="block text-white/60 text-sm mb-2">
-                    Picture Status
+                    Carrier Name
                   </label>
                   <input
                     type="text"
                     className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                    placeholder="Picture Status"
-                    value={formData.pictureStatus}
+                    placeholder="Carrier Name"
+                    value={formData.carrierName}
                     onChange={(e) =>
-                      handleInputChange("pictureStatus", e.target.value)
+                      handleInputChange("carrierName", e.target.value)
                     }
                   />
                 </div>
@@ -1320,14 +1854,32 @@ const OrderDetails = () => {
                     }
                   />
                 </div>
+                <div className="col-span-1">
+                  <button className="cursor-pointer mt-8 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white px-6 py-2 rounded-lg font-semibold shadow-md transition-colors w-full">
+                    Send Tracking details
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="block text-white/60 text-sm mb-2">
+                  Notes
+                </label>
+                <textarea
+                  className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none resize-none"
+                  placeholder="Add any notes here..."
+                  rows={4}
+                  value={formData.notes || ""}
+                  onChange={(e) => handleInputChange("notes", e.target.value)}
+                />
               </div>
 
               {/* Action Buttons */}
               <div className="flex justify-end gap-4 mt-8 mb-8">
-                <button className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-medium transition-colors">
+                <button className="bg-green-600 cursor-pointer hover:bg-green-700 text-white px-8 py-3 rounded-lg font-medium transition-colors">
                   Save
                 </button>
-                <button className="bg-gray-600 hover:bg-gray-700 text-white px-8 py-3 rounded-lg font-medium transition-colors">
+                <button className="bg-gray-600 cursor-pointer hover:bg-gray-700 text-white px-8 py-3 rounded-lg font-medium transition-colors">
                   Close
                 </button>
               </div>
