@@ -66,6 +66,30 @@ const OrderDetails = () => {
     text: string;
   } | null>(null);
 
+  // Helpers: formatters for card inputs
+  const formatCardNumber = (rawValue: string): string => {
+    const digitsOnly = rawValue.replace(/\D/g, "").slice(0, 19);
+    return digitsOnly.replace(/(.{4})/g, "$1 ").trim();
+  };
+
+  const formatExpiryDate = (rawValue: string): string => {
+    const digitsOnly = rawValue.replace(/\D/g, "").slice(0, 6);
+    if (digitsOnly.length === 0) return "";
+
+    // Ensure month stays between 01-12 when 2 digits are present
+    let month = digitsOnly.slice(0, 2);
+    if (month.length === 2) {
+      const monthNum = parseInt(month, 10);
+      if (monthNum === 0) month = "01";
+      else if (monthNum > 12) month = "12";
+    }
+
+    if (digitsOnly.length <= 2) return month;
+
+    const rest = digitsOnly.slice(2);
+    return `${month}/${rest}`;
+  };
+
   // State for additional price fields visibility
   const [visiblePriceFields, setVisiblePriceFields] = useState<{
     taxesPrice: boolean;
@@ -1030,9 +1054,12 @@ const OrderDetails = () => {
                         className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
                         placeholder="Card Number"
                         value={formData.cardNumber}
-                        onChange={(e) =>
-                          handleInputChange("cardNumber", e.target.value)
-                        }
+                        inputMode="numeric"
+                        maxLength={23}
+                        onChange={(e) => {
+                          const formatted = formatCardNumber(e.target.value);
+                          handleInputChange("cardNumber", formatted);
+                        }}
                         onBlur={(e) => {
                           const err = validateField(
                             "cardNumber",
@@ -1062,9 +1089,12 @@ const OrderDetails = () => {
                         className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
                         placeholder="Expire Date"
                         value={formData.cardDate}
-                        onChange={(e) =>
-                          handleInputChange("cardDate", e.target.value)
-                        }
+                        inputMode="numeric"
+                        maxLength={7}
+                        onChange={(e) => {
+                          const formatted = formatExpiryDate(e.target.value);
+                          handleInputChange("cardDate", formatted);
+                        }}
                         onBlur={(e) => {
                           const err = validateField("cardDate", e.target.value);
                           if (err)
@@ -1084,9 +1114,24 @@ const OrderDetails = () => {
                         className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
                         placeholder="CVV"
                         value={formData.cardCvv}
-                        onChange={(e) =>
-                          handleInputChange("cardCvv", e.target.value)
+                        inputMode="numeric"
+                        maxLength={
+                          getCardType(formData.cardNumber) ===
+                          "American Express"
+                            ? 4
+                            : 3
                         }
+                        onChange={(e) => {
+                          const expected =
+                            getCardType(formData.cardNumber) ===
+                            "American Express"
+                              ? 4
+                              : 3;
+                          const digits = e.target.value
+                            .replace(/\D/g, "")
+                            .slice(0, expected);
+                          handleInputChange("cardCvv", digits);
+                        }}
                         onBlur={(e) => {
                           const err = validateField("cardCvv", e.target.value);
                           if (err)

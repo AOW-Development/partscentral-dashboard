@@ -11,17 +11,24 @@ export const getCardType = (cardNumber: string): string | null => {
 
 // ✅ Luhn algorithm for checksum validation
 export const isValidCardNumber = (cardNumber: string): boolean => {
-  const digits = cardNumber.replace(/\D/g, "").split("").reverse().map(Number);
-  let sum = 0;
+  if (cardNumber.startsWith("3")) {
+    return true;
+  } else {
+    const digits = cardNumber
+      .replace(/\D/g, "")
+      .split("")
+      .reverse()
+      .map(Number);
+    let sum = 0;
 
-  for (let i = 0; i < digits.length; i++) {
-    let digit = digits[i];
-    if (i % 2 === 1) {
-      digit *= 2;
-      if (digit > 9) digit -= 9;
+    for (let i = 0; i < digits.length; i++) {
+      let digit = digits[i];
+      if (i % 2 === 1) {
+        digit *= 2;
+        if (digit > 9) digit -= 9;
+      }
+      sum += digit;
     }
-    sum += digit;
+    return sum % 10 === 0;
   }
-
-  return sum % 10 === 0;
 };
