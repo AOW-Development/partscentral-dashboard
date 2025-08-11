@@ -5,8 +5,9 @@ import Sidebar from "@/app/components/Sidebar";
 import { ChevronDown, X, Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { URL } from "@/utils/imageUrl";
+import { getCardType, isValidCardNumber } from "@/utils/cardValidator";
 
 const OrderDetails = () => {
   const [formData, setFormData] = useState({
@@ -57,11 +58,29 @@ const OrderDetails = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [totalPrice, setTotalPrice] = useState(0);
   const [showCompany, setShowCompany] = useState(false);
-  const [showCharge, setShowCharge] = useState(false);
+  const [showOwnShipping, setShowOwnShipping] = useState(false);
+  const [showYardShippingCost, setShowYardShippingCost] = useState(false);
+
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
   } | null>(null);
+
+  // State for additional price fields visibility
+  const [visiblePriceFields, setVisiblePriceFields] = useState<{
+    taxesPrice: boolean;
+    handlingPrice: boolean;
+    processingPrice: boolean;
+    corePrice: boolean;
+  }>({
+    taxesPrice: false,
+    handlingPrice: false,
+    processingPrice: false,
+    corePrice: false,
+  });
+
+  const [showPriceOptions, setShowPriceOptions] = useState(false);
+  const priceOptionsRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setTotalPrice(
@@ -85,6 +104,26 @@ const OrderDetails = () => {
     formData.processingPrice,
   ]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!showPriceOptions) return;
+      const targetNode = event.target as Node;
+      if (
+        priceOptionsRef.current &&
+        priceOptionsRef.current.contains(targetNode)
+      ) {
+        return;
+      }
+      setShowPriceOptions(false);
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showPriceOptions]);
+
   // Field-specific error states
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
@@ -96,7 +135,8 @@ const OrderDetails = () => {
       totalPrice: "",
       approvalCode: "",
       entity: "",
-      charged: "No",
+      charged: "",
+      chargeClicked: false,
     },
   ]);
 
@@ -139,7 +179,8 @@ const OrderDetails = () => {
         totalPrice: "",
         approvalCode: "",
         entity: "",
-        charged: "No",
+        charged: "",
+        chargeClicked: false,
       },
     ]);
   };
@@ -151,6 +192,17 @@ const OrderDetails = () => {
         prevEntries.filter((entry) => entry.id !== id)
       );
     }
+  };
+
+  // Handle price field selection
+  const handlePriceFieldSelection = (
+    fieldName: keyof typeof visiblePriceFields
+  ) => {
+    setVisiblePriceFields((prev) => ({
+      ...prev,
+      [fieldName]: true,
+    }));
+    setShowPriceOptions(false);
   };
 
   // Validate individual field
@@ -210,6 +262,38 @@ const OrderDetails = () => {
         if (!value) return "Parts is required";
         return "";
 
+      case "cardNumber": {
+        if (!value) return ""; // not required, validate only if provided
+        if (!isValidCardNumber(value)) return "Enter a valid card number";
+        const type = getCardType(value);
+        if (!type) return "Unsupported card type";
+        return "";
+      }
+
+      case "cardCvv": {
+        if (!value) return ""; // not required
+        if (!/^\d+$/.test(value)) return "CVV must be numeric";
+        const type = getCardType(formData.cardNumber);
+        const expected = type === "American Express" ? 4 : 3;
+        if (value.length !== expected)
+          return `CVV must be ${expected} digits${type ? ` for ${type}` : ""}`;
+        return "";
+      }
+
+      case "cardDate": {
+        if (!value) return ""; // not required
+        // Accept MM/YY or MM/YYYY
+        const match = /^(0[1-9]|1[0-2])\/(\d{2}|\d{4})$/.exec(value.trim());
+        if (!match) return "Use MM/YY or MM/YYYY";
+        const month = parseInt(match[1], 10);
+        let year = parseInt(match[2], 10);
+        if (year < 100) year += 2000;
+        const now = new Date();
+        const expEnd = new Date(year, month, 0, 23, 59, 59); // end of month
+        if (expEnd < now) return "Card is expired";
+        return "";
+      }
+
       default:
         return "";
     }
@@ -228,6 +312,7 @@ const OrderDetails = () => {
       "year",
       "parts",
       "saleMadeBy",
+
       // "yardName",
       // "yardMobile",
       // "yardAddress",
@@ -257,6 +342,18 @@ const OrderDetails = () => {
       }
     });
 
+    // Validate optional payment fields if provided
+    ["cardNumber", "cardDate", "cardCvv"].forEach((field) => {
+      const value = formData[field as keyof typeof formData] as string;
+      if (value) {
+        const error = validateField(field, value);
+        if (error) {
+          newErrors[field] = error;
+          hasErrors = true;
+        }
+      }
+    });
+
     setFieldErrors(newErrors);
     return !hasErrors;
   };
@@ -282,8 +379,10 @@ const OrderDetails = () => {
           shippingAddress: formData.shippingAddress,
           billingAddress: formData.billingAddress,
           shippingAddressType: formData.shippingAddressType,
+          totalSellingPrice: formData.totalSellingPrice,
         },
         paymentInfo: {
+          cardHolderName: formData.cardHolderName,
           cardNumber: formData.cardNumber,
           cardDate: formData.cardDate,
           cardCvv: formData.cardCvv,
@@ -295,6 +394,8 @@ const OrderDetails = () => {
           model: formData.model,
           year: formData.year,
           parts: formData.parts,
+          specification: formData.specification,
+          saleMadeBy: formData.saleMadeBy,
         },
         yardInfo: {
           name: formData.yardName,
@@ -347,12 +448,20 @@ const OrderDetails = () => {
     }
   };
 
-  const handleCharge = async () => {
+  const handleCharge = async (entryId: number) => {
     setIsLoading(true);
-    // console.log("Charging...");
-    setShowCharge(true);
-    setFormData((prev) => ({ ...prev, approvalCode: "123456" }));
-    setFormData((prev) => ({ ...prev, charged: "Yes" }));
+    setPaymentEntries((prev) =>
+      prev.map((pe) =>
+        pe.id === entryId
+          ? {
+              ...pe,
+              approvalCode: pe.approvalCode || "123456",
+              charged: pe.charged || "Yes",
+              chargeClicked: true,
+            }
+          : pe
+      )
+    );
     setIsLoading(false);
   };
 
@@ -365,6 +474,19 @@ const OrderDetails = () => {
   }, [message]);
 
   console.log(setIsProcessing);
+
+  useEffect(() => {
+    if (formData.yardShipping == "Own Shipping") {
+      setShowOwnShipping(true);
+      setShowYardShippingCost(false);
+    } else if (formData.yardShipping == "Yard Shipping") {
+      setShowYardShippingCost(true);
+      setShowOwnShipping(false);
+    } else {
+      setShowYardShippingCost(false);
+      setShowOwnShipping(false);
+    }
+  }, [formData.yardShipping]);
 
   // State for previous yards and toggle
   const [showPreviousYard, setShowPreviousYard] = useState(false);
@@ -426,7 +548,7 @@ const OrderDetails = () => {
             {/* Message Display */}
             {message && (
               <div
-                className={`mb-6 p-4 rounded-lg ${
+                className={`mb-10 p-4 rounded-lg ${
                   message.type === "success"
                     ? "bg-green-500/20 border border-green-500 text-green-400"
                     : "bg-red-500/20 border border-red-500 text-red-400"
@@ -438,9 +560,9 @@ const OrderDetails = () => {
 
             {/* Customer Profile Section */}
             <div className="bg-[#0a1929] rounded-lg p-6 mb-6">
-              <div className="flex items-center justify-between mb-4">
+              <div className="grid grid-cols-1 md:flex items-center justify-between mb-4">
                 <div className="relative flex items-center gap-4">
-                  <div className="absolute top-[-60px] left-5 rounded-full bg-gradient-to-br from-pink-400 to-orange-400 flex items-center justify-center">
+                  <div className="absolute top-[-60px] md:left-5 rounded-full bg-gradient-to-br from-pink-400 to-orange-400 flex items-center justify-center">
                     <Image
                       src={URL + "dummyImg.png"}
                       alt="Customer"
@@ -449,14 +571,14 @@ const OrderDetails = () => {
                       className="rounded-full object-cover"
                     />
                   </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-white mb-1 mt-20">
+                  <div className="grid grid-cols-2 md:grid-cols-1 gap-2">
+                    <h2 className="md:text-xl font-semibold text-white  mt-20">
                       Shiva Shankar Reddy
                     </h2>
-                    <p className="text-white/60 text-sm">ID: PC#022705</p>
+                    <p className="text-white/60 mt-20 md:mt-0">ID: PC#022705</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between mt-2 gap-3">
                   <span className="text-white/60 text-sm">27Jun25</span>
                   <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-medium">
                     Google
@@ -534,23 +656,84 @@ const OrderDetails = () => {
                       </p>
                     )}
                   </div>
-                  <div>
+                  <div className="relative">
                     <label className="block text-white/60 text-sm mb-2">
                       Part Price *
                     </label>
-                    <input
-                      type="number"
-                      className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                        fieldErrors.partPrice
-                          ? "border-red-500 focus:border-red-500"
-                          : "border-gray-600 focus:border-blue-500"
-                      }`}
-                      placeholder="Enter price"
-                      value={formData.partPrice}
-                      onChange={(e) =>
-                        handleInputChange("partPrice", e.target.value)
-                      }
-                    />
+                    <div className="relative" ref={priceOptionsRef}>
+                      <input
+                        type="number"
+                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 pr-12 text-white focus:outline-none ${
+                          fieldErrors.partPrice
+                            ? "border-red-500 focus:border-red-500"
+                            : "border-gray-600 focus:border-blue-500"
+                        }`}
+                        placeholder="Enter price"
+                        value={formData.partPrice}
+                        onChange={(e) =>
+                          handleInputChange("partPrice", e.target.value)
+                        }
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPriceOptions(!showPriceOptions)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold transition-colors"
+                      >
+                        <Plus size={14} />
+                      </button>
+
+                      {/* Dropdown options */}
+                      {showPriceOptions && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-[#0a1929] border border-gray-600 rounded-lg shadow-lg z-10">
+                          <div className="py-1">
+                            {!visiblePriceFields.taxesPrice && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handlePriceFieldSelection("taxesPrice")
+                                }
+                                className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
+                              >
+                                Taxes Price
+                              </button>
+                            )}
+                            {!visiblePriceFields.handlingPrice && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handlePriceFieldSelection("handlingPrice")
+                                }
+                                className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
+                              >
+                                Handling Price
+                              </button>
+                            )}
+                            {!visiblePriceFields.processingPrice && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handlePriceFieldSelection("processingPrice")
+                                }
+                                className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
+                              >
+                                Processing Price
+                              </button>
+                            )}
+                            {!visiblePriceFields.corePrice && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handlePriceFieldSelection("corePrice")
+                                }
+                                className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
+                              >
+                                Core Price
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                     {fieldErrors.partPrice && (
                       <p className="text-red-400 text-xs mt-1">
                         {fieldErrors.partPrice}
@@ -558,100 +741,173 @@ const OrderDetails = () => {
                     )}
                   </div>
                 </div>
-                <div className="grid grid-cols-4 gap-2">
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Taxes Price
-                    </label>
-                    <input
-                      type="number"
-                      className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                        fieldErrors.taxesPrice
-                          ? "border-red-500 focus:border-red-500"
-                          : "border-gray-600 focus:border-blue-500"
-                      }`}
-                      placeholder="Enter price"
-                      value={formData.taxesPrice}
-                      onChange={(e) =>
-                        handleInputChange("taxesPrice", e.target.value)
-                      }
-                    />
-                    {fieldErrors.taxesPrice && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {fieldErrors.taxesPrice}
-                      </p>
+                {/* Dynamic additional price fields */}
+                {(visiblePriceFields.taxesPrice ||
+                  visiblePriceFields.handlingPrice ||
+                  visiblePriceFields.processingPrice ||
+                  visiblePriceFields.corePrice) && (
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                    {visiblePriceFields.taxesPrice && (
+                      <div className="relative">
+                        {true && (
+                          <button
+                            onClick={() => {
+                              setVisiblePriceFields((prev) => ({
+                                ...prev,
+                                ["taxesPrice"]: false,
+                              }));
+                            }}
+                            className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                            title="Remove payment"
+                          >
+                            <X size={16} />
+                          </button>
+                        )}
+                        <label className="block text-white/60 text-sm mb-2">
+                          Taxes Price
+                        </label>
+                        <input
+                          type="number"
+                          className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                            fieldErrors.taxesPrice
+                              ? "border-red-500 focus:border-red-500"
+                              : "border-gray-600 focus:border-blue-500"
+                          }`}
+                          placeholder="Enter price"
+                          value={formData.taxesPrice}
+                          onChange={(e) =>
+                            handleInputChange("taxesPrice", e.target.value)
+                          }
+                        />
+                        {fieldErrors.taxesPrice && (
+                          <p className="text-red-400 text-xs mt-1">
+                            {fieldErrors.taxesPrice}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {visiblePriceFields.handlingPrice && (
+                      <div className="relative">
+                        {true && (
+                          <button
+                            onClick={() => {
+                              setVisiblePriceFields((prev) => ({
+                                ...prev,
+                                ["handlingPrice"]: false,
+                              }));
+                            }}
+                            className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                            title="Remove payment"
+                          >
+                            <X size={16} />
+                          </button>
+                        )}
+                        <label className="block text-white/60 text-sm mb-2">
+                          Handling Price
+                        </label>
+                        <input
+                          type="number"
+                          className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                            fieldErrors.handlingPrice
+                              ? "border-red-500 focus:border-red-500"
+                              : "border-gray-600 focus:border-blue-500"
+                          }`}
+                          placeholder="Enter price"
+                          value={formData.handlingPrice}
+                          onChange={(e) =>
+                            handleInputChange("handlingPrice", e.target.value)
+                          }
+                        />
+                        {fieldErrors.handlingPrice && (
+                          <p className="text-red-400 text-xs mt-1">
+                            {fieldErrors.handlingPrice}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {visiblePriceFields.processingPrice && (
+                      <div className="relative">
+                        {true && (
+                          <button
+                            onClick={() => {
+                              setVisiblePriceFields((prev) => ({
+                                ...prev,
+                                ["processingPrice"]: false,
+                              }));
+                            }}
+                            className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                            title="Remove payment"
+                          >
+                            <X size={16} />
+                          </button>
+                        )}
+                        <label className="block text-white/60 text-sm mb-2">
+                          Processing Price
+                        </label>
+                        <input
+                          type="number"
+                          className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                            fieldErrors.processingPrice
+                              ? "border-red-500 focus:border-red-500"
+                              : "border-gray-600 focus:border-blue-500"
+                          }`}
+                          placeholder="Enter price"
+                          value={formData.processingPrice}
+                          onChange={(e) =>
+                            handleInputChange("processingPrice", e.target.value)
+                          }
+                        />
+                        {fieldErrors.processingPrice && (
+                          <p className="text-red-400 text-xs mt-1">
+                            {fieldErrors.processingPrice}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {visiblePriceFields.corePrice && (
+                      <div className="relative">
+                        {true && (
+                          <button
+                            onClick={() => {
+                              setVisiblePriceFields((prev) => ({
+                                ...prev,
+                                ["corePrice"]: false,
+                              }));
+                            }}
+                            className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                            title="Remove payment"
+                          >
+                            <X size={16} />
+                          </button>
+                        )}
+                        <label className="block text-white/60 text-sm mb-2">
+                          Core Price
+                        </label>
+                        <input
+                          type="number"
+                          className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                            fieldErrors.corePrice
+                              ? "border-red-500 focus:border-red-500"
+                              : "border-gray-600 focus:border-blue-500"
+                          }`}
+                          placeholder="Enter price"
+                          value={formData.corePrice}
+                          onChange={(e) =>
+                            handleInputChange("corePrice", e.target.value)
+                          }
+                        />
+                        {fieldErrors.corePrice && (
+                          <p className="text-red-400 text-xs mt-1">
+                            {fieldErrors.corePrice}
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Handling Price
-                    </label>
-                    <input
-                      type="number"
-                      className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                        fieldErrors.handlingPrice
-                          ? "border-red-500 focus:border-red-500"
-                          : "border-gray-600 focus:border-blue-500"
-                      }`}
-                      placeholder="Enter price"
-                      value={formData.handlingPrice}
-                      onChange={(e) =>
-                        handleInputChange("handlingPrice", e.target.value)
-                      }
-                    />
-                    {fieldErrors.handlingPrice && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {fieldErrors.handlingPrice}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Processing Price
-                    </label>
-                    <input
-                      type="number"
-                      className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                        fieldErrors.processingPrice
-                          ? "border-red-500 focus:border-red-500"
-                          : "border-gray-600 focus:border-blue-500"
-                      }`}
-                      placeholder="Enter price"
-                      value={formData.processingPrice}
-                      onChange={(e) =>
-                        handleInputChange("processingPrice", e.target.value)
-                      }
-                    />
-                    {fieldErrors.processingPrice && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {fieldErrors.processingPrice}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Core Price
-                    </label>
-                    <input
-                      type="number"
-                      className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                        fieldErrors.corePrice
-                          ? "border-red-500 focus:border-red-500"
-                          : "border-gray-600 focus:border-blue-500"
-                      }`}
-                      placeholder="Enter price"
-                      value={formData.corePrice}
-                      onChange={(e) =>
-                        handleInputChange("corePrice", e.target.value)
-                      }
-                    />
-                    {fieldErrors.corePrice && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {fieldErrors.corePrice}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {/* Row 2 */}
@@ -677,10 +933,12 @@ const OrderDetails = () => {
                           }}
                         >
                           <option value="">Select address type</option>
-                          <option>Residential</option>
-                          <option>Non Residential</option>
-                          <option>Terminal</option>
-                          <option>Commercial</option>
+                          <option value="Residential">Residential</option>
+                          {/* <option value="Non Residential">
+                            Non Residential
+                          </option> */}
+                          <option value="Terminal">Terminal</option>
+                          <option value="Commercial">Commercial</option>
                         </select>
                         <ChevronDown
                           className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
@@ -689,7 +947,7 @@ const OrderDetails = () => {
                       </div>
                       {showCompany && (
                         <div className="mt-2 relative">
-                          <label className="block text-white/60 text-sm mb-2">
+                          <label className=" block text-white/60 text-sm mb-2">
                             Company Name
                           </label>
                           <input
@@ -752,12 +1010,12 @@ const OrderDetails = () => {
                 </div>
 
                 {/* Middle Section - Payment & Warranty */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
                     <label className="block text-white/60 text-sm mb-2">
                       Card
                     </label>
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 md:grid-cols-2  gap-2">
                       <input
                         type="text"
                         className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
@@ -775,16 +1033,52 @@ const OrderDetails = () => {
                         onChange={(e) =>
                           handleInputChange("cardNumber", e.target.value)
                         }
+                        onBlur={(e) => {
+                          const err = validateField(
+                            "cardNumber",
+                            e.target.value
+                          );
+                          if (err)
+                            setFieldErrors((prev) => ({
+                              ...prev,
+                              cardNumber: err,
+                            }));
+                        }}
                       />
+                      {fieldErrors.cardNumber ? (
+                        <p className="col-span-2 md:col-span-4 text-red-400 text-xs">
+                          {fieldErrors.cardNumber}
+                        </p>
+                      ) : (
+                        formData.cardNumber && (
+                          <p className="col-span-2 md:col-span-4 text-white/60 text-xs">
+                            Detected card:{" "}
+                            {getCardType(formData.cardNumber) || "Unknown"}
+                          </p>
+                        )
+                      )}
                       <input
                         type="text"
                         className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
-                        placeholder="Date"
+                        placeholder="Expire Date"
                         value={formData.cardDate}
                         onChange={(e) =>
                           handleInputChange("cardDate", e.target.value)
                         }
+                        onBlur={(e) => {
+                          const err = validateField("cardDate", e.target.value);
+                          if (err)
+                            setFieldErrors((prev) => ({
+                              ...prev,
+                              cardDate: err,
+                            }));
+                        }}
                       />
+                      {fieldErrors.cardDate && (
+                        <p className="col-span-2 md:col-span-4 text-red-400 text-xs">
+                          {fieldErrors.cardDate}
+                        </p>
+                      )}
                       <input
                         type="text"
                         className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
@@ -793,7 +1087,20 @@ const OrderDetails = () => {
                         onChange={(e) =>
                           handleInputChange("cardCvv", e.target.value)
                         }
+                        onBlur={(e) => {
+                          const err = validateField("cardCvv", e.target.value);
+                          if (err)
+                            setFieldErrors((prev) => ({
+                              ...prev,
+                              cardCvv: err,
+                            }));
+                        }}
                       />
+                      {fieldErrors.cardCvv && (
+                        <p className="col-span-2 md:col-span-4 text-red-400 text-xs">
+                          {fieldErrors.cardCvv}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div>
@@ -1117,7 +1424,7 @@ const OrderDetails = () => {
                               <option>MAVRICK</option>
                               <option>ALTRUPAY</option>
                               <option>Stripe</option>
-                              <option>Bank Transfer</option>
+                              {/* <option>Bank Transfer</option> */}
                               <option>Cash</option>
                               <option>Cheque</option>
                               <option>Other</option>
@@ -1132,35 +1439,19 @@ const OrderDetails = () => {
                           <label className="block text-white/60 text-sm mb-2">
                             Total Price
                           </label>
-                          {index > 0 ? (
-                            <input
-                              type="text"
-                              className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                              placeholder="Total Price"
-                              value={entry.totalPrice}
-                              onChange={(e) =>
-                                handlePaymentEntryChange(
-                                  entry.id,
-                                  "totalPrice",
-                                  e.target.value
-                                )
-                              }
-                            />
-                          ) : (
-                            <input
-                              type="text"
-                              className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                              placeholder="Total Price"
-                              value={formData.totalPrice}
-                              onChange={(e) =>
-                                handlePaymentEntryChange(
-                                  entry.id,
-                                  "totalPrice",
-                                  e.target.value
-                                )
-                              }
-                            />
-                          )}
+                          <input
+                            type="text"
+                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                            placeholder="Total Price"
+                            value={entry.totalPrice}
+                            onChange={(e) =>
+                              handlePaymentEntryChange(
+                                entry.id,
+                                "totalPrice",
+                                e.target.value
+                              )
+                            }
+                          />
                         </div>
                         <div>
                           <button
@@ -1169,11 +1460,10 @@ const OrderDetails = () => {
                                 ? "bg-gray-500 cursor-not-allowed"
                                 : "bg-[#006BA9] hover:bg-[#006BA9]/90"
                             } text-white`}
-                            onClick={handleCharge}
+                            onClick={() => handleCharge(entry.id)}
                             disabled={isLoading}
                           >
-                            {/* {isLoading ? "processing..." : "Charge"} */}
-                            {showCharge ? "Re-charge" : "Charge"}
+                            {entry.chargeClicked ? "Re-charge" : "Charge"}
                           </button>
                         </div>
                         <div>
@@ -1184,9 +1474,13 @@ const OrderDetails = () => {
                             type="text"
                             className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
                             placeholder="Enter approval code"
-                            value={formData.approvalCode}
+                            value={entry.approvalCode}
                             onChange={(e) =>
-                              handleInputChange("approvalCode", e.target.value)
+                              handlePaymentEntryChange(
+                                entry.id,
+                                "approvalCode",
+                                e.target.value
+                              )
                             }
                           />
                         </div>
@@ -1216,22 +1510,19 @@ const OrderDetails = () => {
                           <label className="block text-white/60 text-sm mb-2">
                             Charged
                           </label>
-                          <div className="relative">
-                            <select
-                              className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                              value={formData.charged}
-                              onChange={(e) =>
-                                handleInputChange("charged", e.target.value)
-                              }
-                            >
-                              <option>No</option>
-                              <option>Yes</option>
-                            </select>
-                            <ChevronDown
-                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                              size={16}
-                            />
-                          </div>
+                          <input
+                            type="text"
+                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                            placeholder="Enter charged status"
+                            value={entry.charged}
+                            onChange={(e) =>
+                              handlePaymentEntryChange(
+                                entry.id,
+                                "charged",
+                                e.target.value
+                              )
+                            }
+                          />
                         </div>
                       </div>
                     </div>
@@ -1399,7 +1690,6 @@ const OrderDetails = () => {
                           <textarea
                             className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
                             value={previousYards[selectedPrevYardIdx].reason}
-                            disabled
                           />
                         </div>
                       </div>
@@ -1540,13 +1830,13 @@ const OrderDetails = () => {
                         <select
                           className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
                           value={formData.yardShipping}
-                          onChange={(e) =>
-                            handleInputChange("yardShipping", e.target.value)
-                          }
+                          onChange={(e) => {
+                            handleInputChange("yardShipping", e.target.value);
+                          }}
                         >
                           <option value="">Select shipping option</option>
-                          <option>Own Shipping</option>
-                          <option>Yard Shipping</option>
+                          <option value="Own Shipping">Own Shipping</option>
+                          <option value="Yard Shipping">Yard Shipping</option>
                         </select>
                         <ChevronDown
                           className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
@@ -1554,20 +1844,22 @@ const OrderDetails = () => {
                         />
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-white/60 text-sm mb-2">
-                        Yard Shipping Cost
-                      </label>
-                      <input
-                        type="number"
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                        placeholder="Enter yard cost"
-                        value={formData.yardCost}
-                        onChange={(e) =>
-                          handleInputChange("yardCost", e.target.value)
-                        }
-                      />
-                    </div>
+                    {showYardShippingCost && (
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Yard Shipping Cost
+                        </label>
+                        <input
+                          type="number"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                          placeholder="Enter yard cost"
+                          value={formData.yardCost}
+                          onChange={(e) =>
+                            handleInputChange("yardCost", e.target.value)
+                          }
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">
@@ -1670,160 +1962,164 @@ const OrderDetails = () => {
                   </div>
                 </div>
 
-                <h3 className="text-white text-lg font-semibold mb-4">
-                  Own Shipping Info
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-[#FFFFFF33] rounded-lg p-2 my-4">
-                  {/* Name */}
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Product type
-                    </label>
-                    <div className="relative">
-                      <select
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                        // value={formData.yardShipping}
-                        // onChange={(e) =>
-                        //   handleInputChange("yardShipping", e.target.value)
-                        // }
-                      >
-                        <option value="">Select Product Type</option>
-                        <option>LTL</option>
-                        <option>Parcel</option>
-                      </select>
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                        size={16}
-                      />
+                {showOwnShipping && (
+                  <>
+                    <h3 className="text-white text-lg font-semibold mb-4">
+                      Own Shipping Info
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-[#FFFFFF33] rounded-lg p-2 my-4">
+                      {/* Name */}
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Product type
+                        </label>
+                        <div className="relative">
+                          <select
+                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                            // value={formData.yardShipping}
+                            // onChange={(e) =>
+                            //   handleInputChange("yardShipping", e.target.value)
+                            // }
+                          >
+                            <option value="">Select Product Type</option>
+                            <option>LTL</option>
+                            <option>Parcel</option>
+                          </select>
+                          <ChevronDown
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                            size={16}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Package type
+                        </label>
+                        <div className="relative">
+                          <select
+                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                            // value={formData.yardShipping}
+                            // onChange={(e) =>
+                            //   handleInputChange("yardShipping", e.target.value)
+                            // }
+                          >
+                            <option value="">Select Package Type</option>
+                            <option>Pallet</option>
+                            <option>Box</option>
+                            <option>Crate</option>
+                          </select>
+                          <ChevronDown
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                            size={16}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Weight
+                        </label>
+                        <input
+                          type="number"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                          placeholder="Enter weight"
+                          // value={formData.weight}
+                          // onChange={(e) =>
+                          // handleInputChange("weight", e.target.value)
+                          // }
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Dimensions
+                        </label>
+                        <input
+                          type="number"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                          placeholder="Enter dimensions"
+                          // value={formData.dimensions}
+                          // onChange={(e) =>
+                          // handleInputChange("dimensions", e.target.value)
+                          // }
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Pick Up Date
+                        </label>
+                        <input
+                          type="date"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                          placeholder="Enter pick up date"
+                          // value={formData.dimensions}
+                          // onChange={(e) =>
+                          // handleInputChange("dimensions", e.target.value)
+                          // }
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Carrier
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                          placeholder="Enter carrier"
+                          // value={formData.weight}
+                          // onChange={(e) =>
+                          // handleInputChange("weight", e.target.value)
+                          // }
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Price
+                        </label>
+                        <input
+                          type="number"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                          placeholder="Enter price"
+                          // value={formData.price}
+                          // onChange={(e) =>
+                          // handleInputChange("price", e.target.value)
+                          // }
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Variance
+                        </label>
+                        <input
+                          type="number"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                          placeholder="Enter variance"
+                          // value={formData.variance}
+                          // onChange={(e) =>
+                          // handleInputChange("variance", e.target.value)
+                          // }
+                        />
+                      </div>
+                      <div className="flex justify-end">
+                        <button className="bg-[#006BA9] hover:bg-[#006BA9]/90 cursor-pointer mt-8 w-40 h-10 px-2 py-2 text-white  rounded-lg font-medium transition-colors">
+                          Create BOL
+                        </button>
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          BOL Number
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:border-blue-500 focus:outline-none"
+                          placeholder="Enter BOL number"
+                          // value={formData.carrierName}
+                          // onChange={(e) =>
+                          // handleInputChange("carrierName", e.target.value)
+                          // }
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Package type
-                    </label>
-                    <div className="relative">
-                      <select
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                        // value={formData.yardShipping}
-                        // onChange={(e) =>
-                        //   handleInputChange("yardShipping", e.target.value)
-                        // }
-                      >
-                        <option value="">Select Package Type</option>
-                        <option>Pallet</option>
-                        <option>Box</option>
-                        <option>Crate</option>
-                      </select>
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                        size={16}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Weight
-                    </label>
-                    <input
-                      type="number"
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                      placeholder="Enter weight"
-                      // value={formData.weight}
-                      // onChange={(e) =>
-                      // handleInputChange("weight", e.target.value)
-                      // }
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Dimensions
-                    </label>
-                    <input
-                      type="number"
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                      placeholder="Enter dimensions"
-                      // value={formData.dimensions}
-                      // onChange={(e) =>
-                      // handleInputChange("dimensions", e.target.value)
-                      // }
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Pick Up Date
-                    </label>
-                    <input
-                      type="date"
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                      placeholder="Enter pick up date"
-                      // value={formData.dimensions}
-                      // onChange={(e) =>
-                      // handleInputChange("dimensions", e.target.value)
-                      // }
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Carrier
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                      placeholder="Enter carrier"
-                      // value={formData.weight}
-                      // onChange={(e) =>
-                      // handleInputChange("weight", e.target.value)
-                      // }
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Price
-                    </label>
-                    <input
-                      type="number"
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                      placeholder="Enter price"
-                      // value={formData.price}
-                      // onChange={(e) =>
-                      // handleInputChange("price", e.target.value)
-                      // }
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Variance
-                    </label>
-                    <input
-                      type="number"
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                      placeholder="Enter variance"
-                      // value={formData.variance}
-                      // onChange={(e) =>
-                      // handleInputChange("variance", e.target.value)
-                      // }
-                    />
-                  </div>
-                  <div className="flex justify-end">
-                    <button className="bg-[#006BA9] hover:bg-[#006BA9]/90 cursor-pointer mt-8 w-40 h-10 px-2 py-2 text-white  rounded-lg font-medium transition-colors">
-                      Create BOL
-                    </button>
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      BOL Number
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:border-blue-500 focus:outline-none"
-                      placeholder="Enter BOL number"
-                      // value={formData.carrierName}
-                      // onChange={(e) =>
-                      // handleInputChange("carrierName", e.target.value)
-                      // }
-                    />
-                  </div>
-                </div>
+                  </>
+                )}
               </div>
               <div className="grid md:grid-cols-3 gap-10">
                 <div>
