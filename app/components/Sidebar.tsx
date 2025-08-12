@@ -14,12 +14,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import useAuthStore from "@/store/auth";
-import { URL } from "@/utils//imageUrl";
+import { URL } from "@/utils/imageUrl";
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const isActive = (path: string) => pathname === path;
+  const isActive = (basePath: string): boolean => {
+    if (basePath === "/") return pathname === "/"; // root should be exact
+    return pathname === basePath || pathname.startsWith(`${basePath}/`);
+  };
   const user = useAuthStore((state) => state.user);
 
   return (
@@ -65,15 +68,7 @@ export default function Sidebar() {
             <Link
               href="/orders"
               className={`flex items-center px-4 py-3 rounded-lg hover:bg-[#00466f] ${
-                isActive("/orders")
-                  ? "bg-hover"
-                  : isActive("/orders/")
-                  ? "bg-hover"
-                  : isActive("/dashboard/orders")
-                  ? "bg-hover"
-                  : isActive("/dashboard/orders/")
-                  ? "bg-hover"
-                  : ""
+                isActive("/orders") ? "bg-hover" : ""
               }`}
             >
               <Package className="mr-2 w-5 h-5" />
@@ -82,19 +77,7 @@ export default function Sidebar() {
             <Link
               href="/production"
               className={`flex items-center px-4 py-3 rounded-lg hover:bg-[#00466f] ${
-                isActive("/production")
-                  ? "bg-hover"
-                  : isActive("/production/")
-                  ? "bg-hover"
-                  : isActive("/dashboard/production")
-                  ? "bg-hover"
-                  : isActive("/dashboard/production/")
-                  ? "bg-hover"
-                  : isActive("/production/add")
-                  ? "bg-hover"
-                  : isActive("/production/[id]")
-                  ? "bg-hover"
-                  : ""
+                isActive("/production") ? "bg-hover" : ""
               }`}
             >
               <Factory className="mr-2 w-5 h-5" />
@@ -103,15 +86,7 @@ export default function Sidebar() {
             <Link
               href="/in-clients"
               className={`flex items-center px-4 py-3 rounded-lg hover:bg-[#00466f] ${
-                isActive("/in-clients")
-                  ? "bg-hover"
-                  : isActive("/in-clients/")
-                  ? "bg-hover"
-                  : isActive("/dashboard/in-clients")
-                  ? "bg-hover"
-                  : isActive("/dashboard/in-clients/")
-                  ? "bg-hover"
-                  : ""
+                isActive("/in-clients") ? "bg-hover" : ""
               }`}
             >
               <Users className="mr-2 w-5 h-5" />

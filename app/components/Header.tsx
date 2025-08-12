@@ -10,7 +10,7 @@ export default function Header() {
   return (
     <div className="pt-[60px]">
       <header className="fixed top-0 left-0 w-full z-10">
-        <div className="w-full  bg-secondary px-4 md:px-8 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0">
+        <div className="w-full  bg-secondary px-4 md:px-6 lg:px-8 py-4 md:py-5 lg:py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0">
           {/* Top - Title + Mobile icons */}
           <div className="flex justify-between items-center md:justify-start w-full">
             <h2 className="text-white font-semibold ml-0 px-10 md:ml-50 text-[20px] md:text-[30px] font-audiowide">
@@ -27,7 +27,7 @@ export default function Header() {
           </div>
 
           {/* Search Bar */}
-          <div className="w-full md:w-[450px]">
+          <div className="hidden lg:block w-full md:w-[450px]">
             <div className="relative w-full">
               <Search
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"

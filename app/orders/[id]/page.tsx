@@ -403,6 +403,7 @@ const OrderDetails = () => {
           shippingAddress: formData.shippingAddress,
           billingAddress: formData.billingAddress,
           shippingAddressType: formData.shippingAddressType,
+          company: formData.company,
           totalSellingPrice: formData.totalSellingPrice,
         },
         paymentInfo: {
@@ -431,6 +432,16 @@ const OrderDetails = () => {
           miles: formData.yardMiles,
           shipping: formData.yardShipping,
         },
+        // previousYards: {
+        //   name: formData.yardName,
+        //   mobile: formData.yardMobile,
+        //   address: formData.yardAddress,
+        //   email: formData.yardEmail,
+        //   price: formData.yardPrice,
+        //   warranty: formData.yardWarranty,
+        //   miles: formData.yardMiles,
+        //   shipping: formData.yardShipping,
+        // },
         additionalInfo: {
           pictureStatus: formData.pictureStatus,
           trackingNumber: formData.trackingNumber,
@@ -552,7 +563,7 @@ const OrderDetails = () => {
         <Sidebar />
         <div className="md:pl-64">
           <Header />
-          <main className="pt-[40px] min-h-screen px-4 md:px-8">
+          <main className="pt-[60px] lg:pt-[40px] min-h-screen px-4 md:px-8">
             {/* Header with breadcrumb and close button */}
             <div className="flex items-center justify-between mb-20">
               <div className="flex items-center gap-2 text-sm">
@@ -632,7 +643,7 @@ const OrderDetails = () => {
               {/* Form Fields Grid */}
               <div className="space-y-8">
                 {/* Top Section - Contact & Address */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {/* Row 1 */}
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
@@ -651,11 +662,13 @@ const OrderDetails = () => {
                         handleInputChange("email", e.target.value)
                       }
                     />
-                    {fieldErrors.email && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {fieldErrors.email}
-                      </p>
-                    )}
+                    <p
+                      className={`text-red-400 text-xs mt-1 h-4 ${
+                        fieldErrors.email ? "" : "invisible"
+                      }`}
+                    >
+                      {fieldErrors.email || "placeholder"}
+                    </p>
                   </div>
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
@@ -674,11 +687,13 @@ const OrderDetails = () => {
                         handleInputChange("mobile", e.target.value)
                       }
                     />
-                    {fieldErrors.mobile && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {fieldErrors.mobile}
-                      </p>
-                    )}
+                    <p
+                      className={`text-red-400 text-xs mt-1 h-4 ${
+                        fieldErrors.mobile ? "" : "invisible"
+                      }`}
+                    >
+                      {fieldErrors.mobile || "placeholder"}
+                    </p>
                   </div>
                   <div className="relative">
                     <label className="block text-white/60 text-sm mb-2">
@@ -758,11 +773,13 @@ const OrderDetails = () => {
                         </div>
                       )}
                     </div>
-                    {fieldErrors.partPrice && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {fieldErrors.partPrice}
-                      </p>
-                    )}
+                    <p
+                      className={`text-red-400 text-xs mt-1 h-4 ${
+                        fieldErrors.partPrice ? "" : "invisible"
+                      }`}
+                    >
+                      {fieldErrors.partPrice || "placeholder"}
+                    </p>
                   </div>
                 </div>
                 {/* Dynamic additional price fields */}
@@ -780,6 +797,7 @@ const OrderDetails = () => {
                                 ...prev,
                                 ["taxesPrice"]: false,
                               }));
+                              handleInputChange("taxesPrice", "");
                             }}
                             className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                             title="Remove payment"
@@ -820,6 +838,7 @@ const OrderDetails = () => {
                                 ...prev,
                                 ["handlingPrice"]: false,
                               }));
+                              handleInputChange("handlingPrice", "");
                             }}
                             className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                             title="Remove payment"
@@ -860,6 +879,7 @@ const OrderDetails = () => {
                                 ...prev,
                                 ["processingPrice"]: false,
                               }));
+                              handleInputChange("processingPrice", "");
                             }}
                             className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                             title="Remove payment"
@@ -900,6 +920,7 @@ const OrderDetails = () => {
                                 ...prev,
                                 ["corePrice"]: false,
                               }));
+                              handleInputChange("corePrice", "");
                             }}
                             className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                             title="Remove payment"
@@ -933,7 +954,7 @@ const OrderDetails = () => {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {/* Row 2 */}
                   <div className="col-span-1">
                     <div>
@@ -1003,11 +1024,13 @@ const OrderDetails = () => {
                         handleInputChange("shippingAddress", e.target.value)
                       }
                     />
-                    {fieldErrors.shippingAddress && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {fieldErrors.shippingAddress}
-                      </p>
-                    )}
+                    <p
+                      className={`text-red-400 text-xs mt-1 h-4 ${
+                        fieldErrors.shippingAddress ? "" : "invisible"
+                      }`}
+                    >
+                      {fieldErrors.shippingAddress || "placeholder"}
+                    </p>
                   </div>
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
@@ -1025,11 +1048,13 @@ const OrderDetails = () => {
                         handleInputChange("billingAddress", e.target.value)
                       }
                     />
-                    {fieldErrors.billingAddress && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {fieldErrors.billingAddress}
-                      </p>
-                    )}
+                    <p
+                      className={`text-red-400 text-xs mt-1 h-4 ${
+                        fieldErrors.billingAddress ? "" : "invisible"
+                      }`}
+                    >
+                      {fieldErrors.billingAddress || "placeholder"}
+                    </p>
                   </div>
                 </div>
 
@@ -1039,113 +1064,135 @@ const OrderDetails = () => {
                     <label className="block text-white/60 text-sm mb-2">
                       Card
                     </label>
-                    <div className="grid grid-cols-2 md:grid-cols-2  gap-2">
-                      <input
-                        type="text"
-                        className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
-                        placeholder="Card holder name"
-                        value={formData.cardHolderName}
-                        onChange={(e) =>
-                          handleInputChange("cardHolderName", e.target.value)
-                        }
-                      />
-                      <input
-                        type="text"
-                        className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
-                        placeholder="Card Number"
-                        value={formData.cardNumber}
-                        inputMode="numeric"
-                        maxLength={23}
-                        onChange={(e) => {
-                          const formatted = formatCardNumber(e.target.value);
-                          handleInputChange("cardNumber", formatted);
-                        }}
-                        onBlur={(e) => {
-                          const err = validateField(
-                            "cardNumber",
-                            e.target.value
-                          );
-                          if (err)
-                            setFieldErrors((prev) => ({
-                              ...prev,
-                              cardNumber: err,
-                            }));
-                        }}
-                      />
-                      {fieldErrors.cardNumber ? (
-                        <p className="col-span-2 md:col-span-4 text-red-400 text-xs">
-                          {fieldErrors.cardNumber}
+                    <div className="grid grid-cols-1 lg:grid-cols-4  gap-1">
+                      <div>
+                        <input
+                          type="text"
+                          className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
+                          placeholder="Card holder name"
+                          value={formData.cardHolderName}
+                          onChange={(e) =>
+                            handleInputChange("cardHolderName", e.target.value)
+                          }
+                        />
+                        <p className="text-red-400 text-xs mt-1 h-4 invisible">
+                          placeholder
                         </p>
-                      ) : (
-                        formData.cardNumber && (
-                          <p className="col-span-2 md:col-span-4 text-white/60 text-xs">
+                      </div>
+                      <div>
+                        <input
+                          type="text"
+                          className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
+                          placeholder="Card Number"
+                          value={formData.cardNumber}
+                          inputMode="numeric"
+                          maxLength={23}
+                          onChange={(e) => {
+                            const formatted = formatCardNumber(e.target.value);
+                            handleInputChange("cardNumber", formatted);
+                          }}
+                          onBlur={(e) => {
+                            const err = validateField(
+                              "cardNumber",
+                              e.target.value
+                            );
+                            if (err)
+                              setFieldErrors((prev) => ({
+                                ...prev,
+                                cardNumber: err,
+                              }));
+                          }}
+                        />
+                        <p
+                          className={`text-red-400 text-xs mt-1 h-4 ${
+                            fieldErrors.cardNumber ? "" : "invisible"
+                          }`}
+                        >
+                          {fieldErrors.cardNumber || "placeholder"}
+                        </p>
+                        {!fieldErrors.cardNumber && formData.cardNumber && (
+                          <p className="text-white/60 text-xs">
                             Detected card:{" "}
                             {getCardType(formData.cardNumber) || "Unknown"}
                           </p>
-                        )
-                      )}
-                      <input
-                        type="text"
-                        className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
-                        placeholder="Expire Date"
-                        value={formData.cardDate}
-                        inputMode="numeric"
-                        maxLength={7}
-                        onChange={(e) => {
-                          const formatted = formatExpiryDate(e.target.value);
-                          handleInputChange("cardDate", formatted);
-                        }}
-                        onBlur={(e) => {
-                          const err = validateField("cardDate", e.target.value);
-                          if (err)
-                            setFieldErrors((prev) => ({
-                              ...prev,
-                              cardDate: err,
-                            }));
-                        }}
-                      />
-                      {fieldErrors.cardDate && (
-                        <p className="col-span-2 md:col-span-4 text-red-400 text-xs">
-                          {fieldErrors.cardDate}
+                        )}
+                      </div>
+                      <div>
+                        <input
+                          type="text"
+                          className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
+                          placeholder="Expire Date"
+                          value={formData.cardDate}
+                          inputMode="numeric"
+                          maxLength={7}
+                          onChange={(e) => {
+                            const formatted = formatExpiryDate(e.target.value);
+                            handleInputChange("cardDate", formatted);
+                          }}
+                          onBlur={(e) => {
+                            const err = validateField(
+                              "cardDate",
+                              e.target.value
+                            );
+                            if (err)
+                              setFieldErrors((prev) => ({
+                                ...prev,
+                                cardDate: err,
+                              }));
+                          }}
+                        />
+                        <p
+                          className={`text-red-400 text-xs mt-1 h-4 ${
+                            fieldErrors.cardDate ? "" : "invisible"
+                          }`}
+                        >
+                          {fieldErrors.cardDate || "placeholder"}
                         </p>
-                      )}
-                      <input
-                        type="text"
-                        className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
-                        placeholder="CVV"
-                        value={formData.cardCvv}
-                        inputMode="numeric"
-                        maxLength={
-                          getCardType(formData.cardNumber) ===
-                          "American Express"
-                            ? 4
-                            : 3
-                        }
-                        onChange={(e) => {
-                          const expected =
+                      </div>
+                      <div>
+                        <input
+                          type="text"
+                          className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
+                          placeholder="CVV"
+                          value={formData.cardCvv}
+                          inputMode="numeric"
+                          maxLength={
                             getCardType(formData.cardNumber) ===
                             "American Express"
                               ? 4
-                              : 3;
-                          const digits = e.target.value
-                            .replace(/\D/g, "")
-                            .slice(0, expected);
-                          handleInputChange("cardCvv", digits);
-                        }}
-                        onBlur={(e) => {
-                          const err = validateField("cardCvv", e.target.value);
-                          if (err)
-                            setFieldErrors((prev) => ({
-                              ...prev,
-                              cardCvv: err,
-                            }));
-                        }}
-                      />
-                      {fieldErrors.cardCvv && (
-                        <p className="col-span-2 md:col-span-4 text-red-400 text-xs">
-                          {fieldErrors.cardCvv}
+                              : 3
+                          }
+                          onChange={(e) => {
+                            const expected =
+                              getCardType(formData.cardNumber) ===
+                              "American Express"
+                                ? 4
+                                : 3;
+                            const digits = e.target.value
+                              .replace(/\D/g, "")
+                              .slice(0, expected);
+                            handleInputChange("cardCvv", digits);
+                          }}
+                          onBlur={(e) => {
+                            const err = validateField(
+                              "cardCvv",
+                              e.target.value
+                            );
+                            if (err)
+                              setFieldErrors((prev) => ({
+                                ...prev,
+                                cardCvv: err,
+                              }));
+                          }}
+                        />
+                        <p
+                          className={`text-red-400 text-xs mt-1 h-4 ${
+                            fieldErrors.cardCvv ? "" : "invisible"
+                          }`}
+                        >
+                          {fieldErrors.cardCvv || "placeholder"}
                         </p>
-                      )}
+                      </div>
                     </div>
                   </div>
                   <div>
@@ -1190,7 +1237,7 @@ const OrderDetails = () => {
                 </div>
 
                 {/* Product Details Section - Before Send Invoice Button */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-6">
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
                       Make *
@@ -1217,11 +1264,13 @@ const OrderDetails = () => {
                         size={16}
                       />
                     </div>
-                    {fieldErrors.make && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {fieldErrors.make}
-                      </p>
-                    )}
+                    <p
+                      className={`text-red-400 text-xs mt-1 h-4 ${
+                        fieldErrors.make ? "" : "invisible"
+                      }`}
+                    >
+                      {fieldErrors.make || "placeholder"}
+                    </p>
                   </div>
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
@@ -1249,11 +1298,13 @@ const OrderDetails = () => {
                         size={16}
                       />
                     </div>
-                    {fieldErrors.model && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {fieldErrors.model}
-                      </p>
-                    )}
+                    <p
+                      className={`text-red-400 text-xs mt-1 h-4 ${
+                        fieldErrors.model ? "" : "invisible"
+                      }`}
+                    >
+                      {fieldErrors.model || "placeholder"}
+                    </p>
                   </div>
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
@@ -1281,11 +1332,13 @@ const OrderDetails = () => {
                         size={16}
                       />
                     </div>
-                    {fieldErrors.year && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {fieldErrors.year}
-                      </p>
-                    )}
+                    <p
+                      className={`text-red-400 text-xs mt-1 h-4 ${
+                        fieldErrors.year ? "" : "invisible"
+                      }`}
+                    >
+                      {fieldErrors.year || "placeholder"}
+                    </p>
                   </div>
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
@@ -1313,11 +1366,13 @@ const OrderDetails = () => {
                         size={16}
                       />
                     </div>
-                    {fieldErrors.parts && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {fieldErrors.parts}
-                      </p>
-                    )}
+                    <p
+                      className={`text-red-400 text-xs mt-1 h-4 ${
+                        fieldErrors.parts ? "" : "invisible"
+                      }`}
+                    >
+                      {fieldErrors.parts || "placeholder"}
+                    </p>
                   </div>
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
@@ -1934,7 +1989,7 @@ const OrderDetails = () => {
                     </div>
                   </div>
                 </div>
-                <div className="grid md:grid-cols-2 gap-10 my-2">
+                <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-10 my-2">
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
                       Picture Status

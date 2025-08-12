@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodeMailer from "nodemailer";
+import path from "path";
 
 interface InvoiceData {
   customerInfo: {
@@ -9,6 +10,7 @@ interface InvoiceData {
     shippingAddress: string;
     billingAddress: string;
     shippingAddressType: string;
+    company: string;
     totalSellingPrice: number;
     warranty: string;
     milesPromised: number;
@@ -60,7 +62,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate invoice HTML (you can use a template engine like Handlebars)
+    // Generate invoice HTML (CID image will be attached via email)
     const invoiceHTML = generateInvoiceHTML(invoiceData);
 
     // Send email with invoice
@@ -100,41 +102,54 @@ function generateInvoiceHTML(data: InvoiceData) {
       <meta charset="utf-8">
       <title>Invoice - ${data.orderId}</title>
       <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-        .invoice-header { text-align: center; margin-bottom: 30px; }
-        .invoice-details { margin-bottom: 20px; }
-        .customer-info, .product-info, .payment-info { margin-bottom: 20px; }
-        .total { font-size: 18px; font-weight: bold; margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #f5f5f5; }
+        body { font-family: Arial, sans-serif; margin: 0; }
+        .invoice-header {font-size: 30px; text-align: center; margin-bottom: 30px; }
+        .invoice-details {font-size: 40px; margin-bottom: 20px; }
+        .customer-info, .payment-info {font-size: 40px; margin-bottom: 20px; }
+        .product-info {font-size: 40px; margin-bottom: 20px; }
+        .total { font-size: 40px; font-weight: bold; margin-top: 20px; }
+        table {font-size: 25px; width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { font-size: 25px;padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { font-size: 25px;background-color: #f5f5f5; }
       </style>
     </head>
     <body>
+      <div style="width:100vh;padding:60px 15px;background:#091627;border-bottom:2px solid #e5e5e5;text-align:left;margin-bottom:24px;margin-left:0px">
+        <img src="cid:invoice-logo" alt="Parts Central" style="height:60px;display:inline-block;" />
+      </div>
       <div class="invoice-header">
         <h1>INVOICE</h1>
         <p>Order ID: ${data.orderId}</p>
         <p>Date: ${new Date().toLocaleDateString()}</p>
       </div>
 
-      <div class="customer-info">
-        <h3>Customer Information</h3>
-        <p><strong>Name:</strong> ${data.customerInfo.name}</p>
-        <p><strong>Email:</strong> ${data.customerInfo.email}</p>
-        <p><strong>Mobile:</strong> ${data.customerInfo.mobile}</p>
-         <p><strong>shipping Address Type:</strong> ${
+      <div>
+        <h3 style="font-size: 40px;">Customer Information</h3>
+        <p style="font-size: 30px;"><strong>Name:</strong> ${
+          data.customerInfo.name
+        }</p>
+        <p style="font-size: 30px;"><strong>Email:</strong> ${
+          data.customerInfo.email
+        }</p>
+        <p style="font-size: 30px;"><strong>Mobile:</strong> ${
+          data.customerInfo.mobile
+        }</p>
+         <p style="font-size: 30px;"><strong>shipping Address Type:</strong> ${
            data.customerInfo.shippingAddressType
          }</p>
-        <p><strong>Shipping Address:</strong> ${
+        <p style="font-size: 30px;"><strong>Company:</strong> ${
+          data.customerInfo.company
+        }</p>
+        <p style="font-size: 30px;"><strong>Shipping Address:</strong> ${
           data.customerInfo.shippingAddress
         }</p>
-        <p><strong>Billing Address:</strong> ${
+        <p style="font-size: 30px;"><strong>Billing Address:</strong> ${
           data.customerInfo.billingAddress
         }</p>
       </div>
 
       <div class="product-info">
-        <h3>Product Information</h3>
+        <h3 style="font-size: 40px;">Product Information</h3>
         <table>
           <tr>
             <th>Make</th>
@@ -155,48 +170,53 @@ function generateInvoiceHTML(data: InvoiceData) {
         </table>
       </div>
 
-      <div class="payment-info">
-        <h3>Payment Information</h3>
-        <p><strong>Selling Price:</strong> $${
+      <div>
+        <h3 style="font-size: 40px;">Payment Information</h3>
+        <p style="font-size: 30px;"><strong>Selling Price:</strong> $${
           data.customerInfo.totalSellingPrice
         }</p>
-        <p><strong>Card Holder Name:</strong> ${
+        <p style="font-size: 30px;"><strong>Card Holder Name:</strong> ${
           data.paymentInfo.cardHolderName
         }</p>
-        <p><strong>Card Number:</strong> ${data.paymentInfo.cardNumber}</p>
-        <p><strong>Card Date:</strong> ${data.paymentInfo.cardDate}</p>
-        <p><strong>CVV:</strong> ${data.paymentInfo.cardCvv}</p>
-        <p><strong>Warranty:</strong> ${data.paymentInfo.warranty}</p>
-        <p><strong>Miles Promised:</strong> ${
-          data.paymentInfo.milesPromised
+        <p style="font-size: 30px;"><strong>Card Number:</strong> **** **** **** ${data.paymentInfo.cardNumber.slice(
+          15,
+          19
+        )}</p>
+        <p style="font-size: 30px;"><strong>Expire Date:</strong> ${
+          data.paymentInfo.cardDate
         }</p>
+        <p style="font-size: 30px;"><strong>CVV:</strong> ${
+          data.paymentInfo.cardCvv
+        }</p>
+        <p style="font-size: 30px;"><strong>Warranty:</strong> ${
+          data.paymentInfo.warranty
+        }</p>
+        
       </div>
-
-      ${
-        data.yardInfo.name
-          ? `
-      <div class="yard-info">
-        <h3>Yard Information</h3>
-        <p><strong>Name:</strong> ${data.yardInfo.name}</p>
-        <p><strong>Mobile:</strong> ${data.yardInfo.mobile}</p>
-        <p><strong>Address:</strong> ${data.yardInfo.address}</p>
-        <p><strong>Email:</strong> ${data.yardInfo.email}</p>
-        <p><strong>Price:</strong> $${data.yardInfo.price}</p>
-        <p><strong>Warranty:</strong> ${data.yardInfo.warranty}</p>
-        <p><strong>Miles:</strong> ${data.yardInfo.miles}</p>
-        <p><strong>Shipping:</strong> ${data.yardInfo.shipping}</p>
-      </div>
-      `
-          : ""
-      }
       <div class="total">
         <p><strong>Total Amount:</strong> $${
           data.customerInfo.totalSellingPrice
         }</p>
       </div>
-      <div style="margin-top: 40px; text-align: center; color: #666;">
-        <p>Thank you for your business!</p>
-        <p>This is an automated invoice generated by Parts Central Dashboard</p>
+      <div style="margin-top:32px;padding-top:16px;border-top:1px solid #eee;color:#222;font-size: 30px;line-height:1.6;">
+        <h2 style="font-size:40px;margin:0 0 12px 0;">Why choose Parts Central?</h2>
+        <ul style="margin:0 0 16px 20px;padding:0;">
+          <li>Friendly customer support available to assist you.</li>
+          <li>Wide selection of quality used OEM parts available in all over USA.</li>
+          <li>Fast shipping within 8-9 business days.</li>
+          <li>Buy Now &amp; Pay Later options available.</li>
+        </ul>
+
+        <p style="text-align:center;font-weight:600;font-size:40px;margin:24px 0;">
+          We look forward to hearing from you soon!
+        </p>
+
+        <div style="margin-top:16px;">
+          <p style="margin:0 0 6px 0;font-weight:600;font-size: 40px;">Best regards,</p>
+          <p style="margin:0;">Parts Central LLC</p>
+          <p style="margin:0;">76 Imperial Dr Suite E Evanston, WY 82930, USA</p>
+          <p style="margin:0;">Phone: +1 (888) 338-2540</p>
+        </div>
       </div>
     </body>
     </html>
@@ -228,6 +248,13 @@ async function sendInvoiceEmail(
       to: toEmail,
       subject: `Invoice - Order ${orderId}`,
       html: htmlContent,
+      attachments: [
+        {
+          filename: "header-3.png",
+          path: path.join(process.cwd(), "public", "header-3.png"),
+          cid: "invoice-logo",
+        },
+      ],
     };
 
     await transporter.sendMail(mailOptions);
