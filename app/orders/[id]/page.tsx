@@ -7,7 +7,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { URL } from "@/utils/imageUrl";
+import { createOrderFromAdmin } from "@/utils/orderApi";
 import { getCardType, isValidCardNumber } from "@/utils/cardValidator";
+import { MAKES, MODELS } from "@/../vehicleData-dashboard";
+import { fetchYears } from "@/utils/vehicleApi";
 
 const OrderDetails = () => {
   const [formData, setFormData] = useState({
@@ -54,6 +57,15 @@ const OrderDetails = () => {
     trackingNumber: "",
     notes: "",
   });
+  const [availableYears, setAvailableYears] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (formData.make && formData.model) {
+      fetchYears(formData.make, formData.model).then(setAvailableYears);
+    } else {
+      setAvailableYears([]);
+    }
+  }, [formData.make, formData.model]);
   const [isProcessing, setIsProcessing] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [totalPrice, setTotalPrice] = useState(0);
@@ -477,6 +489,49 @@ const OrderDetails = () => {
           error instanceof Error
             ? error.message
             : "Failed to send invoice. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCreateOrder = async () => {
+    if (!validateAllFields()) {
+      return;
+    }
+
+    setIsLoading(true);
+    setMessage(null);
+
+    try {
+      // Construct cartItems from formData
+      const cartItems = [
+        {
+          id: `${formData.make}-${formData.model}-${formData.year}-${formData.parts}`,
+          name: `${formData.make} ${formData.model} ${formData.year} ${formData.parts}`,
+          price: parseFloat(formData.partPrice),
+          quantity: 1,
+          image: "/Images/default-engine.png",
+          subtitle: formData.specification,
+          title: `${formData.make} ${formData.model} ${formData.year} ${formData.parts}`,
+        },
+      ];
+
+      const result = await createOrderFromAdmin(formData, cartItems);
+
+      setMessage({
+        type: "success",
+        text: "Order created successfully!",
+      });
+      setIsProcessing(false);
+      console.log("Order created:", result);
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Failed to create order. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -1250,14 +1305,18 @@ const OrderDetails = () => {
                             : "border-gray-600 focus:border-blue-500"
                         }`}
                         value={formData.make}
-                        onChange={(e) =>
-                          handleInputChange("make", e.target.value)
-                        }
+                        onChange={(e) => {
+                          handleInputChange("make", e.target.value);
+                          handleInputChange("model", "");
+                          handleInputChange("year", "");
+                        }}
                       >
                         <option value="">Select make</option>
-                        {/* <option>Toyota</option>
-                        <option>Honda</option> */}
-                        <option>Ford</option>
+                        {MAKES.map((make) => (
+                          <option key={make} value={make}>
+                            {make}
+                          </option>
+                        ))}
                       </select>
                       <ChevronDown
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
@@ -1284,14 +1343,18 @@ const OrderDetails = () => {
                             : "border-gray-600 focus:border-blue-500"
                         }`}
                         value={formData.model}
-                        onChange={(e) =>
-                          handleInputChange("model", e.target.value)
-                        }
+                        onChange={(e) => {
+                          handleInputChange("model", e.target.value);
+                          handleInputChange("year", "");
+                        }}
+                        disabled={!formData.make}
                       >
                         <option value="">Select model</option>
-                        <option>500</option>
-                        {/* <option>Honda</option>
-                        <option>Ford</option> */}
+                        {(MODELS[formData.make] || []).map((model) => (
+                          <option key={model} value={model}>
+                            {model}
+                          </option>
+                        ))}
                       </select>
                       <ChevronDown
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
@@ -1318,14 +1381,15 @@ const OrderDetails = () => {
                             : "border-gray-600 focus:border-blue-500"
                         }`}
                         value={formData.year}
-                        onChange={(e) =>
-                          handleInputChange("year", e.target.value)
-                        }
+                        onChange={(e) => handleInputChange("year", e.target.value)}
+                        disabled={!formData.model || availableYears.length === 0}
                       >
                         <option value="">Select year</option>
-                        <option>2001</option>
-                        <option>2002</option>
-                        <option>2003</option>
+                        {availableYears.map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
                       </select>
                       <ChevronDown
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
@@ -2272,9 +2336,12 @@ const OrderDetails = () => {
 
               {/* Action Buttons */}
               <div className="flex justify-end gap-4 mt-8 mb-8">
-                <button className="bg-green-600 cursor-pointer hover:bg-green-700 text-white px-8 py-3 rounded-lg font-medium transition-colors">
-                  Save
-                </button>
+                <button
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
+                    onClick={handleCreateOrder}
+                  >
+                    Save
+                  </button>
                 <button className="bg-gray-600 cursor-pointer hover:bg-gray-700 text-white px-8 py-3 rounded-lg font-medium transition-colors">
                   Close
                 </button>

@@ -10,11 +10,23 @@ import ProtectRoute from "../components/ProtectRoute";
 import Link from "next/link";
 import CalendarMain from "../components/Calendar";
 
+// import { getSocket } from "../utils/socket";
+import { getSocket } from "../../utils/socket";
 // import Calendar from "react-calendar";
 
 type ValuePiece = Date | null;
 
 type Value = ValuePiece | [ValuePiece, ValuePiece];
+
+interface Order {
+  id: string;
+  name: string;
+  date: string;
+  sum: string;
+  email: string;
+  mobile: number;
+  status: string;
+}
 
 export default function Orders() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -47,106 +59,51 @@ export default function Orders() {
   const monthName = value instanceof Date ? monthNames[value.getMonth()] : null;
   const year = value instanceof Date ? value.getFullYear() : null;
   const date = value instanceof Date ? value.getDate() : null;
-  // Order data
-  const initialOrders = [
-    {
-      id: "PC#022705",
-      name: "Shiva",
-      date: "27Jun25",
-      sum: "$1,200",
-      email: "s@gmail.com",
-      mobile: 8877665544,
-      status: "Processing",
-    },
-    {
-      id: "PC#022706",
-      name: "Shiva",
-      date: "28Jun25",
-      sum: "$800",
-      email: "priy@gmail.com",
-      mobile: 9988776655,
-      status: "Refunded",
-    },
-    {
-      id: "PC#022707",
-      name: "Shiva",
-      date: "29Jun25",
-      sum: "$2,400",
-      email: "amit@gmail.com",
-      mobile: 8877661122,
-      status: "Shipped",
-    },
-    {
-      id: "PC#022708",
-      name: "Shiva",
-      date: "30Jun25",
-      sum: "$150",
-      email: "sunil@gmail.com",
-      mobile: 7766554433,
-      status: "Cancelled",
-    },
-    {
-      id: "PC#022709",
-      name: "Shiva",
-      date: "01Jul25",
-      sum: "$600",
-      email: "neha@gmail.com",
-      mobile: 6655443322,
-      status: "Paid",
-    },
-    {
-      id: "PC#022710",
-      name: "Shiva",
-      date: "02Jul25",
-      sum: "$350",
-      email: "vikram@gmail.com",
-      mobile: 5544332211,
-      status: "Processing",
-    },
-    {
-      id: "PC#022711",
-      name: "Shiva",
-      date: "03Jul25",
-      sum: "$900",
-      email: "deepa@gmail.com",
-      mobile: 4433221100,
-      status: "Shipped",
-    },
-    {
-      id: "PC#022712",
-      name: "Shiva",
-      date: "04Jul25",
-      sum: "$250",
-      email: "rahul@gmail.com",
-      mobile: 3322110099,
-      status: "Paid",
-    },
-    {
-      id: "PC#022713",
-      name: "Shiva",
-      date: "05Jul25",
-      sum: "$120",
-      email: "kiran@gmail.com",
-      mobile: 2211009988,
-      status: "Processing",
-    },
-    {
-      id: "PC#022714",
-      name: "Shiva",
-      date: "06Jul25",
-      sum: "$80",
-      email: "manoj@gmail.com",
-      mobile: 1100998877,
-      status: "Cancelled",
-    },
-  ];
 
-  // State for filters
-  const [orders] = useState(initialOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/orders');
+        if (response.ok) {
+          const data = await response.json();
+          setOrders(data);
+        } else {
+          console.error('Failed to fetch orders');
+        }
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
+  useEffect(() => {
+    const socket = getSocket();
+
+    socket.on('new_order', (data) => {
+      const newOrder: Order = {
+        id: data.order.id,
+        name: data.order.customerName,
+        date: new Date(data.order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).replace(/ /g, ' '),
+        sum: `${data.order.total}`,
+        email: data.order.customer_email,
+        mobile: data.order.mobile,
+        status: data.order.status,
+      };
+      setOrders((prevOrders) => [newOrder, ...prevOrders]);
+    });
+
+    return () => {
+      socket.off('new_order');
+    };
+  }, []);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [dateRange, setDateRange] = useState({ from: "", to: "" });
-  const [filteredOrders, setFilteredOrders] = useState(initialOrders);
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const filterBtnRef = useRef<HTMLButtonElement | null>(null);
   const filterPanelRef = useRef<HTMLDivElement | null>(null);
