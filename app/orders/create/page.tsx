@@ -9,8 +9,13 @@ import { useEffect, useRef, useState } from "react";
 import { URL } from "@/utils/imageUrl";
 import { getCardType, isValidCardNumber } from "@/utils/cardValidator";
 
-const OrderDetails = () => {
+const OrderCreate = () => {
   const [formData, setFormData] = useState({
+    customerName: "",
+    customerId: "",
+    orderDate: "",
+    source: "",
+    status: "",
     email: "",
     mobile: "",
     partPrice: "",
@@ -53,11 +58,6 @@ const OrderDetails = () => {
     carrierName: "",
     trackingNumber: "",
     notes: "",
-  });
-  const [lastLogged, setLastLogged] = useState({
-    trackingNumber: "",
-    yardCost: "",
-    carrierName: "",
   });
   const [isProcessing, setIsProcessing] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -327,7 +327,6 @@ const OrderDetails = () => {
         return "";
     }
   };
-  let TIME = new Date();
 
   // Validate all required fields
   const validateAllFields = () => {
@@ -387,7 +386,7 @@ const OrderDetails = () => {
     setFieldErrors(newErrors);
     return !hasErrors;
   };
-  const [invoiceDate, setInvoiceData] = useState(false);
+
   // Send invoice function
   const handleSendInvoice = async () => {
     if (!validateAllFields()) {
@@ -396,8 +395,6 @@ const OrderDetails = () => {
 
     setIsLoading(true);
     setMessage(null);
-    setInvoiceData(true);
-    TIME = new Date();
 
     try {
       // Prepare invoice data
@@ -475,15 +472,6 @@ const OrderDetails = () => {
         });
         // Update invoice status
         setIsProcessing(false);
-        // Notes
-        addCustomerNote(
-          "Invoice Generated – Invoice prepared for the order.",
-          "By BillingAutomation"
-        );
-        addCustomerNote(
-          "Invoice Sent – Invoice emailed to customer.",
-          "By BillingAutomation"
-        );
       } else {
         throw new Error(result.message || "Failed to send invoice");
       }
@@ -502,7 +490,6 @@ const OrderDetails = () => {
 
   const handleCharge = async (entryId: number) => {
     setIsLoading(true);
-    let chargedEntry: (typeof paymentEntries)[number] | undefined = undefined;
     setPaymentEntries((prev) =>
       prev.map((pe) =>
         pe.id === entryId
@@ -515,15 +502,6 @@ const OrderDetails = () => {
           : pe
       )
     );
-    chargedEntry = paymentEntries.find((p) => p.id === entryId);
-    if (chargedEntry) {
-      addCustomerNote(
-        `Payment – ${chargedEntry.merchantMethod || "Method"} charged for $${
-          chargedEntry.totalPrice || "0"
-        }. Approval Code: ${chargedEntry.approvalCode || "123456"}.`,
-        "Logged By System"
-      );
-    }
     setIsLoading(false);
   };
 
@@ -549,56 +527,6 @@ const OrderDetails = () => {
       setShowOwnShipping(false);
     }
   }, [formData.yardShipping]);
-
-  // Auto log important Yard notes when key fields change
-  useEffect(() => {
-    if (
-      formData.trackingNumber &&
-      formData.trackingNumber !== lastLogged.trackingNumber
-    ) {
-      addYardNote(
-        `Tracking Number – Tracking ID Assigned: ${formData.trackingNumber}.`,
-        "Added By System"
-      );
-      setLastLogged((p) => ({ ...p, trackingNumber: formData.trackingNumber }));
-    }
-  }, [formData.trackingNumber, lastLogged.trackingNumber]);
-
-  // Only log a new note when the user finishes input (on blur) or when the value is a valid, non-empty, and different from last logged.
-  // We'll use a ref to track the last yardCost that was logged to avoid duplicate logs while typing.
-  const lastLoggedYardCostRef = useRef<string>("");
-
-  useEffect(() => {
-    // Only log if yardCost is not empty, is different from last logged, and is a valid number
-    if (
-      formData.yardCost &&
-      formData.yardCost !== lastLoggedYardCostRef.current &&
-      !isNaN(Number(formData.yardCost)) &&
-      Number(formData.yardCost) > 0
-    ) {
-      addYardNote(
-        `Price – Shipping Cost Recorded: $${Number(formData.yardCost).toFixed(
-          2
-        )}.`,
-        "Logged By System"
-      );
-      setLastLogged((p) => ({ ...p, yardCost: formData.yardCost }));
-      lastLoggedYardCostRef.current = formData.yardCost;
-    }
-  }, [formData.yardCost]);
-
-  useEffect(() => {
-    if (
-      formData.carrierName &&
-      formData.carrierName !== lastLogged.carrierName
-    ) {
-      addYardNote(
-        `Carrier – Carrier Assigned: ${formData.carrierName}.`,
-        "By ShippingAutomation"
-      );
-      setLastLogged((p) => ({ ...p, carrierName: formData.carrierName }));
-    }
-  }, [lastLogged.carrierName, formData.carrierName]);
 
   // State for previous yards and toggle
   const [showPreviousYard, setShowPreviousYard] = useState(false);
@@ -634,101 +562,6 @@ const OrderDetails = () => {
   // Add state for uploaded picture file
   const [uploadedPicture, setUploadedPicture] = useState<File | null>(null);
 
-  // Notes system state
-  type NoteEntry = {
-    id: number;
-    timestamp: Date;
-    message: string;
-    actor?: string;
-  };
-
-  const [customerNotes, setCustomerNotes] = useState<NoteEntry[]>([]);
-  const [yardNotes, setYardNotes] = useState<NoteEntry[]>([]);
-  const [customerNoteInput, setCustomerNoteInput] = useState("");
-  const [yardNoteInput, setYardNoteInput] = useState("");
-
-  const addCustomerNote = (message: string, actor?: string) => {
-    setCustomerNotes((prev) => [
-      {
-        id: Date.now() + Math.floor(Math.random() * 1000000),
-        timestamp: new Date(),
-        message,
-        actor,
-      },
-      ...prev,
-    ]);
-  };
-
-  const addYardNote = (message: string, actor?: string) => {
-    setYardNotes((prev) => [
-      {
-        id: Date.now() + Math.floor(Math.random() * 1000000),
-        timestamp: new Date(),
-        message,
-        actor,
-      },
-      ...prev,
-    ]);
-  };
-
-  const formatDay = (d: Date) =>
-    d.toLocaleDateString("en-US", { day: "2-digit", month: "short" });
-  const formatTime = (d: Date) =>
-    d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-
-  const handleManualAddCustomerNote = () => {
-    if (!customerNoteInput.trim()) return;
-    addCustomerNote(customerNoteInput.trim(), "By Agent");
-    setCustomerNoteInput("");
-  };
-
-  const handleManualAddYardNote = () => {
-    if (!yardNoteInput.trim()) return;
-    addYardNote(yardNoteInput.trim(), "By Agent");
-    setYardNoteInput("");
-  };
-
-  // Yard/PO/Tracking helpers
-  const handleSendPO = () => {
-    addYardNote("PO Sent – Purchase Order emailed to yard.", "Added By System");
-  };
-
-  const handleCreateBOL = () => {
-    addYardNote(
-      "Create BOL – Bill Of Lading Generated For Shipment.",
-      "By LogisticsAutomation"
-    );
-  };
-
-  const handleSendTracking = () => {
-    addYardNote(
-      "Send Tracking Details – Tracking Details Emailed To Customer.",
-      "By ShippingAutomation"
-    );
-  };
-
-  const handleSendPicture = () => {
-    if (uploadedPicture) {
-      addCustomerNote(
-        `Picture Uploaded – ${uploadedPicture.name} sent to customer.`,
-        "By Agent"
-      );
-    } else {
-      addCustomerNote("Picture – No file selected.", "By Agent");
-    }
-  };
-
-  // Initialize a base note once
-  const initRef = useRef(false);
-  useEffect(() => {
-    if (initRef.current) return;
-    initRef.current = true;
-    addCustomerNote(
-      "Order Received – Customer placed the order online.",
-      "Added By System"
-    );
-  }, []);
-
   return (
     <ProtectRoute>
       <div className="min-h-screen bg-main text-white font-exo py-2">
@@ -743,7 +576,7 @@ const OrderDetails = () => {
                   <span className="text-white/60">Orders</span>
                 </Link>
                 <span className="text-white/60">›</span>
-                <span className="text-white">Order Details</span>
+                <span className="text-white">Create Order</span>
               </div>
               <button className="text-white/60 hover:text-white">
                 <Link href="/orders">
@@ -777,28 +610,81 @@ const OrderDetails = () => {
                       height={120}
                       className="rounded-full object-cover"
                     />
+                    <label className="absolute bottom-0 right-0 bg-blue-600 rounded-full p-1 cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            setUploadedPicture(e.target.files[0]);
+                          }
+                        }}
+                      />
+                      <svg
+                        width="18"
+                        height="18"
+                        fill="currentColor"
+                        className="text-white"
+                      >
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                      </svg>
+                    </label>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-1 gap-2">
-                    <h2 className="md:text-xl font-semibold text-white  mt-20">
-                      Shiva Shankar Reddy
-                    </h2>
-                    <p className="text-white/60 mt-20 md:mt-0">ID: PC#022705</p>
+                  <div className="grid grid-cols-2 md:grid-cols-1 gap-2 mt-20">
+                    <input
+                      type="text"
+                      className="md:text-xl font-semibold text-white bg-transparent border-b border-gray-600 focus:outline-none focus:border-blue-500"
+                      placeholder="Customer Name"
+                      value={formData.customerName}
+                      onChange={(e) =>
+                        handleInputChange("customerName", e.target.value)
+                      }
+                    />
+                    <input
+                      type="text"
+                      className="text-white/60 bg-transparent border-b border-gray-600 focus:outline-none focus:border-blue-500 mt-20 md:mt-0"
+                      placeholder="Customer ID"
+                      value={formData.customerId}
+                      onChange={(e) =>
+                        handleInputChange("customerId", e.target.value)
+                      }
+                    />
                   </div>
                 </div>
                 <div className="flex items-center justify-between mt-2 gap-3">
-                  <span className="text-white/60 text-sm">27Jun25</span>
-                  <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-medium">
-                    Google
-                  </span>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  <input
+                    type="text"
+                    className="text-white/60 text-sm bg-transparent border-b border-gray-600 focus:outline-none focus:border-blue-500"
+                    placeholder="Date"
+                    value={formData.orderDate}
+                    onChange={(e) =>
+                      handleInputChange("orderDate", e.target.value)
+                    }
+                  />
+                  <input
+                    type="text"
+                    className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-medium bg-opacity-80 focus:outline-none"
+                    placeholder="Source"
+                    value={formData.source}
+                    onChange={(e) =>
+                      handleInputChange("source", e.target.value)
+                    }
+                  />
+                  <select
+                    className={`px-3 py-1 rounded-full text-xs font-medium focus:outline-none ${
                       isProcessing
                         ? "bg-purple-500 text-white"
                         : "bg-gray-500 text-white"
                     }`}
+                    value={formData.status}
+                    onChange={(e) =>
+                      handleInputChange("status", e.target.value)
+                    }
                   >
-                    {isProcessing ? "Processing" : "Completed"}
-                  </span>
+                    <option value="Processing">Processing</option>
+                    <option value="Completed">Completed</option>
+                  </select>
                   <button className="text-white/60 hover:text-white">
                     <svg
                       width="16"
@@ -1638,9 +1524,7 @@ const OrderDetails = () => {
                           Invoice Sent
                         </span>
                         <span className="text-white/60 text-xs">
-                          {/* 27Jun25 7:11pm */}
-                          {invoiceDate &&
-                            `${formatDay(TIME)} ${formatTime(TIME)}`}
+                          27Jun25 7:11pm
                         </span>
                       </div>
                       <div className="flex items-center justify-between bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3">
@@ -2137,10 +2021,7 @@ const OrderDetails = () => {
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">
-                  <button
-                    onClick={handleSendPO}
-                    className="bg-[#006BA9] hover:bg-[#006BA9]/90 cursor-pointer mt-8 w-40 h-10 px-2 py-1 text-white  rounded-lg font-medium transition-colors"
-                  >
+                  <button className="bg-[#006BA9] hover:bg-[#006BA9]/90 cursor-pointer mt-8 w-40 h-10 px-2 py-1 text-white  rounded-lg font-medium transition-colors">
                     Send PO
                   </button>
                   {/* PO Status & Approval/Sales */}
@@ -2230,7 +2111,7 @@ const OrderDetails = () => {
                         )}
                         <button
                           className="bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white px-6 py-2 rounded-lg font-semibold shadow-md transition-colors w-full"
-                          onClick={handleSendPicture}
+                          // onClick handler for sending picture
                         >
                           Send Picture
                         </button>
@@ -2376,10 +2257,7 @@ const OrderDetails = () => {
                         />
                       </div>
                       <div className="flex justify-end">
-                        <button
-                          onClick={handleCreateBOL}
-                          className="bg-[#006BA9] hover:bg-[#006BA9]/90 cursor-pointer mt-8 w-40 h-10 px-2 py-2 text-white  rounded-lg font-medium transition-colors"
-                        >
+                        <button className="bg-[#006BA9] hover:bg-[#006BA9]/90 cursor-pointer mt-8 w-40 h-10 px-2 py-2 text-white  rounded-lg font-medium transition-colors">
                           Create BOL
                         </button>
                       </div>
@@ -2431,13 +2309,23 @@ const OrderDetails = () => {
                   />
                 </div>
                 <div className="col-span-1">
-                  <button
-                    onClick={handleSendTracking}
-                    className="cursor-pointer mt-8 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white px-6 py-2 rounded-lg font-semibold shadow-md transition-colors w-full"
-                  >
+                  <button className="cursor-pointer mt-8 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white px-6 py-2 rounded-lg font-semibold shadow-md transition-colors w-full">
                     Send Tracking details
                   </button>
                 </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="block text-white/60 text-sm mb-2">
+                  Notes
+                </label>
+                <textarea
+                  className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none resize-none"
+                  placeholder="Add any notes here..."
+                  rows={4}
+                  value={formData.notes || ""}
+                  onChange={(e) => handleInputChange("notes", e.target.value)}
+                />
               </div>
 
               {/* Action Buttons */}
@@ -2449,95 +2337,6 @@ const OrderDetails = () => {
                   Close
                 </button>
               </div>
-
-              {/* Notes Section */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-                {/* Customer Notes */}
-                <div className="bg-[#0a1929] rounded-lg p-4 border border-gray-700">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-white text-lg font-semibold">
-                      Customer Notes
-                    </h3>
-                  </div>
-                  <div className="flex flex-col md:flex-row items-start md:items-center gap-2 mb-3">
-                    <input
-                      className="flex-1 bg-[#0f1e35] border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none"
-                      placeholder="Notes"
-                      value={customerNoteInput}
-                      onChange={(e) => setCustomerNoteInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          handleManualAddCustomerNote();
-                        }
-                      }}
-                    />
-                    <button
-                      onClick={handleManualAddCustomerNote}
-                      className="bg-[#006BA9] hover:bg-[#006BA9]/90 text-white px-4 py-2 rounded-lg"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  <div className="max-h-80 overflow-auto pr-1 space-y-3">
-                    {customerNotes.length === 0 && (
-                      <p className="text-white/60 text-sm">No notes yet</p>
-                    )}
-                    {customerNotes.map((n) => (
-                      <div key={n.id} className="text-sm">
-                        <div className="text-white/80">{n.message}</div>
-                        <div className="text-white/40 text-xs">
-                          {formatDay(n.timestamp)} {formatTime(n.timestamp)}
-                          {n.actor ? `  |  ${n.actor}` : ""}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Yard Notes */}
-                <div className="bg-[#0a1929] rounded-lg p-4 border border-gray-700">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-white text-lg font-semibold">
-                      Yard Notes
-                    </h3>
-                  </div>
-                  <div className="flex flex-col md:flex-row items-start md:items-center gap-2 mb-3">
-                    <input
-                      className="flex-1 bg-[#0f1e35] border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none"
-                      placeholder="Notes"
-                      value={yardNoteInput}
-                      onChange={(e) => setYardNoteInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          handleManualAddYardNote();
-                        }
-                      }}
-                    />
-                    <button
-                      onClick={handleManualAddYardNote}
-                      className="bg-[#006BA9] hover:bg-[#006BA9]/90 text-white px-4 py-2 rounded-lg"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  <div className="max-h-80 overflow-auto pr-1 space-y-3">
-                    {yardNotes.length === 0 && (
-                      <p className="text-white/60 text-sm">No notes yet</p>
-                    )}
-                    {yardNotes.map((n) => (
-                      <div key={n.id} className="text-sm">
-                        <div className="text-white/80">{n.message}</div>
-                        <div className="text-white/40 text-xs">
-                          {formatDay(n.timestamp)} {formatTime(n.timestamp)}
-                          {n.actor ? `  |  ${n.actor}` : ""}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
             </div>
           </main>
         </div>
@@ -2546,4 +2345,4 @@ const OrderDetails = () => {
   );
 };
 
-export default OrderDetails;
+export default OrderCreate;
