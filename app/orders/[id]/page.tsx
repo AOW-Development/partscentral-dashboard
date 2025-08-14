@@ -9,10 +9,18 @@ import { useEffect, useRef, useState } from "react";
 import { URL } from "@/utils/imageUrl";
 import { createOrderFromAdmin } from "@/utils/orderApi";
 import { getCardType, isValidCardNumber } from "@/utils/cardValidator";
-import { MAKES, MODELS } from "@/../vehicleData-dashboard";
+import { MAKES, MODELS } from "@/vehicleData-dashboard";
 import { fetchYears } from "@/utils/vehicleApi";
+import { getProductVariants, GroupedVariant } from "@/utils/productApi";
 
 const OrderDetails = () => {
+  // State for product variants
+  const [productVariants, setProductVariants] = useState<GroupedVariant[]>([]);
+  const [selectedSubpart, setSelectedSubpart] = useState<GroupedVariant | null>(null);
+  const [selectedMileage, setSelectedMileage] = useState('');
+  const [isLoadingVariants, setIsLoadingVariants] = useState(false);
+  const [variantError, setVariantError] = useState('');
+
   const [formData, setFormData] = useState({
     email: "",
     mobile: "",
@@ -36,6 +44,7 @@ const OrderDetails = () => {
     year: "",
     parts: "",
     specification: "",
+    variantSku: "", // store the selected variant SKU
     totalSellingPrice: "",
     totalPrice: "",
     merchantMethod: "",
@@ -59,6 +68,7 @@ const OrderDetails = () => {
   });
   const [availableYears, setAvailableYears] = useState<string[]>([]);
 
+  // Fetch years when make and model are selected
   useEffect(() => {
     if (formData.make && formData.model) {
       fetchYears(formData.make, formData.model).then(setAvailableYears);
@@ -66,6 +76,38 @@ const OrderDetails = () => {
       setAvailableYears([]);
     }
   }, [formData.make, formData.model]);
+
+  // Fetch product variants when make, model, year, and part are selected
+  useEffect(() => {
+    const fetchVariants = async () => {
+      if (formData.make && formData.model && formData.year && formData.parts) {
+        setIsLoadingVariants(true);
+        setVariantError('');
+        try {
+          const data = await getProductVariants({
+            make: formData.make,
+            model: formData.model,
+            year: formData.year,
+            part: formData.parts
+          });
+          setProductVariants(data.groupedVariants || []);
+          // Reset selections when variants change
+          setSelectedSubpart(null);
+          setSelectedMileage('');
+        } catch (error) {
+          console.error('Error fetching product variants:', error);
+          setVariantError('Failed to load product variants. Please try again.');
+          setProductVariants([]);
+        } finally {
+          setIsLoadingVariants(false);
+        }
+      } else {
+        setProductVariants([]);
+      }
+    };
+
+    fetchVariants();
+  }, [formData.make, formData.model, formData.year, formData.parts]);
   const [isProcessing, setIsProcessing] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [totalPrice, setTotalPrice] = useState(0);
@@ -1279,15 +1321,28 @@ const OrderDetails = () => {
                     <label className="block text-white/60 text-sm mb-2">
                       Miles Promised
                     </label>
-                    <input
-                      type="number"
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                      placeholder="Enter miles"
-                      value={formData.milesPromised}
-                      onChange={(e) =>
-                        handleInputChange("milesPromised", e.target.value)
-                      }
-                    />
+                    <div className="relative">
+                      <select
+                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                        value={formData.milesPromised}
+                        onChange={(e) =>
+                          handleInputChange("milesPromised", e.target.value)
+                        }
+                      >
+                        <option value="">Select Miles</option>
+                        <option value="50000">50,000 miles</option>
+                        <option value="75000">75,000 miles</option>
+                        <option value="100000">100,000 miles</option>
+                        <option value="125000">125,000 miles</option>
+                        <option value="150000">150,000 miles</option>
+                        <option value="175000">175,000 miles</option>
+                        <option value="200000">200,000+ miles</option>
+                      </select>
+                      <ChevronDown
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                        size={16}
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -1445,7 +1500,7 @@ const OrderDetails = () => {
                     <div className="relative">
                       <select
                         className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
-                          fieldErrors.make
+                          fieldErrors.specification
                             ? "border-red-500 focus:border-red-500"
                             : "border-gray-600 focus:border-blue-500"
                         }`}
@@ -1453,20 +1508,27 @@ const OrderDetails = () => {
                         onChange={(e) =>
                           handleInputChange("specification", e.target.value)
                         }
+                        disabled={!selectedSubpart}
                       >
                         <option value="">Select Specification</option>
-                        {/* <option>Toyota</option>
-                        <option>Honda</option> */}
-                        <option>4.9L</option>
+                        {selectedSubpart ? (
+                          selectedSubpart.variants.map((variant, idx) => (
+                            <option key={idx} value={variant.specification}>
+                              {variant.specification}
+                            </option>
+                          ))
+                        ) : (
+                          <option disabled>Select a part first</option>
+                        )}
                       </select>
                       <ChevronDown
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
                         size={16}
                       />
                     </div>
-                    {fieldErrors.make && (
+                    {fieldErrors.specification && (
                       <p className="text-red-400 text-xs mt-1">
-                        {fieldErrors.make}
+                        {fieldErrors.specification}
                       </p>
                     )}
                   </div>
