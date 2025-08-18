@@ -77,6 +77,41 @@ const OrderDetails = () => {
     }
   }, [formData.make, formData.model]);
 
+  // Handle mileage selection
+  const handleMileageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedMiles = e.target.value;
+    setSelectedMileage(selectedMiles);
+    
+    // Find the selected variant and update the SKU in form data
+    if (selectedSubpart) {
+      const variant = selectedSubpart.variants.find(v => v.miles === selectedMiles);
+      if (variant) {
+        setFormData(prev => ({
+          ...prev,
+          milesPromised: selectedMiles,
+          variantSku: variant.sku,
+          partPrice: variant.discountedPrice?.toString() || variant.actualprice.toString()
+        }));
+      }
+    }
+  };
+
+  // Handle specification selection
+  const handleSpecificationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedSpec = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      specification: selectedSpec,
+      variantSku: "",
+      milesPromised: ""
+    }));
+    
+    // Find and set the selected subpart
+    const subpart = productVariants.find(v => v.subPart.name === selectedSpec) || null;
+    setSelectedSubpart(subpart);
+    setSelectedMileage("");
+  };
+
   // Fetch product variants when make, model, year, and part are selected
   useEffect(() => {
     const fetchVariants = async () => {
@@ -94,6 +129,12 @@ const OrderDetails = () => {
           // Reset selections when variants change
           setSelectedSubpart(null);
           setSelectedMileage('');
+          setFormData(prev => ({
+            ...prev,
+            specification: "",
+            variantSku: "",
+            milesPromised: ""
+          }));
         } catch (error) {
           console.error('Error fetching product variants:', error);
           setVariantError('Failed to load product variants. Please try again.');
@@ -546,19 +587,23 @@ const OrderDetails = () => {
     setMessage(null);
 
     try {
-      // Construct cartItems from formData
+      if (!formData.variantSku) {
+        alert('Please select a valid specification and mileage');
+        return;
+      }
+
+      // Create cart items array with the selected part
       const cartItems = [
         {
-          id: `${formData.make}-${formData.model}-${formData.year}-${formData.parts}`,
+          id: formData.variantSku, // Use the actual SKU from the selected variant
           name: `${formData.make} ${formData.model} ${formData.year} ${formData.parts}`,
-          price: parseFloat(formData.partPrice),
+          price: parseFloat(formData.partPrice) || 0,
           quantity: 1,
-          image: "/Images/default-engine.png",
-          subtitle: formData.specification,
-          title: `${formData.make} ${formData.model} ${formData.year} ${formData.parts}`,
+          warranty: formData.warranty,
+          milesPromised: formData.milesPromised,
+          specification: formData.specification,
         },
       ];
-
       const result = await createOrderFromAdmin(formData, cartItems);
 
       setMessage({
@@ -1323,20 +1368,17 @@ const OrderDetails = () => {
                     </label>
                     <div className="relative">
                       <select
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none disabled:opacity-50"
                         value={formData.milesPromised}
-                        onChange={(e) =>
-                          handleInputChange("milesPromised", e.target.value)
-                        }
+                        onChange={handleMileageChange}
+                        disabled={!selectedSubpart}
                       >
                         <option value="">Select Miles</option>
-                        <option value="50000">50,000 miles</option>
-                        <option value="75000">75,000 miles</option>
-                        <option value="100000">100,000 miles</option>
-                        <option value="125000">125,000 miles</option>
-                        <option value="150000">150,000 miles</option>
-                        <option value="175000">175,000 miles</option>
-                        <option value="200000">200,000+ miles</option>
+                        {selectedSubpart?.variants.map((variant, idx) => (
+                          <option key={idx} value={variant.miles}>
+                            {variant.miles} miles
+                          </option>
+                        ))}
                       </select>
                       <ChevronDown
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
@@ -1505,21 +1547,15 @@ const OrderDetails = () => {
                             : "border-gray-600 focus:border-blue-500"
                         }`}
                         value={formData.specification}
-                        onChange={(e) =>
-                          handleInputChange("specification", e.target.value)
-                        }
-                        disabled={!selectedSubpart}
+                        onChange={handleSpecificationChange}
+                        disabled={!productVariants.length}
                       >
                         <option value="">Select Specification</option>
-                        {selectedSubpart ? (
-                          selectedSubpart.variants.map((variant, idx) => (
-                            <option key={idx} value={variant.specification}>
-                              {variant.specification}
-                            </option>
-                          ))
-                        ) : (
-                          <option disabled>Select a part first</option>
-                        )}
+                        {productVariants.map((variant, idx) => (
+                          <option key={idx} value={variant.subPart.name}>
+                            {variant.subPart.name}
+                          </option>
+                        ))}
                       </select>
                       <ChevronDown
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
