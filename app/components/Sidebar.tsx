@@ -84,9 +84,9 @@ export default function Sidebar() {
               Products
             </Link>
             <Link
-              href="/in-clients"
+              href="/leads"
               className={`flex items-center px-4 py-3 rounded-lg hover:bg-[#00466f] ${
-                isActive("/in-clients") ? "bg-hover" : ""
+                isActive("/leads") ? "bg-hover" : ""
               }`}
             >
               <Users className="mr-2 w-5 h-5" />
@@ -145,7 +145,7 @@ export default function Sidebar() {
               className="rounded-full mr-2"
             />
             <div>
-              <div className="font-bold">Admin</div>
+              <div className="font-bold">{user?.name}</div>
               <div className="text-xs text-gray-400">{user?.email}</div>
             </div>
           </div>
@@ -206,13 +206,13 @@ export default function Sidebar() {
               Production
             </Link>
             <Link
-              href="/in-clients"
+              href="/leads"
               className={`flex items-center px-4 py-3 rounded-lg hover:bg-[#00466f] ${
-                isActive("/in-clients") ? "bg-hover" : ""
+                isActive("/leads") ? "bg-hover" : ""
               }`}
             >
               <Users className="mr-2 w-5 h-5" />
-              In Clients
+              Leads
             </Link>
           </nav>
         </div>
@@ -259,8 +259,8 @@ export default function Sidebar() {
               className="rounded-full mr-2"
             />
             <div>
-              <div className="font-bold">Adhitya</div>
-              <div className="text-xs text-gray-400">adhityaj@gmail.com</div>
+              <div className="font-bold">Shiva</div>
+              <div className="text-xs text-gray-400">Shiva@gmail.com</div>
             </div>
           </div>
         </div>

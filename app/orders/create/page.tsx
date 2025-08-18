@@ -59,6 +59,7 @@ const OrderCreate = () => {
     trackingNumber: "",
     notes: "",
   });
+  const [invoiceDate, setInvoiceData] = useState(false);
   const [isProcessing, setIsProcessing] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [totalPrice, setTotalPrice] = useState(0);
@@ -327,7 +328,7 @@ const OrderCreate = () => {
         return "";
     }
   };
-
+  let TIME = new Date();
   // Validate all required fields
   const validateAllFields = () => {
     const requiredFields = [
@@ -395,6 +396,7 @@ const OrderCreate = () => {
 
     setIsLoading(true);
     setMessage(null);
+    TIME = new Date();
 
     try {
       // Prepare invoice data
@@ -561,6 +563,10 @@ const OrderCreate = () => {
 
   // Add state for uploaded picture file
   const [uploadedPicture, setUploadedPicture] = useState<File | null>(null);
+  const formatDay = (d: Date) =>
+    d.toLocaleDateString("en-US", { day: "2-digit", month: "short" });
+  const formatTime = (d: Date) =>
+    d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 
   return (
     <ProtectRoute>
@@ -652,7 +658,7 @@ const OrderCreate = () => {
                     />
                   </div>
                 </div>
-                <div className="flex items-center justify-between mt-2 gap-3">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between mt-2 gap-3">
                   <input
                     type="text"
                     className="text-white/60 text-sm bg-transparent border-b border-gray-600 focus:outline-none focus:border-blue-500"
@@ -1524,16 +1530,19 @@ const OrderCreate = () => {
                           Invoice Sent
                         </span>
                         <span className="text-white/60 text-xs">
-                          27Jun25 7:11pm
+                          {/* 27Jun25 7:11pm */}
+                          {invoiceDate &&
+                            `${formatDay(TIME)} ${formatTime(TIME)}`}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3">
+                      <div className="flex items-center justify-between gap-0.5 bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3">
                         <span className="text-green-400 text-sm">
                           Invoice Confirm
                         </span>
-                        <span className="text-white/60 text-xs">
+                        {/* <span className="text-white/60 text-xs">
                           28Jun25 7:11pm
-                        </span>
+                        </span> */}
+                        <input type="date" />
                       </div>
                     </div>
                   </div>

@@ -551,54 +551,54 @@ const OrderDetails = () => {
   }, [formData.yardShipping]);
 
   // Auto log important Yard notes when key fields change
-  useEffect(() => {
-    if (
-      formData.trackingNumber &&
-      formData.trackingNumber !== lastLogged.trackingNumber
-    ) {
-      addYardNote(
-        `Tracking Number – Tracking ID Assigned: ${formData.trackingNumber}.`,
-        "Added By System"
-      );
-      setLastLogged((p) => ({ ...p, trackingNumber: formData.trackingNumber }));
-    }
-  }, [formData.trackingNumber, lastLogged.trackingNumber]);
+  // useEffect(() => {
+  //   if (
+  //     formData.trackingNumber &&
+  //     formData.trackingNumber !== lastLogged.trackingNumber
+  //   ) {
+  //     addYardNote(
+  //       `Tracking Number – Tracking ID Assigned: ${formData.trackingNumber}.`,
+  //       "Added By System"
+  //     );
+  //     setLastLogged((p) => ({ ...p, trackingNumber: formData.trackingNumber }));
+  //   }
+  // }, [formData.trackingNumber, lastLogged.trackingNumber]);
 
   // Only log a new note when the user finishes input (on blur) or when the value is a valid, non-empty, and different from last logged.
   // We'll use a ref to track the last yardCost that was logged to avoid duplicate logs while typing.
   const lastLoggedYardCostRef = useRef<string>("");
 
-  useEffect(() => {
-    // Only log if yardCost is not empty, is different from last logged, and is a valid number
-    if (
-      formData.yardCost &&
-      formData.yardCost !== lastLoggedYardCostRef.current &&
-      !isNaN(Number(formData.yardCost)) &&
-      Number(formData.yardCost) > 0
-    ) {
-      addYardNote(
-        `Price – Shipping Cost Recorded: $${Number(formData.yardCost).toFixed(
-          2
-        )}.`,
-        "Logged By System"
-      );
-      setLastLogged((p) => ({ ...p, yardCost: formData.yardCost }));
-      lastLoggedYardCostRef.current = formData.yardCost;
-    }
-  }, [formData.yardCost]);
+  // useEffect(() => {
+  //   // Only log if yardCost is not empty, is different from last logged, and is a valid number
+  //   if (
+  //     formData.yardCost &&
+  //     formData.yardCost !== lastLoggedYardCostRef.current &&
+  //     !isNaN(Number(formData.yardCost)) &&
+  //     Number(formData.yardCost) > 0
+  //   ) {
+  //     addYardNote(
+  //       `Price – Shipping Cost Recorded: $${Number(formData.yardCost).toFixed(
+  //         2
+  //       )}.`,
+  //       "Logged By System"
+  //     );
+  //     setLastLogged((p) => ({ ...p, yardCost: formData.yardCost }));
+  //     lastLoggedYardCostRef.current = formData.yardCost;
+  //   }
+  // }, [formData.yardCost]);
 
-  useEffect(() => {
-    if (
-      formData.carrierName &&
-      formData.carrierName !== lastLogged.carrierName
-    ) {
-      addYardNote(
-        `Carrier – Carrier Assigned: ${formData.carrierName}.`,
-        "By ShippingAutomation"
-      );
-      setLastLogged((p) => ({ ...p, carrierName: formData.carrierName }));
-    }
-  }, [lastLogged.carrierName, formData.carrierName]);
+  // useEffect(() => {
+  //   if (
+  //     formData.carrierName &&
+  //     formData.carrierName !== lastLogged.carrierName
+  //   ) {
+  //     addYardNote(
+  //       `Carrier – Carrier Assigned: ${formData.carrierName}.`,
+  //       "By ShippingAutomation"
+  //     );
+  //     setLastLogged((p) => ({ ...p, carrierName: formData.carrierName }));
+  //   }
+  // }, [lastLogged.carrierName, formData.carrierName]);
 
   // State for previous yards and toggle
   const [showPreviousYard, setShowPreviousYard] = useState(false);
@@ -701,6 +701,26 @@ const OrderDetails = () => {
   };
 
   const handleSendTracking = () => {
+    if (
+      formData.carrierName &&
+      formData.carrierName !== lastLogged.carrierName
+    ) {
+      addYardNote(
+        `Carrier – Carrier Assigned: ${formData.carrierName}.`,
+        "By ShippingAutomation"
+      );
+      setLastLogged((p) => ({ ...p, carrierName: formData.carrierName }));
+    }
+    if (
+      formData.trackingNumber &&
+      formData.trackingNumber !== lastLogged.trackingNumber
+    ) {
+      addYardNote(
+        `Tracking Number – Tracking ID Assigned: ${formData.trackingNumber}.`,
+        "Added By System"
+      );
+      setLastLogged((p) => ({ ...p, trackingNumber: formData.trackingNumber }));
+    }
     addYardNote(
       "Send Tracking Details – Tracking Details Emailed To Customer.",
       "By ShippingAutomation"
@@ -1643,13 +1663,14 @@ const OrderDetails = () => {
                             `${formatDay(TIME)} ${formatTime(TIME)}`}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3">
+                      <div className="flex items-center justify-between gap-0.5 bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3">
                         <span className="text-green-400 text-sm">
                           Invoice Confirm
                         </span>
-                        <span className="text-white/60 text-xs">
+                        {/* <span className="text-white/60 text-xs">
                           28Jun25 7:11pm
-                        </span>
+                        </span> */}
+                        <input type="date" />
                       </div>
                     </div>
                   </div>

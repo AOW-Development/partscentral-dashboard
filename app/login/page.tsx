@@ -7,6 +7,7 @@ import { useState } from "react";
 import useAuthStore from "@/store/auth";
 import { URL } from "@/utils//imageUrl";
 import { Eye, EyeClosed } from "lucide-react";
+import { users } from "@/data/users";
 // import { Exo } from "next/font/google";
 // const exo = Exo({
 //   subsets: ["latin"],
@@ -42,6 +43,13 @@ export default function LoginPage() {
     }
     setLoading(true);
     try {
+      const user = users.find(
+        (user) => user.email === email && user.password === password
+      );
+      if (!user) {
+        setError("Invalid credentials");
+        return;
+      }
       // Dummy API call
       const res = await fetch("https://jsonplaceholder.typicode.com/posts", {
         method: "POST",
@@ -49,14 +57,17 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
       if (res.ok) {
-        setSuccess("Login successful (dummy API)");
-        login({ email, id: "dummy-id" }, "dummy-token");
+        setSuccess("Login successful");
+        login(
+          { email, id: user.id, role: user.role, name: user.name },
+          "dummy token"
+        );
 
         setTimeout(() => {
           router.push("/");
         }, 1000);
       } else {
-        setError("Invalid credentials (dummy API)");
+        setError("Invalid credentials");
       }
     } catch {
       setError("Network error. Please try again.");
@@ -141,6 +152,15 @@ export default function LoginPage() {
             >
               {loading ? "Logging in..." : "Login"}
             </button>
+            <div className="mt-4">
+              <p className="text-sm text-gray-400 my-2">
+                Use demo credentials:
+              </p>
+              <p className="text-xs text-white my-1">
+                Username: admin@partscentral.com
+              </p>
+              <p className="text-xs text-white">Password: admin@123</p>
+            </div>
           </form>
         </div>
       </main>

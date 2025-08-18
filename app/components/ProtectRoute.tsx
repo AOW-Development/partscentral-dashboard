@@ -10,6 +10,7 @@ export default function ProtectRoute({
 }) {
   const router = useRouter();
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  
 
   useEffect(() => {
     if (!isLoggedIn) {
