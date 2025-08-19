@@ -1,0 +1,94 @@
+{
+    "billingInfo": {
+        "firstName": "card",
+        "lastName": "h",
+        "address": "asdfasdfsdf sdf",
+        "city": "Unknown",
+        "state": "CA",
+        "postalCode": "00000",
+        "country": "US",
+        "phone": "1223112341",
+        "email": "fasdf@gmail.com",
+        "company": null,
+        "addressType": "RESIDENTIAL"
+    },
+    "shippingInfo": {
+        "firstName": "card",
+        "lastName": "h",
+        "address": "asdf sadf asdf",
+        "city": "Unknown",
+        "state": "CA",
+        "postalCode": "00000",
+        "country": "US",
+        "phone": "1223112341",
+        "email": "fasdf@gmail.com",
+        "company": null,
+        "addressType": "RESIDENTIAL"
+    },
+    "customerInfo": {
+        "email": "fasdf@gmail.com",
+        "phone": "1223112341",
+        "firstName": "card",
+        "lastName": "h",
+        "company": null,
+        "address": "asdf sadf asdf",
+        "city": "Unknown",
+        "state": "CA",
+        "postalCode": "00000",
+        "country": "US",
+        "type": "RESIDENTIAL"
+    },
+    "cartItems": [
+        {
+            "id": "ISUZU-OASIS-1998-ENGINE-(2.3L,4CYLINDER,VIN2,6THDIGIT)-92K",
+            "sku": "ISUZU-OASIS-1998-ENGINE-(2.3L,4CYLINDER,VIN2,6THDIGIT)-92K",
+            "quantity": 1,
+            "price": 1675,
+            "name": "Engine for ISUZU OASIS 1998",
+            "warranty": "30 Days",
+            "milesPromised": "92K",
+            "specification": "(2.3L, 4 cylinder, VIN 2, 6th digit)",
+            "productVariantId": "ISUZU-OASIS-1998-ENGINE-(2.3L,4CYLINDER,VIN2,6THDIGIT)-92K"
+        }
+    ],
+    "paymentInfo": {
+        "paymentMethod": "CARD",
+        "status": "PENDING",
+        "amount": 1723,
+        "currency": "USD",
+        "provider": "STRIPE",
+        "cardData": {
+            "cardNumber": "4242 4242 4242 4242",
+            "cardholderName": "card h",
+            "expirationDate": "12/34",
+            "securityCode": "123",
+            "last4": "4242",
+            "brand": "Visa"
+        }
+    },
+    "totalAmount": 1723,
+    "subtotal": 1675,
+    "orderNumber": "PC-807737",
+    "notes": "notes here",
+    "carrierName": "carrier name",
+    "trackingNumber": "123as",
+    "saleMadeBy": "Shiva",
+    "taxesAmount": 12,
+    "shippingAmount": 123,
+    "handlingFee": 12,
+    "processingFee": 12,
+    "corePrice": 12,
+    "milesPromised": 92,
+    "yardInfo": {
+        "yardName": "yardnameis",
+        "yardAddress": "addresis",
+        "yardMobile": "4213112345",
+        "yardEmail": "123asd@gmail.com",
+        "yardPrice": 123,
+        "yardWarranty": "WARRANTY_60_DAYS",
+        "yardMiles": 123,
+        "yardShippingType": "Yard Shipping",
+        "yardShippingCost": 123,
+        "reason": "No reason provided"
+    }
+}

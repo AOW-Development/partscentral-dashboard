@@ -12,6 +12,9 @@ const mapWarrantyToPrismaEnum = (warranty: string): string => {
 };
 
 export const createOrderFromAdmin = async (formData: any, cartItems: any[]) => {
+  // Debug: log ownShippingInfo and yardShipping before constructing orderData
+  console.log('DEBUG ownShippingInfo:', formData.ownShippingInfo);
+  console.log('DEBUG yardShipping:', formData.yardShipping);
   // Prepare order items with required fields
   const orderItems = cartItems.map(item => ({
     productVariantId: item.id, // This should be the variant SKU
@@ -115,7 +118,8 @@ const orderData = {
   orderNumber: `PC-${Math.floor(Math.random() * 900000) + 100000}`,
   
   // Additional fields that might be needed
-  notes: formData.notes || '',
+  // notes: formData.notes || '',
+  notes: formData.customerNotes || '',
   carrierName: formData.carrierName || 'UNKNOWN',
   trackingNumber: formData.trackingNumber || `TRK-${Date.now()}`,
   saleMadeBy: formData.saleMadeBy || 'Admin',
@@ -129,7 +133,6 @@ const orderData = {
   // Include yard info in the order creation if provided
   ...(formData.yardName && {
     yardInfo: {
-      
       yardName: formData.yardName,
       yardAddress: formData.yardAddress || 'Unknown',
       yardMobile: formData.yardMobile || '000-000-0000',
@@ -139,7 +142,9 @@ const orderData = {
       yardMiles: parseFloat(formData.yardMiles) || 0,
       yardShippingType: formData.yardShipping || 'OWN_SHIPPING',
       yardShippingCost: parseFloat(formData.yardCost) || 0,
-      reason: formData.reason || 'No reason provided'
+      reason: formData.reason || 'No reason provided',
+      // Include own shipping info as JSON if present
+      ...(formData.yardShipping === 'Own Shipping' && formData.ownShippingInfo ? { yardOwnShippingInfo: formData.ownShippingInfo } : {})
     }
   })
 };

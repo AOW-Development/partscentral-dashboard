@@ -65,6 +65,17 @@ const OrderDetails = () => {
     carrierName: "",
     trackingNumber: "",
     notes: "",
+    ownShippingInfo: {
+      productType: "",
+      packageType: "",
+      weight: "",
+      dimensions: "",
+      pickUpDate: "",
+      carrier: "",
+      price: "",
+      variance: "",
+      bolNumber: ""
+    },
   });
   const [availableYears, setAvailableYears] = useState<string[]>([]);
 
@@ -275,6 +286,16 @@ const OrderDetails = () => {
     }
   };
 
+  const handleOwnShippingInfoChange = (field: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      ownShippingInfo: {
+        ...prev.ownShippingInfo,
+        [field]: value,
+      },
+    }));
+  };
+
   // Handle payment entry field changes
   const handlePaymentEntryChange = (
     id: number,
@@ -450,16 +471,29 @@ const OrderDetails = () => {
     const newErrors: { [key: string]: string } = {};
     let hasErrors = false;
 
-    requiredFields.forEach((field) => {
-      const error = validateField(
-        field,
-        formData[field as keyof typeof formData]
-      );
-      if (error) {
-        newErrors[field] = error;
-        hasErrors = true;
-      }
-    });
+    // requiredFields.forEach((field) => {
+    //   const error = validateField(
+    //     field,
+    //     formData[field as keyof typeof formData]
+    //   );
+    //   if (error) {
+    //     newErrors[field] = error;
+    //     hasErrors = true;
+    //   }
+    // });
+
+    if (formData.yardShipping === "Own Shipping") {
+      Object.keys(formData.ownShippingInfo).forEach(field => {
+        const error = validateField(
+          field,
+          formData.ownShippingInfo[field]
+        );
+        if (error) {
+          newErrors[`ownShippingInfo.${field}`] = error;
+          hasErrors = true;
+        }
+      });
+    }
 
     // Validate optional payment fields if provided
     ["cardNumber", "cardDate", "cardCvv"].forEach((field) => {
@@ -1605,6 +1639,168 @@ const OrderDetails = () => {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-[#FFFFFF33] rounded-lg p-2">
+                  {showOwnShipping && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4 p-4 border border-gray-700 rounded-lg md:col-span-3">
+                      <h3 className="md:col-span-3 text-white font-semibold mb-2">
+                        Own Shipping Details
+                      </h3>
+                      {/* Product Type */}
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Product Type
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white"
+                          placeholder="e.g., Engine, Transmission"
+                          value={formData.ownShippingInfo.productType}
+                          onChange={(e) =>
+                            handleOwnShippingInfoChange(
+                              "productType",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+                      {/* Package Type */}
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Package Type
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white"
+                          placeholder="e.g., Pallet, Crate"
+                          value={formData.ownShippingInfo.packageType}
+                          onChange={(e) =>
+                            handleOwnShippingInfoChange(
+                              "packageType",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+                      {/* Weight */}
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Weight (lbs)
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white"
+                          placeholder="Enter weight"
+                          value={formData.ownShippingInfo.weight}
+                          onChange={(e) =>
+                            handleOwnShippingInfoChange("weight", e.target.value)
+                          }
+                        />
+                      </div>
+                      {/* Dimensions */}
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Dimensions (LxWxH)
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white"
+                          placeholder="e.g., 48x40x30"
+                          value={formData.ownShippingInfo.dimensions}
+                          onChange={(e) =>
+                            handleOwnShippingInfoChange(
+                              "dimensions",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+                      {/* Pick-up Date */}
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Pick-up Date
+                        </label>
+                        <input
+                          type="date"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white"
+                          value={formData.ownShippingInfo.pickUpDate}
+                          onChange={(e) =>
+                            handleOwnShippingInfoChange(
+                              "pickUpDate",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+                      {/* Carrier */}
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Carrier
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white"
+                          placeholder="e.g., FedEx, UPS"
+                          value={formData.ownShippingInfo.carrier}
+                          onChange={(e) =>
+                            handleOwnShippingInfoChange("carrier", e.target.value)
+                          }
+                        />
+                      </div>
+                      {/* Price */}
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Price
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white"
+                          placeholder="Enter price"
+                          value={formData.ownShippingInfo.price}
+                          onChange={(e) =>
+                            handleOwnShippingInfoChange("price", e.target.value)
+                          }
+                        />
+                      </div>
+                      {/* Variance */}
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Variance
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white"
+                          placeholder="Enter variance"
+                          value={formData.ownShippingInfo.variance}
+                          onChange={(e) =>
+                            handleOwnShippingInfoChange(
+                              "variance",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+                      {/* BOL Number */}
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          BOL Number
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white"
+                          placeholder="Enter BOL number"
+                          value={formData.ownShippingInfo.bolNumber}
+                          onChange={(e) =>
+                            handleOwnShippingInfoChange(
+                              "bolNumber",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* Send Invoice Button */}
                 <div className="flex justify-end gap-4">
                   <button
@@ -1952,6 +2148,7 @@ const OrderDetails = () => {
                           <textarea
                             className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
                             value={previousYards[selectedPrevYardIdx].reason}
+                            disabled
                           />
                         </div>
                       </div>
@@ -2237,16 +2434,22 @@ const OrderDetails = () => {
                         </label>
                         <div className="relative">
                           <select
-                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                            // value={formData.yardShipping}
-                            // onChange={(e) =>
-                            //   handleInputChange("yardShipping", e.target.value)
-                            // }
-                          >
-                            <option value="">Select Product Type</option>
-                            <option>LTL</option>
-                            <option>Parcel</option>
-                          </select>
+  className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+  value={formData.ownShippingInfo.productType}
+  onChange={e =>
+    setFormData(prev => ({
+      ...prev,
+      ownShippingInfo: {
+        ...prev.ownShippingInfo,
+        productType: e.target.value
+      }
+    }))
+  }
+>
+  <option value="">Select Product Type</option>
+  <option>LTL</option>
+  <option>Parcel</option>
+</select>
                           <ChevronDown
                             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
                             size={16}
@@ -2259,17 +2462,23 @@ const OrderDetails = () => {
                         </label>
                         <div className="relative">
                           <select
-                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                            // value={formData.yardShipping}
-                            // onChange={(e) =>
-                            //   handleInputChange("yardShipping", e.target.value)
-                            // }
-                          >
-                            <option value="">Select Package Type</option>
-                            <option>Pallet</option>
-                            <option>Box</option>
-                            <option>Crate</option>
-                          </select>
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                          value={formData.ownShippingInfo.packageType}
+                          onChange={e =>
+                            setFormData(prev => ({
+                              ...prev,
+                              ownShippingInfo: {
+                                ...prev.ownShippingInfo,
+                                packageType: e.target.value
+                              }
+                            }))
+                          }
+                        >
+                          <option value="">Select Package Type</option>
+                          <option>Pallet</option>
+                          <option>Box</option>
+                          <option>Crate</option>
+                        </select>
                           <ChevronDown
                             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
                             size={16}
@@ -2284,10 +2493,16 @@ const OrderDetails = () => {
                           type="number"
                           className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
                           placeholder="Enter weight"
-                          // value={formData.weight}
-                          // onChange={(e) =>
-                          // handleInputChange("weight", e.target.value)
-                          // }
+                          value={formData.ownShippingInfo.weight}
+                          onChange={e =>
+                            setFormData(prev => ({
+                              ...prev,
+                              ownShippingInfo: {
+                                ...prev.ownShippingInfo,
+                                weight: e.target.value
+                              }
+                            }))
+                          }
                         />
                       </div>
                       <div>
@@ -2295,28 +2510,40 @@ const OrderDetails = () => {
                           Dimensions
                         </label>
                         <input
-                          type="number"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                          placeholder="Enter dimensions"
-                          // value={formData.dimensions}
-                          // onChange={(e) =>
-                          // handleInputChange("dimensions", e.target.value)
-                          // }
-                        />
+                        type="number"
+                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                        placeholder="Enter dimensions"
+                        value={formData.ownShippingInfo.dimensions}
+                        onChange={e =>
+                          setFormData(prev => ({
+                            ...prev,
+                            ownShippingInfo: {
+                              ...prev.ownShippingInfo,
+                              dimensions: e.target.value
+                            }
+                          }))
+                        }
+                      />
                       </div>
                       <div>
                         <label className="block text-white/60 text-sm mb-2">
                           Pick Up Date
                         </label>
                         <input
-                          type="date"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                          placeholder="Enter pick up date"
-                          // value={formData.dimensions}
-                          // onChange={(e) =>
-                          // handleInputChange("dimensions", e.target.value)
-                          // }
-                        />
+  type="date"
+  className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+  placeholder="Enter pick up date"
+  value={formData.ownShippingInfo.pickUpDate}
+  onChange={e =>
+    setFormData(prev => ({
+      ...prev,
+      ownShippingInfo: {
+        ...prev.ownShippingInfo,
+        pickUpDate: e.target.value
+      }
+    }))
+  }
+/>
                       </div>
                       <div>
                         <label className="block text-white/60 text-sm mb-2">
@@ -2326,10 +2553,16 @@ const OrderDetails = () => {
                           type="text"
                           className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
                           placeholder="Enter carrier"
-                          // value={formData.weight}
-                          // onChange={(e) =>
-                          // handleInputChange("weight", e.target.value)
-                          // }
+                          value={formData.ownShippingInfo.carrier}
+                          onChange={e =>
+                            setFormData(prev => ({
+                              ...prev,
+                              ownShippingInfo: {
+                                ...prev.ownShippingInfo,
+                                carrier: e.target.value
+                              }
+                            }))
+                          }
                         />
                       </div>
                       <div>
@@ -2337,28 +2570,40 @@ const OrderDetails = () => {
                           Price
                         </label>
                         <input
-                          type="number"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                          placeholder="Enter price"
-                          // value={formData.price}
-                          // onChange={(e) =>
-                          // handleInputChange("price", e.target.value)
-                          // }
-                        />
+  type="number"
+  className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+  placeholder="Enter price"
+  value={formData.ownShippingInfo.price}
+  onChange={e =>
+    setFormData(prev => ({
+      ...prev,
+      ownShippingInfo: {
+        ...prev.ownShippingInfo,
+        price: e.target.value
+      }
+    }))
+  }
+/>
                       </div>
                       <div>
                         <label className="block text-white/60 text-sm mb-2">
                           Variance
                         </label>
                         <input
-                          type="number"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                          placeholder="Enter variance"
-                          // value={formData.variance}
-                          // onChange={(e) =>
-                          // handleInputChange("variance", e.target.value)
-                          // }
-                        />
+  type="number"
+  className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+  placeholder="Enter variance"
+  value={formData.ownShippingInfo.variance}
+  onChange={e =>
+    setFormData(prev => ({
+      ...prev,
+      ownShippingInfo: {
+        ...prev.ownShippingInfo,
+        variance: e.target.value
+      }
+    }))
+  }
+/>
                       </div>
                       <div className="flex justify-end">
                         <button className="bg-[#006BA9] hover:bg-[#006BA9]/90 cursor-pointer mt-8 w-40 h-10 px-2 py-2 text-white  rounded-lg font-medium transition-colors">
@@ -2370,14 +2615,20 @@ const OrderDetails = () => {
                           BOL Number
                         </label>
                         <input
-                          type="text"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:border-blue-500 focus:outline-none"
-                          placeholder="Enter BOL number"
-                          // value={formData.carrierName}
-                          // onChange={(e) =>
-                          // handleInputChange("carrierName", e.target.value)
-                          // }
-                        />
+  type="text"
+  className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:border-blue-500 focus:outline-none"
+  placeholder="Enter BOL number"
+  value={formData.ownShippingInfo.bolNumber}
+  onChange={e =>
+    setFormData(prev => ({
+      ...prev,
+      ownShippingInfo: {
+        ...prev.ownShippingInfo,
+        bolNumber: e.target.value
+      }
+    }))
+  }
+/>
                       </div>
                     </div>
                   </>
