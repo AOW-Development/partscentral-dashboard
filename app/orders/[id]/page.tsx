@@ -489,7 +489,8 @@ const OrderDetails = () => {
     // });
 
     if (formData.yardShipping === "Own Shipping") {
-      Object.keys(formData.ownShippingInfo).forEach(field => {
+      const ownShippingInfoKeys = Object.keys(formData.ownShippingInfo) as Array<keyof typeof formData.ownShippingInfo>;
+      ownShippingInfoKeys.forEach(field => {
         const error = validateField(
           field,
           formData.ownShippingInfo[field]

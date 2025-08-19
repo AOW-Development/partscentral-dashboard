@@ -1,0 +1,20 @@
+location /socket.io/ {
+    proxy_pass http://localhost:3001/socket.io/;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+}
+
+You mean this should be like this :
+(cause /api/ is backend so ? right ?)
+
+location /socket.io/ {
+    proxy_pass http://parscentral.us/api/socket.io/;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+}
+
+also my grave concern is fetching years route in backend which is being used my both frontends so how does backend know which frotend to return/call/send ??
