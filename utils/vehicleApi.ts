@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
 export const fetchYears = async (make: string, model: string): Promise<string[]> => {
   if (!make || !model) {

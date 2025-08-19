@@ -1,4 +1,18 @@
-const API_URL = 'http://localhost:3001/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
+type CartItem = {
+  id: string;
+  sku?: string;
+  quantity: number;
+  price: number;
+  warranty?: string;
+  milesPromised?: string | number;
+  specification?: string;
+  pictureUrl?: string;
+  pictureStatus?: string;
+  source?: string;
+  [key: string]: any; // For any additional properties
+};
 
 const mapWarrantyToPrismaEnum = (warranty: string): string => {
   switch (warranty) {
@@ -11,7 +25,7 @@ const mapWarrantyToPrismaEnum = (warranty: string): string => {
   }
 };
 
-export const createOrderFromAdmin = async (formData: any, cartItems: any[]) => {
+export const createOrderFromAdmin = async (formData: any, cartItems: CartItem[]) => {
   // Debug: log ownShippingInfo and yardShipping before constructing orderData
   console.log('DEBUG ownShippingInfo:', formData.ownShippingInfo);
   console.log('DEBUG yardShipping:', formData.yardShipping);
@@ -73,9 +87,10 @@ const orderData = {
     type: formData.shippingAddressType || 'RESIDENTIAL'
   },
   
-  cartItems: orderItems.map(item => {
-    // Ensure we use the correct SKU field that matches the database
-    const sku = item.productVariantId || item.sku || item.id;
+  cartItems: cartItems.map(item => {
+    // Use the id as the SKU since that's what we're using as the primary identifier
+    const sku = item.id;
+    // console.log('SKU for cart item:', sku);      
     if (!sku) {
       console.error('Missing SKU for cart item:', item);
       throw new Error('Product variant SKU is required');

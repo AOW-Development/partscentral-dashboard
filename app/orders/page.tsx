@@ -24,7 +24,7 @@ interface Order {
   date: string;
   sum: string;
   email: string;
-  mobile: number;
+  mobile: string;
   status: string;
 }
 
