@@ -23,10 +23,10 @@ export const users: User[] = [
   },
   {
     id: "USR-003",
-    email: "sarah@partscentral.com",
-    password: "sarah@123",
+    email: "ramjas@partscentral.com",
+    password: "ramjas@123",
     role: "sales",
-    name: "Sarah Williams",
+    name: "Ramjas",
   },
   {
     id: "USR-004",

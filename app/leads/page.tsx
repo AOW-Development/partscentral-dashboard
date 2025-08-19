@@ -343,37 +343,55 @@ export default function Leads() {
                         />
                       </th>
                       <th className="px-4 py-4 font-semibold text-sm text-gray-400">
-                        Lead ID
+                        <div className="flex justify-center space-x-2">
+                          Lead ID
+                        </div>
                       </th>
                       <th className="px-4 py-4 font-semibold text-sm text-gray-400">
-                        Lead Name
+                        <div className="flex justify-center space-x-2">
+                          Lead Name
+                        </div>
                       </th>
                       <th className="px-4 py-4 font-semibold text-sm text-gray-400">
-                        Mobile
+                        <div className="flex justify-center space-x-2">
+                          Mobile
+                        </div>
                       </th>
                       {/* <th className="px-6 py-4 font-semibold text-sm text-gray-400">
                         Email
                       </th> */}
                       <th className="px-4 py-4 font-semibold text-sm text-gray-400">
-                        Product Interest
+                        <div className="flex justify-center space-x-2">
+                          Product Interest
+                        </div>
                       </th>
                       <th className="px-4 py-4 font-semibold text-sm text-gray-400">
-                        Source
+                        <div className="flex justify-center space-x-2">
+                          Source
+                        </div>
                       </th>
                       <th className="px-4 py-4 font-semibold text-sm text-gray-400">
-                        Assigned By
+                        <div className="flex justify-center space-x-2">
+                          Assigned By
+                        </div>
                       </th>
                       <th className="px-4 py-4 font-semibold text-sm text-gray-400">
-                        Status
+                        <div className="flex justify-center space-x-2">
+                          Status
+                        </div>
                       </th>
                       <th className="px-4 py-4 font-semibold text-sm text-gray-400">
-                        <span className="ml-2">Priority</span>
+                        <div className="flex justify-center space-x-2">
+                          Priority
+                        </div>
                       </th>
                       {/* <th className="px-6 py-4 font-semibold text-sm text-gray-400">
                         Last Contact
                       </th> */}
                       <th className="px-4 py-4 font-semibold text-sm text-gray-400">
-                        Actions
+                        <div className="flex justify-center space-x-2">
+                          Actions
+                        </div>
                       </th>
                     </tr>
                   </thead>
@@ -381,38 +399,57 @@ export default function Leads() {
                     {filteredClients.map((client) => (
                       <tr key={client.id} className="hover:bg-gray-800/50">
                         <td className="whitespace-nowrap px-4 py-4">
-                          <input
-                            type="checkbox"
-                            className="rounded border-gray-400 text-blue-600 focus:ring-blue-500"
-                            checked={selectedItems.includes(client.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedItems([...selectedItems, client.id]);
-                              } else {
-                                setSelectedItems(
-                                  selectedItems.filter((id) => id !== client.id)
-                                );
-                              }
-                            }}
-                          />
+                          <div className="flex justify-center space-x-2">
+                            <input
+                              type="checkbox"
+                              className="rounded border-gray-400 text-blue-600 focus:ring-blue-500"
+                              checked={selectedItems.includes(client.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedItems([
+                                    ...selectedItems,
+                                    client.id,
+                                  ]);
+                                } else {
+                                  setSelectedItems(
+                                    selectedItems.filter(
+                                      (id) => id !== client.id
+                                    )
+                                  );
+                                }
+                              }}
+                            />
+                          </div>
                         </td>
                         <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-300">
-                          {client.id}
+                          <div className="flex justify-center space-x-2">
+                            {client.id}
+                          </div>
                         </td>
                         <td className="whitespace-nowrap px-4 py-4 text-sm font-medium text-gray-300">
-                          {client.name}
+                          <div className="flex justify-center space-x-2">
+                            {client.name}
+                          </div>
                         </td>
                         <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-300">
-                          {client.phone || "N/A"}
+                          <div className="flex justify-center space-x-2">
+                            {client.phone || "N/A"}
+                          </div>
                         </td>
                         <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-300">
-                          {client.productInterest || "N/A"}
+                          <div className="flex justify-center space-x-2">
+                            {client.productInterest || "N/A"}
+                          </div>
                         </td>
                         <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-300">
-                          {client.source || "N/A"}
+                          <div className="flex justify-center space-x-2">
+                            {client.source || "N/A"}
+                          </div>
                         </td>
                         <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-300">
-                          {client.assignedBy || "N/A"}
+                          <div className="flex justify-center space-x-2">
+                            {client.assignedBy || "N/A"}
+                          </div>
                         </td>
                         <td
                           className={`whitespace-nowrap text-sm text-gray-300 ${
@@ -438,24 +475,26 @@ export default function Leads() {
                         >
                           {client.status || "N/A"}
                         </td>
-                        <td className=" whitespace-nowrap px-4 py-4 gap-0.5 text-sm text-gray-300">
-                          <div
-                            className={`inline-flex mx-1  w-2 h-2  rounded-full bg-${
-                              client.priority === "High"
-                                ? "red-500"
-                                : client.priority === "Medium"
-                                ? "blue-500"
-                                : "green-500"
-                            }`}
-                          ></div>
-                          {client.priority || "N/A"}
+                        <td className=" whitespace-nowrap justify-center px-4 py-4 gap-0.5 text-sm text-gray-300">
+                          <div className="flex justify-center space-x-2">
+                            <div
+                              className={`inline-flex mx-1 mt-1  w-2 h-2  rounded-full bg-${
+                                client.priority === "High"
+                                  ? "red-500"
+                                  : client.priority === "Medium"
+                                  ? "blue-500"
+                                  : "green-500"
+                              }`}
+                            ></div>
+                            {client.priority || "N/A"}
+                          </div>
                         </td>
 
                         {/* <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
                           {client.email || "N/A"}
                         </td> */}
                         <td className="whitespace-nowrap px-4 py-4 text-right text-sm font-medium relative">
-                          <div className="flex justify-end space-x-2">
+                          <div className="flex justify-center space-x-2">
                             <button
                               type="button"
                               className="text-blue-500 hover:text-blue-700 action-button"
