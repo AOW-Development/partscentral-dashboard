@@ -4,6 +4,8 @@ import { persist } from "zustand/middleware";
 interface User {
   id: string;
   email: string;
+  role: string;
+  name: string;
   [key: string]: string | number | boolean;
 }
 
@@ -31,12 +33,28 @@ const useAuthStore = create<AuthState>()(
           token,
           isLoggedIn: true,
         })),
-      logout: () =>
+      // logout: () =>
+      //   set(() => ({
+      //     user: null,
+      //     token: null,
+      //     isLoggedIn: false,
+      //   })),
+      logout: () => {
+        // Clear all auth-related data
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("auth-storage");
+          // Clear any other auth-related items if they exist
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+        }
+
+        // Update the state using the functional update pattern
         set(() => ({
           user: null,
           token: null,
           isLoggedIn: false,
-        })),
+        }));
+      },
       setToken: (token: string) => set(() => ({ token })),
     }),
     {

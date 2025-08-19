@@ -64,7 +64,7 @@ export default function Header() {
                 className="rounded-full object-cover cursor-pointer"
               />
               <div className="text-white text-sm hidden sm:block">
-                <p className="font-medium leading-tight">Admin</p>
+                <p className="font-medium leading-tight">{user?.name}</p>
                 <p className="text-xs text-gray-300">{user?.email}</p>
               </div>
               {user && (
