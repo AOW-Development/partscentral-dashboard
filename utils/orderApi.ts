@@ -134,11 +134,11 @@ const orderData = {
       yardAddress: formData.yardAddress || 'Unknown',
       yardMobile: formData.yardMobile || '000-000-0000',
       yardEmail: formData.yardEmail || 'no-email@example.com',
-      yardPrice: formData.yardPrice ? parseFloat(formData.yardPrice) : 0,
+      yardPrice: parseFloat(formData.yardPrice) || 0,
       yardWarranty: mapWarrantyToPrismaEnum(formData.yardWarranty || '30 Days'),
-      yardMiles: formData.yardMiles ? parseFloat(formData.yardMiles) : 0,
+      yardMiles: parseFloat(formData.yardMiles) || 0,
       yardShippingType: formData.yardShipping || 'OWN_SHIPPING',
-      yardShippingCost: formData.yardCost ? parseFloat(formData.yardCost) : 0,
+      yardShippingCost: parseFloat(formData.yardCost) || 0,
       reason: formData.reason || 'No reason provided'
     }
   })
