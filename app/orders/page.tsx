@@ -28,6 +28,24 @@ interface Order {
   status: string;
 }
 
+interface RawOrder {
+  id: string;
+  orderNumber: string;
+  createdAt: string;
+  totalAmount: number;
+  status: string;
+  customer: {
+    full_name: string;
+    email: string;
+  };
+  shippingSnapshot?: {
+    phone?: string;
+  };
+  billingSnapshot?: {
+    phone?: string;
+  };
+}
+
 export default function Orders() {
   const [currentPage, setCurrentPage] = useState(1);
   const [open, setOpen] = useState(false);
@@ -68,7 +86,7 @@ export default function Orders() {
         const response = await fetch('http://localhost:3001/api/orders');
         if (response.ok) {
           const data = await response.json();
-          const mappedOrders = data.map((order: any) => ({
+          const mappedOrders = data.map((order: RawOrder) => ({
             id: order.orderNumber,
             name: order.customer.full_name,
             date: new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).replace(/ /g, ' '),
