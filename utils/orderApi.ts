@@ -189,3 +189,17 @@ try {
     throw error;
   }
 };
+
+export const getOrderById = async (orderId: string) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/${orderId}`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to fetch order');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error(`Error fetching order ${orderId}:`, error);
+    throw error;
+  }
+};
