@@ -684,6 +684,18 @@ const OrderDetails = () => {
         return;
       }
 
+      const cartItems = [
+        {
+          id: formData.variantSku, // Use the actual SKU from the selected variant
+          name: `${formData.make} ${formData.model} ${formData.year} ${formData.parts}`,
+          price: parseFloat(formData.partPrice) || 0,
+          quantity: 1,
+          warranty: formData.warranty,
+          milesPromised: formData.milesPromised,
+          specification: formData.specification,
+        },
+      ];
+
       const result = await updateOrderFromAdmin(orderId, formData, cartItems);
 
       setMessage({
@@ -3105,3 +3117,7 @@ const OrderDetails = () => {
 };
 
 export default OrderDetails;
+function setCartItems(arg0: any) {
+  throw new Error("Function not implemented.");
+}
+
