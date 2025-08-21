@@ -1,6 +1,7 @@
-export const getCardType = (cardNumber?: string | null): string | null => {
-  if (!cardNumber) return null;
-  
+export const getCardType = (cardNumber: string): string | null => {
+  if (typeof cardNumber !== 'string') {
+    return null;
+  }
   const sanitized = cardNumber.replace(/\D/g, "");
 
   if (/^4[0-9]{12}(?:[0-9]{3})?$/.test(sanitized)) return "Visa";
@@ -13,6 +14,9 @@ export const getCardType = (cardNumber?: string | null): string | null => {
 
 // ✅ Luhn algorithm for checksum validation
 export const isValidCardNumber = (cardNumber: string): boolean => {
+  if (typeof cardNumber !== 'string') {
+    return false;
+  }
   if (cardNumber.startsWith("3")) {
     return true;
   } else {

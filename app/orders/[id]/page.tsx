@@ -26,6 +26,7 @@ interface CartItem {
 }
 
 const OrderDetails = () => {
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const params = useParams();
   const orderId = params.id as string;
 
@@ -33,12 +34,68 @@ const OrderDetails = () => {
     if (orderId && orderId !== 'create' && orderId !== 'new') {
       getOrderById(orderId)
         .then((data) => {
+          const payment = data.payments?.[0] || {};
+          const billing = data.billingSnapshot || {};
+          const shipping = data.shippingSnapshot || {};
+          const yard = data.yardInfo || {};
+          const ownShipping = yard.yardOwnShippingInfo || {};
+
           setFormData({
-            ...data,
-            billingInfo: data.billingSnapshot || {},
-            shippingInfo: data.shippingSnapshot || {},
-            yardInfo: data.yardInfo || {},
-            ownShippingInfo: data.yardInfo?.yardOwnShippingInfo || {},
+            ...formData,
+            email: billing.email || '',
+            mobile: billing.phone || '',
+            partPrice: data.subtotal || '',
+            taxesPrice: data.taxesAmount || '',
+            handlingPrice: data.handlingFee || '',
+            processingPrice: data.processingFee || '',
+            corePrice: data.corePrice || '',
+            shippingAddressType: shipping.addressType || '',
+            company: shipping.company || '',
+            shippingAddress: shipping.address || '',
+            billingAddress: billing.address || '',
+            cardHolderName: payment.cardHolderName || '',
+            cardNumber: payment.cardNumber || '',
+            cardDate: payment.cardExpiry ? new Date(payment.cardExpiry).toLocaleDateString('en-US', { month: '2-digit', year: '2-digit' }) : '',
+            cardCvv: payment.cardCvv || '',
+            warranty: data.warranty || '',
+            milesPromised: data.milesPromised || '',
+            make: data.make || '',
+            model: data.model || '',
+            year: data.year || '',
+            parts: data.parts || '',
+            specification: data.specification || '',
+            variantSku: data.variantSku || '',
+            totalSellingPrice: data.totalAmount || '',
+            totalPrice: data.totalAmount || '',
+            merchantMethod: payment.method || '',
+            approvalCode: payment.providerPaymentId || '',
+            entity: payment.entity || '',
+            charged: payment.status === 'SUCCEEDED' ? 'Yes' : 'No',
+            saleMadeBy: data.saleMadeBy || '',
+            yardName: yard.yardName || '',
+            yardMobile: yard.yardMobile || '',
+            yardAddress: yard.yardAddress || '',
+            yardEmail: yard.yardEmail || '',
+            yardPrice: yard.yardPrice || '',
+            yardWarranty: yard.yardWarranty || '',
+            yardMiles: yard.yardMiles || '',
+            yardShipping: yard.yardShippingType || '',
+            yardCost: yard.yardShippingCost || '',
+            pictureStatus: data.pictureStatus || '',
+            carrierName: data.carrierName || '',
+            trackingNumber: data.trackingNumber || '',
+            notes: data.notes || '',
+            ownShippingInfo: {
+              productType: ownShipping.productType || '',
+              packageType: ownShipping.packageType || '',
+              weight: ownShipping.weight || '',
+              dimensions: ownShipping.dimensions || '',
+              pickUpDate: ownShipping.pickUpDate || '',
+              carrier: ownShipping.carrier || '',
+              price: ownShipping.price || '',
+              variance: ownShipping.variance || '',
+              bolNumber: ownShipping.bolNumber || '',
+            },
           });
           setCartItems(data.items || []);
         })
@@ -46,7 +103,7 @@ const OrderDetails = () => {
           console.error("Failed to fetch order details", err);
         });
     }
-  }, [orderId]);// State for product variants
+  }, [orderId, setCartItems]);// State for product variants
   const [productVariants, setProductVariants] = useState<GroupedVariant[]>([]);
   const [selectedSubpart, setSelectedSubpart] = useState<GroupedVariant | null>(null);
   const [selectedMileage, setSelectedMileage] = useState('');
