@@ -2,19 +2,51 @@
 import Header from "@/app/components/Header";
 import ProtectRoute from "@/app/components/ProtectRoute";
 import Sidebar from "@/app/components/Sidebar";
+import { useParams } from "next/navigation";
 import { ChevronDown, X, Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { URL } from "@/utils/imageUrl";
-import { createOrderFromAdmin } from "@/utils/orderApi";
+import { createOrderFromAdmin, getOrderById  } from "@/utils/orderApi";
+import { updateOrderFromAdmin} from "@/utils/updateOrderApi";
 import { getCardType, isValidCardNumber } from "@/utils/cardValidator";
 import { MAKES, MODELS } from "@/vehicleData-dashboard";
 import { fetchYears } from "@/utils/vehicleApi";
 import { getProductVariants, GroupedVariant } from "@/utils/productApi";
 
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  warranty?: string;
+  milesPromised?: string;
+  specification?: string;
+}
+
 const OrderDetails = () => {
-  // State for product variants
+  const params = useParams();
+  const orderId = params.id as string;
+
+  useEffect(() => {
+    if (orderId && orderId !== 'create') {
+      getOrderById(orderId)
+        .then((data) => {
+          setFormData({
+            ...data,
+            billingInfo: data.billingSnapshot || {},
+            shippingInfo: data.shippingSnapshot || {},
+            yardInfo: data.yardInfo || {},
+            ownShippingInfo: data.yardInfo?.yardOwnShippingInfo || {},
+          });
+          setCartItems(data.items || []);
+        })
+        .catch((err) => {
+          console.error("Failed to fetch order details", err);
+        });
+    }
+  }, [orderId]);// State for product variants
   const [productVariants, setProductVariants] = useState<GroupedVariant[]>([]);
   const [selectedSubpart, setSelectedSubpart] = useState<GroupedVariant | null>(null);
   const [selectedMileage, setSelectedMileage] = useState('');
@@ -630,7 +662,95 @@ const OrderDetails = () => {
     }
   };
 
+  const handleSave = async () => {
+    if (orderId && orderId !== 'create') {
+      await handleUpdateOrder();
+    } else {
+      await handleCreateOrder();
+    }
+  };
+
+  const handleUpdateOrder = async () => {
+    if (!validateAllFields()) {
+      return;
+    }
+
+    setIsLoading(true);
+    setMessage(null);
+
+    try {
+      if (!formData.variantSku) {
+        alert('Please select a valid specification and mileage');
+        return;
+      }
+
+      const result = await updateOrderFromAdmin(orderId, formData, cartItems);
+
+      setMessage({
+        type: "success",
+        text: "Order updated successfully!",
+      });
+      setIsProcessing(false);
+      console.log("Order updated:", result);
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Failed to update order. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleCreateOrder = async () => {
+    // if (!validateAllFields()) {
+    //   return;
+    // }
+
+  //   setIsLoading(true);
+  //   setMessage(null);
+
+  //   try {
+  //     if (!formData.variantSku) {
+  //       alert('Please select a valid specification and mileage');
+  //       return;
+  //     }
+
+  //     // Create cart items array with the selected part
+  //     const cartItems = [
+  //       {
+  //         id: formData.variantSku, // Use the actual SKU from the selected variant
+  //         name: `${formData.make} ${formData.model} ${formData.year} ${formData.parts}`,
+  //         price: parseFloat(formData.partPrice) || 0,
+  //         quantity: 1,
+  //         warranty: formData.warranty,
+  //         milesPromised: formData.milesPromised,
+  //         specification: formData.specification,
+  //       },
+  //     ];
+  //     const result = await createOrderFromAdmin(formData, cartItems);
+
+  //     setMessage({
+  //       type: "success",
+  //       text: "Order created successfully!",
+  //     });
+  //     setIsProcessing(false);
+  //     console.log("Order created:", result);
+  //   } catch (error) {
+  //     setMessage({
+  //       type: "error",
+  //       text:
+  //         error instanceof Error
+  //           ? error.message
+  //           : "Failed to create order. Please try again.",
+  //     });
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
     if (!validateAllFields()) {
       return;
     }
@@ -2879,7 +2999,7 @@ const OrderDetails = () => {
               <div className="flex justify-end gap-4 mt-8 mb-8">
                 <button
                     className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
-                    onClick={handleCreateOrder}
+                    onClick={handleSave}
                   >
                     Save
                   </button>
