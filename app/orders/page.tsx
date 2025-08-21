@@ -13,6 +13,7 @@ import CalendarMain from "../components/Calendar";
 // import { getSocket } from "../utils/socket";
 import { getSocket } from "../../utils/socket";
 // import Calendar from "react-calendar";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 type ValuePiece = Date | null;
 
@@ -83,11 +84,11 @@ export default function Orders() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/orders');
+        const response = await fetch(`${API_URL}/orders`);
         if (response.ok) {
           const data = await response.json();
           const mappedOrders = data.map((order: RawOrder) => ({
-            id: order.orderNumber,
+            id: order.id,
             name: order.customer.full_name,
             date: new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).replace(/ /g, ' '),
             sum: `${order.totalAmount}`,

@@ -30,7 +30,7 @@ const OrderDetails = () => {
   const orderId = params.id as string;
 
   useEffect(() => {
-    if (orderId && orderId !== 'create') {
+    if (orderId && orderId !== 'create' && orderId !== 'new') {
       getOrderById(orderId)
         .then((data) => {
           setFormData({
@@ -620,7 +620,7 @@ const OrderDetails = () => {
       console.log(invoiceData);
 
       // API call to send invoice
-      const response = await fetch("/api/send-invoice", {
+        const response = await fetch(`${URL}api/send-invoice`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -663,7 +663,7 @@ const OrderDetails = () => {
   };
 
   const handleSave = async () => {
-    if (orderId && orderId !== 'create') {
+    if (orderId && orderId !== 'create' && orderId !== 'new') {
       await handleUpdateOrder();
     } else {
       await handleCreateOrder();

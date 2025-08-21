@@ -1,4 +1,6 @@
-export const getCardType = (cardNumber: string): string | null => {
+export const getCardType = (cardNumber?: string | null): string | null => {
+  if (!cardNumber) return null;
+  
   const sanitized = cardNumber.replace(/\D/g, "");
 
   if (/^4[0-9]{12}(?:[0-9]{3})?$/.test(sanitized)) return "Visa";
