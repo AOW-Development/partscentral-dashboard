@@ -77,7 +77,7 @@ const orderData = {
     email: formData.email || 'no-email@example.com',
     phone: formData.mobile || '000-000-0000',
     firstName: formData.cardHolderName?.split(' ')[0] || 'Unknown',
-    lastName: formData.cardHolderName?.split(' ').slice(1).join(' ') || 'Customer',
+    lastName: formData.cardHolderName?.split(' ').slice(1).join(' ') || '',
     company: formData.company || null,
     address: formData.shippingAddress || 'Unknown',
     city: formData.shippingCity || 'Unknown',

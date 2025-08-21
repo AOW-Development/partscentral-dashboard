@@ -28,6 +28,24 @@ interface Order {
   status: string;
 }
 
+interface RawOrder {
+  id: string;
+  orderNumber: string;
+  createdAt: string;
+  totalAmount: number;
+  status: string;
+  customer: {
+    full_name: string;
+    email: string;
+  };
+  shippingSnapshot?: {
+    phone?: string;
+  };
+  billingSnapshot?: {
+    phone?: string;
+  };
+}
+
 export default function Orders() {
   const [currentPage, setCurrentPage] = useState(1);
   const [open, setOpen] = useState(false);
@@ -68,7 +86,16 @@ export default function Orders() {
         const response = await fetch('http://localhost:3001/api/orders');
         if (response.ok) {
           const data = await response.json();
-          setOrders(data);
+          const mappedOrders = data.map((order: RawOrder) => ({
+            id: order.orderNumber,
+            name: order.customer.full_name,
+            date: new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).replace(/ /g, ' '),
+            sum: `${order.totalAmount}`,
+            email: order.customer.email,
+            mobile: order.shippingSnapshot?.phone || order.billingSnapshot?.phone || '',
+            status: order.status,
+          }));
+          setOrders(mappedOrders);
         } else {
           console.error('Failed to fetch orders');
         }
@@ -86,11 +113,15 @@ export default function Orders() {
     socket.on('new_order', (data) => {
       const newOrder: Order = {
         id: data.order.id,
-        name: data.order.customerName,
+        // name: data.order.customer.full_name,
+        name: data.order.customerName ,
         date: new Date(data.order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).replace(/ /g, ' '),
         sum: `${data.order.total}`,
         email: data.order.customer_email,
         mobile: data.order.mobile,
+        // sum: `${data.order.totalAmount}`,
+        // email: data.order.customer.email,
+        // mobile: data.order.shippingSnapshot?.phone || data.order.billingSnapshot?.phone || '',
         status: data.order.status,
       };
       setOrders((prevOrders) => [newOrder, ...prevOrders]);
@@ -352,7 +383,7 @@ export default function Orders() {
                   className="hover:text-slate-300 cursor-pointer md:mr-10"
                 /> */}
                 <Link
-                  href="/orders/create"
+                  href="/orders/new"
                   className="bg-secondary flex items-center gap-2 hover:bg-secondary/90 text-white px-8 py-4 rounded-lg hover:text-slate-300 cursor-pointer"
                 >
                   Create Order
