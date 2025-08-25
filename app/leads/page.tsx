@@ -4,10 +4,52 @@ import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import Pagination from "../components/Pagination";
 import ProtectRoute from "../components/ProtectRoute";
+import { getSocket } from "../../utils/socket";
+
+// Define the structure of a lead from the API
+interface ApiLead {
+  id: number;
+  lead_id: string;
+  form_id: string;
+  created_at: string;
+  data: { name: string; values: string[] }[];
+}
+
+// Define the structure of a client/lead for the UI
+interface UiLead {
+  id: string;
+  name: string;
+  phone: string;
+  productInterest: string;
+  source: string;
+  assignedBy: string;
+  status: string;
+  priority: string;
+}
+
+// Helper function to extract a specific field from the lead data
+const getLeadFieldValue = (data: { name: string; values: string[] }[], fieldName: string) => {
+  const field = data.find((f) => f.name === fieldName);
+  return field ? field.values.join(', ') : 'N/A';
+};
+
+// Helper to transform an API lead into a UI-compatible lead
+const transformLead = (lead: ApiLead): UiLead => ({
+  id: lead.lead_id,
+  name: getLeadFieldValue(lead.data, 'full_name'),
+  phone: getLeadFieldValue(lead.data, 'phone_number'),
+  productInterest: getLeadFieldValue(lead.data, 'product_interest') || 'N/A',
+  source: 'Meta',
+  assignedBy: 'N/A',
+  status: 'New',
+  priority: 'Medium',
+});
 
 export default function Leads() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [clients, setClients] = useState<UiLead[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // const [value, onChange] = useState<Value>(new Date());
   // Dummy customers data
@@ -141,6 +183,7 @@ export default function Leads() {
   const [filteredClients, setFilteredClients] = useState(initialClients);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [openActionMenu, setOpenActionMenu] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
   const filterBtnRef = useRef<HTMLButtonElement | null>(null);
   const filterPanelRef = useRef<HTMLDivElement | null>(null);
 
@@ -175,7 +218,35 @@ export default function Leads() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [openActionMenu]);
 
-  // Filtering logic (now in useEffect)
+  // Effect for fetching initial data and listening to socket
+  useEffect(() => {
+    const fetchLeads = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/leads`);
+        if (response.ok) {
+          const data: ApiLead[] = await response.json();
+          setClients(data.map(transformLead));
+        }
+      } catch (error) {
+        console.error('Error fetching leads:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLeads();
+
+    const socket = getSocket();
+    socket.on('new-lead', (newLead: ApiLead) => {
+      setClients((prevClients) => [transformLead(newLead), ...prevClients]);
+    });
+
+    return () => {
+      socket.off('new-lead');
+    };
+  }, []);
+
+  // Filtering logic
   useEffect(() => {
     let filtered = [...clients];
     if (search.trim()) {
@@ -184,20 +255,57 @@ export default function Leads() {
           client.id.toLowerCase().includes(search.toLowerCase()) ||
           client.name.toLowerCase().includes(search.toLowerCase()) ||
           client.phone.includes(search)
-        // client.email.toLowerCase().includes(search.toLowerCase())
       );
     }
-    // Dropdown Status
     if (status) {
       filtered = filtered.filter(
         (client) => client.status.toLowerCase() === status.toLowerCase()
       );
     }
-    const startIndex = (currentPage - 1) * 50;
-    const endIndex = startIndex + 50;
-    filtered = filtered.slice(startIndex, endIndex);
-    setFilteredClients(filtered);
+    
+    const startIndex = (currentPage - 1) * 10; // 10 items per page
+    const endIndex = startIndex + 10;
+    setFilteredClients(filtered.slice(startIndex, endIndex));
+
   }, [search, status, currentPage, clients]);
+
+  const handleSyncLeads = async () => {
+    const formId = window.prompt('Please enter your Meta Form ID to sync leads from:');
+    if (!formId) {
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/leads/sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ formId }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert(`Sync complete! ${result.newLeadsCount} new leads were added.`);
+        // Re-fetch all leads to update the list
+        const freshLeadsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/leads`);
+        if (freshLeadsResponse.ok) {
+            const data: ApiLead[] = await freshLeadsResponse.json();
+            setClients(data.map(transformLead));
+        }
+      } else {
+        throw new Error(result.message || 'Failed to sync leads.');
+      }
+    } catch (error) {
+        const err = error as Error;
+        console.error('Error syncing leads:', err);
+        alert(`Sync failed: ${err.message}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   return (
     <ProtectRoute>
@@ -291,6 +399,15 @@ export default function Leads() {
                   </svg>
                 </div>
               </div>
+
+              {/* Sync Leads Button */}
+              <button
+                onClick={handleSyncLeads}
+                disabled={isSyncing}
+                className="w-full lg:w-auto bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-6 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isSyncing ? 'Syncing...' : 'Sync Leads'}
+              </button>
 
               {/* Add Lead Button */}
               <button
@@ -396,7 +513,11 @@ export default function Leads() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-700">
-                    {filteredClients.map((client) => (
+                    {loading ? (
+                      <tr>
+                        <td colSpan={10} className="text-center py-4">Loading...</td>
+                      </tr>
+                    ) : filteredClients.map((client) => (
                       <tr key={client.id} className="hover:bg-gray-800/50">
                         <td className="whitespace-nowrap px-4 py-4">
                           <div className="flex justify-center space-x-2">
@@ -533,7 +654,12 @@ export default function Leads() {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    )))} 
+                    { !loading && filteredClients.length === 0 && (
+                      <tr>
+                        <td colSpan={10} className="text-center py-4">No leads found.</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

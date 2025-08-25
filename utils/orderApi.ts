@@ -44,7 +44,6 @@ export const createOrderFromAdmin = async (formData: any, cartItems: CartItem[])
 
   // Prepare the order data in the exact format expected by the backend
 const orderData = {
-  // Required fields for order creation
   billingInfo: {
     firstName: formData.cardHolderName?.split(' ')[0] || 'Unknown',
     lastName: formData.cardHolderName?.split(' ').slice(1).join(' ') || 'Customer',
@@ -58,7 +57,6 @@ const orderData = {
     company: formData.billingCompany || formData.company || null,
     addressType: formData.billingAddressType || formData.shippingAddressType || 'RESIDENTIAL'
   },
-  
   shippingInfo: {
     firstName: formData.cardHolderName?.split(' ')[0] || 'Unknown',
     lastName: formData.cardHolderName?.split(' ').slice(1).join(' ') || 'Customer',
@@ -72,7 +70,6 @@ const orderData = {
     company: formData.company || null,
     addressType: formData.shippingAddressType || 'RESIDENTIAL'
   },
-  
   customerInfo: {
     email: formData.email || 'no-email@example.com',
     phone: formData.mobile || '000-000-0000',
@@ -86,31 +83,28 @@ const orderData = {
     country: 'US',
     type: formData.shippingAddressType || 'RESIDENTIAL'
   },
-  
   cartItems: cartItems.map(item => {
-    // Use the id as the SKU since that's what we're using as the primary identifier
     const sku = item.id;
-    // console.log('SKU for cart item:', sku);      
     if (!sku) {
       console.error('Missing SKU for cart item:', item);
       throw new Error('Product variant SKU is required');
     }
-    
     return {
-      id: sku, // This will be used as the SKU in the where clause
-      sku: sku, // Include both id and sku for compatibility
+      id: sku,
+      sku: sku,
       quantity: item.quantity || 1,
       price: item.price,
       name: `Engine for ${sku.split('-').slice(0, 3).join(' ')}`,
       warranty: item.warranty || '30 Days',
       milesPromised: item.milesPromised,
       specification: item.specification || '',
-      productVariantId: sku // Keep this for backward compatibility
+      productVariantId: sku,
+      pictureUrl: item.pictureUrl,
+      pictureStatus: item.pictureStatus,
     };
   }),
-  
   paymentInfo: {
-    paymentMethod: formData.merchantMethod || 'CARD', // Changed from 'method' to 'paymentMethod' to match backend
+    paymentMethod: formData.merchantMethod || 'CARD',
     status: 'PENDING',
     amount: parseFloat(formData.totalPrice) || 0,
     currency: 'USD',
@@ -120,21 +114,15 @@ const orderData = {
       cardholderName: formData.cardHolderName,
       expirationDate: formData.cardDate,
       securityCode: formData.cardCvv,
-      // Add last4 for card display
       last4: formData.cardNumber.slice(-4),
-      // Add card brand detection
       brand: formData.cardNumber.startsWith('4') ? 'Visa' : 'Mastercard'
     } : null,
+    approvelCode: formData.approvalCode,
+    charged: formData.charged,
   },
-  
-  // Required fields for order creation
   totalAmount: parseFloat(formData.totalPrice) || 0,
   subtotal: parseFloat(formData.partPrice) || 0,
   orderNumber: `PC-${Math.floor(Math.random() * 900000) + 100000}`,
-  
-  // Additional fields that might be needed
-  // notes: formData.notes || '',
-  notes: formData.customerNotes || '',
   carrierName: formData.carrierName || 'UNKNOWN',
   trackingNumber: formData.trackingNumber || `TRK-${Date.now()}`,
   saleMadeBy: formData.saleMadeBy || 'Admin',
@@ -144,8 +132,13 @@ const orderData = {
   processingFee: parseFloat(formData.processingPrice) || 0,
   corePrice: parseFloat(formData.corePrice) || 0,
   milesPromised: parseFloat(formData.milesPromised) || 0,
-  // console.log('formData.yardName in orderApi:', formData.yardName) ,
-  // Include yard info in the order creation if provided
+  customerNotes: formData.customerNotes,
+  yardNotes: formData.yardNotes,
+  year: parseInt(formData.year, 10),
+  shippingAddress: formData.shippingAddress,
+  billingAddress: formData.billingAddress,
+  companyName: formData.company,
+  addressType: formData.shippingAddressType,
   ...(formData.yardName && {
     yardInfo: {
       yardName: formData.yardName,
@@ -158,7 +151,6 @@ const orderData = {
       yardShippingType: formData.yardShipping || 'OWN_SHIPPING',
       yardShippingCost: parseFloat(formData.yardCost) || 0,
       reason: formData.reason || 'No reason provided',
-      // Include own shipping info as JSON if present
       ...(formData.yardShipping === 'Own Shipping' && formData.ownShippingInfo ? { yardOwnShippingInfo: formData.ownShippingInfo } : {})
     }
   })
