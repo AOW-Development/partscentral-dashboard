@@ -177,7 +177,7 @@ export default function Leads() {
   ];
 
   // State for filters and UI
-  const [clients] = useState(initialClients);
+  // const [clients] = useState(initialClients);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [filteredClients, setFilteredClients] = useState(initialClients);
@@ -654,7 +654,7 @@ export default function Leads() {
                           </div>
                         </td>
                       </tr>
-                    )))} 
+                    ))} 
                     { !loading && filteredClients.length === 0 && (
                       <tr>
                         <td colSpan={10} className="text-center py-4">No leads found.</td>
