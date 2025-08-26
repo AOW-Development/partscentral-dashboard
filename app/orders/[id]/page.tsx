@@ -8,8 +8,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { URL } from "@/utils/imageUrl";
-import { createOrderFromAdmin, getOrderById  } from "@/utils/orderApi";
-import { updateOrderFromAdmin} from "@/utils/updateOrderApi";
+import { createOrderFromAdmin, getOrderById } from "@/utils/orderApi";
+import { updateOrderFromAdmin } from "@/utils/updateOrderApi";
 import { getCardType, isValidCardNumber } from "@/utils/cardValidator";
 import { MAKES, MODELS } from "@/vehicleData-dashboard";
 import { fetchYears } from "@/utils/vehicleApi";
@@ -31,7 +31,7 @@ const OrderDetails = () => {
   const orderId = params.id as string;
 
   useEffect(() => {
-    if (orderId && orderId !== 'create' && orderId !== 'new') {
+    if (orderId && orderId !== "create" && orderId !== "new") {
       getOrderById(orderId)
         .then((data) => {
           const payment = data.payments?.[0] || {};
@@ -42,63 +42,72 @@ const OrderDetails = () => {
 
           setFormData({
             ...formData,
-            email: billing.email || '',
-            mobile: billing.phone || '',
-            partPrice: data.subtotal || '',
-            taxesPrice: data.taxesAmount || '',
-            handlingPrice: data.handlingFee || '',
-            processingPrice: data.processingFee || '',
-            corePrice: data.corePrice || '',
-            shippingAddressType: shipping.addressType || '',
-            company: shipping.company || '',
-            shippingAddress: shipping.address || '',
-            billingAddress: billing.address || '',
-            cardHolderName: payment.cardHolderName || '',
-            cardNumber: payment.cardNumber || '',
-            cardDate: payment.cardExpiry ? new Date(payment.cardExpiry).toLocaleDateString('en-US', { month: '2-digit', year: '2-digit' }) : '',
-            cardCvv: payment.cardCvv || '',
-            warranty: data.warranty || '',
-            milesPromised: data.milesPromised || '',
-            make: data.make || '',
-            model: data.model || '',
-            year: data.year || '',
-            parts: data.parts || '',
-            specification: data.specification || '',
-            variantSku: data.variantSku || '',
-            totalSellingPrice: data.totalAmount || '',
-            totalPrice: data.totalAmount || '',
-            merchantMethod: payment.method || '',
-            approvalCode: payment.providerPaymentId || '',
-            entity: payment.entity || '',
-            charged: payment.status === 'SUCCEEDED' ? 'Yes' : 'No',
-            saleMadeBy: data.saleMadeBy || '',
-            yardName: yard.yardName || '',
-            yardMobile: yard.yardMobile || '',
-            yardAddress: yard.yardAddress || '',
-            yardEmail: yard.yardEmail || '',
-            yardPrice: yard.yardPrice || '',
-            yardWarranty: yard.yardWarranty || '',
-            yardMiles: yard.yardMiles || '',
-            yardShipping: yard.yardShippingType || '',
-            yardCost: yard.yardShippingCost || '',
-            pictureStatus: data.pictureStatus || '',
-            carrierName: data.carrierName || '',
-            trackingNumber: data.trackingNumber || '',
-            customerNotes: data.customerNotes || '',
-            yardNotes: data.yardNotes || '',
-            invoiceStatus: data.invoiceStatus || '',
-            invoiceSentAt: data.invoiceSentAt ? new Date(data.invoiceSentAt).toISOString().split('T')[0] : '',
-            invoiceConfirmAt: data.invoiceConfirmAt ? new Date(data.invoiceConfirmAt).toISOString().split('T')[0] : '',
+            email: billing.email || "",
+            mobile: billing.phone || "",
+            partPrice: data.subtotal || "",
+            taxesPrice: data.taxesAmount || "",
+            handlingPrice: data.handlingFee || "",
+            processingPrice: data.processingFee || "",
+            corePrice: data.corePrice || "",
+            shippingAddressType: shipping.addressType || "",
+            company: shipping.company || "",
+            shippingAddress: shipping.address || "",
+            billingAddress: billing.address || "",
+            cardHolderName: payment.cardHolderName || "",
+            cardNumber: payment.cardNumber || "",
+            cardDate: payment.cardExpiry
+              ? new Date(payment.cardExpiry).toLocaleDateString("en-US", {
+                  month: "2-digit",
+                  year: "2-digit",
+                })
+              : "",
+            cardCvv: payment.cardCvv || "",
+            warranty: data.warranty || "",
+            milesPromised: data.milesPromised || "",
+            make: data.make || "",
+            model: data.model || "",
+            year: data.year || "",
+            parts: data.parts || "",
+            specification: data.specification || "",
+            variantSku: data.variantSku || "",
+            totalSellingPrice: data.totalAmount || "",
+            totalPrice: data.totalAmount || "",
+            merchantMethod: payment.method || "",
+            approvalCode: payment.providerPaymentId || "",
+            entity: payment.entity || "",
+            charged: payment.status === "SUCCEEDED" ? "Yes" : "No",
+            saleMadeBy: data.saleMadeBy || "",
+            yardName: yard.yardName || "",
+            yardMobile: yard.yardMobile || "",
+            yardAddress: yard.yardAddress || "",
+            yardEmail: yard.yardEmail || "",
+            yardPrice: yard.yardPrice || "",
+            yardWarranty: yard.yardWarranty || "",
+            yardMiles: yard.yardMiles || "",
+            yardShipping: yard.yardShippingType || "",
+            yardCost: yard.yardShippingCost || "",
+            pictureStatus: data.pictureStatus || "",
+            carrierName: data.carrierName || "",
+            trackingNumber: data.trackingNumber || "",
+            customerNotes: data.customerNotes || "",
+            yardNotes: data.yardNotes || "",
+            invoiceStatus: data.invoiceStatus || "",
+            invoiceSentAt: data.invoiceSentAt
+              ? new Date(data.invoiceSentAt).toISOString().split("T")[0]
+              : "",
+            invoiceConfirmAt: data.invoiceConfirmAt
+              ? new Date(data.invoiceConfirmAt).toISOString().split("T")[0]
+              : "",
             ownShippingInfo: {
-              productType: ownShipping.productType || '',
-              packageType: ownShipping.packageType || '',
-              weight: ownShipping.weight || '',
-              dimensions: ownShipping.dimensions || '',
-              pickUpDate: ownShipping.pickUpDate || '',
-              carrier: ownShipping.carrier || '',
-              price: ownShipping.price || '',
-              variance: ownShipping.variance || '',
-              bolNumber: ownShipping.bolNumber || '',
+              productType: ownShipping.productType || "",
+              packageType: ownShipping.packageType || "",
+              weight: ownShipping.weight || "",
+              dimensions: ownShipping.dimensions || "",
+              pickUpDate: ownShipping.pickUpDate || "",
+              carrier: ownShipping.carrier || "",
+              price: ownShipping.price || "",
+              variance: ownShipping.variance || "",
+              bolNumber: ownShipping.bolNumber || "",
             },
           });
           setCartItems(data.items || []);
@@ -107,14 +116,21 @@ const OrderDetails = () => {
           console.error("Failed to fetch order details", err);
         });
     }
-  }, [orderId, setCartItems]);// State for product variants
+  }, [orderId, setCartItems]); // State for product variants
   const [productVariants, setProductVariants] = useState<GroupedVariant[]>([]);
-  const [selectedSubpart, setSelectedSubpart] = useState<GroupedVariant | null>(null);
-  const [selectedMileage, setSelectedMileage] = useState('');
+  const [selectedSubpart, setSelectedSubpart] = useState<GroupedVariant | null>(
+    null
+  );
+  const [selectedMileage, setSelectedMileage] = useState("");
   const [isLoadingVariants, setIsLoadingVariants] = useState(false);
-  const [variantError, setVariantError] = useState('');
+  const [variantError, setVariantError] = useState("");
 
   const [formData, setFormData] = useState({
+    customerName: "",
+    id: "",
+    date: "",
+    source: "",
+    status: "",
     email: "",
     mobile: "",
     partPrice: "",
@@ -171,7 +187,7 @@ const OrderDetails = () => {
       carrier: "",
       price: "",
       variance: "",
-      bolNumber: ""
+      bolNumber: "",
     },
   });
   const [availableYears, setAvailableYears] = useState<string[]>([]);
@@ -189,33 +205,40 @@ const OrderDetails = () => {
   const handleMileageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedMiles = e.target.value;
     setSelectedMileage(selectedMiles);
-    
+
     // Find the selected variant and update the SKU in form data
     if (selectedSubpart) {
-      const variant = selectedSubpart.variants.find(v => v.miles === selectedMiles);
+      const variant = selectedSubpart.variants.find(
+        (v) => v.miles === selectedMiles
+      );
       if (variant) {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           milesPromised: selectedMiles,
           variantSku: variant.sku,
-          partPrice: variant.discountedPrice?.toString() || variant.actualprice.toString()
+          partPrice:
+            variant.discountedPrice?.toString() ||
+            variant.actualprice.toString(),
         }));
       }
     }
   };
 
   // Handle specification selection
-  const handleSpecificationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleSpecificationChange = (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
     const selectedSpec = e.target.value;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       specification: selectedSpec,
       variantSku: "",
-      milesPromised: ""
+      milesPromised: "",
     }));
-    
+
     // Find and set the selected subpart
-    const subpart = productVariants.find(v => v.subPart.name === selectedSpec) || null;
+    const subpart =
+      productVariants.find((v) => v.subPart.name === selectedSpec) || null;
     setSelectedSubpart(subpart);
     setSelectedMileage("");
   };
@@ -225,27 +248,27 @@ const OrderDetails = () => {
     const fetchVariants = async () => {
       if (formData.make && formData.model && formData.year && formData.parts) {
         setIsLoadingVariants(true);
-        setVariantError('');
+        setVariantError("");
         try {
           const data = await getProductVariants({
             make: formData.make,
             model: formData.model,
             year: formData.year,
-            part: formData.parts
+            part: formData.parts,
           });
           setProductVariants(data.groupedVariants || []);
           // Reset selections when variants change
           setSelectedSubpart(null);
-          setSelectedMileage('');
-          setFormData(prev => ({
+          setSelectedMileage("");
+          setFormData((prev) => ({
             ...prev,
             specification: "",
             variantSku: "",
-            milesPromised: ""
+            milesPromised: "",
           }));
         } catch (error) {
-          console.error('Error fetching product variants:', error);
-          setVariantError('Failed to load product variants. Please try again.');
+          console.error("Error fetching product variants:", error);
+          setVariantError("Failed to load product variants. Please try again.");
           setProductVariants([]);
         } finally {
           setIsLoadingVariants(false);
@@ -586,12 +609,11 @@ const OrderDetails = () => {
     // });
 
     if (formData.yardShipping === "Own Shipping") {
-      const ownShippingInfoKeys = Object.keys(formData.ownShippingInfo) as Array<keyof typeof formData.ownShippingInfo>;
-      ownShippingInfoKeys.forEach(field => {
-        const error = validateField(
-          field,
-          formData.ownShippingInfo[field]
-        );
+      const ownShippingInfoKeys = Object.keys(
+        formData.ownShippingInfo
+      ) as Array<keyof typeof formData.ownShippingInfo>;
+      ownShippingInfoKeys.forEach((field) => {
+        const error = validateField(field, formData.ownShippingInfo[field]);
         if (error) {
           newErrors[`ownShippingInfo.${field}`] = error;
           hasErrors = true;
@@ -685,7 +707,7 @@ const OrderDetails = () => {
       console.log(invoiceData);
 
       // API call to send invoice
-        const response = await fetch(`${URL}api/send-invoice`, {
+      const response = await fetch(`${URL}api/send-invoice`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -728,7 +750,7 @@ const OrderDetails = () => {
   };
 
   const handleSave = async () => {
-    if (orderId && orderId !== 'create' && orderId !== 'new') {
+    if (orderId && orderId !== "create" && orderId !== "new") {
       await handleUpdateOrder();
     } else {
       await handleCreateOrder();
@@ -745,7 +767,7 @@ const OrderDetails = () => {
 
     try {
       if (!formData.variantSku) {
-        alert('Please select a valid specification and mileage');
+        alert("Please select a valid specification and mileage");
         return;
       }
 
@@ -787,47 +809,47 @@ const OrderDetails = () => {
     //   return;
     // }
 
-  //   setIsLoading(true);
-  //   setMessage(null);
+    //   setIsLoading(true);
+    //   setMessage(null);
 
-  //   try {
-  //     if (!formData.variantSku) {
-  //       alert('Please select a valid specification and mileage');
-  //       return;
-  //     }
+    //   try {
+    //     if (!formData.variantSku) {
+    //       alert('Please select a valid specification and mileage');
+    //       return;
+    //     }
 
-  //     // Create cart items array with the selected part
-  //     const cartItems = [
-  //       {
-  //         id: formData.variantSku, // Use the actual SKU from the selected variant
-  //         name: `${formData.make} ${formData.model} ${formData.year} ${formData.parts}`,
-  //         price: parseFloat(formData.partPrice) || 0,
-  //         quantity: 1,
-  //         warranty: formData.warranty,
-  //         milesPromised: formData.milesPromised,
-  //         specification: formData.specification,
-  //       },
-  //     ];
-  //     const result = await createOrderFromAdmin(formData, cartItems);
+    //     // Create cart items array with the selected part
+    //     const cartItems = [
+    //       {
+    //         id: formData.variantSku, // Use the actual SKU from the selected variant
+    //         name: `${formData.make} ${formData.model} ${formData.year} ${formData.parts}`,
+    //         price: parseFloat(formData.partPrice) || 0,
+    //         quantity: 1,
+    //         warranty: formData.warranty,
+    //         milesPromised: formData.milesPromised,
+    //         specification: formData.specification,
+    //       },
+    //     ];
+    //     const result = await createOrderFromAdmin(formData, cartItems);
 
-  //     setMessage({
-  //       type: "success",
-  //       text: "Order created successfully!",
-  //     });
-  //     setIsProcessing(false);
-  //     console.log("Order created:", result);
-  //   } catch (error) {
-  //     setMessage({
-  //       type: "error",
-  //       text:
-  //         error instanceof Error
-  //           ? error.message
-  //           : "Failed to create order. Please try again.",
-  //     });
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
+    //     setMessage({
+    //       type: "success",
+    //       text: "Order created successfully!",
+    //     });
+    //     setIsProcessing(false);
+    //     console.log("Order created:", result);
+    //   } catch (error) {
+    //     setMessage({
+    //       type: "error",
+    //       text:
+    //         error instanceof Error
+    //           ? error.message
+    //           : "Failed to create order. Please try again.",
+    //     });
+    //   } finally {
+    //     setIsLoading(false);
+    //   }
+    // };
     if (!validateAllFields()) {
       return;
     }
@@ -837,7 +859,7 @@ const OrderDetails = () => {
 
     try {
       if (!formData.variantSku) {
-        alert('Please select a valid specification and mileage');
+        alert("Please select a valid specification and mileage");
         return;
       }
 
@@ -1171,28 +1193,102 @@ const OrderDetails = () => {
                       height={120}
                       className="rounded-full object-cover"
                     />
+                    <label className="absolute bottom-0 right-0 bg-blue-600 rounded-full p-1 cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            setUploadedPicture(e.target.files[0]);
+                          }
+                        }}
+                      />
+                      <svg
+                        width="18"
+                        height="18"
+                        fill="currentColor"
+                        className="text-white"
+                      >
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                      </svg>
+                    </label>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-1 gap-2">
-                    <h2 className="md:text-xl font-semibold text-white  mt-20">
-                      Shiva Shankar Reddy
-                    </h2>
-                    <p className="text-white/60 mt-20 md:mt-0">ID: PC#022705</p>
+                  <div className="grid grid-cols-2 md:grid-cols-1 gap-2 mt-20">
+                    <input
+                      type="text"
+                      className="md:text-xl font-semibold text-white bg-transparent border-b border-gray-600 focus:outline-none focus:border-blue-500"
+                      placeholder="Customer Name"
+                      value={formData.customerName}
+                      onChange={(e) =>
+                        handleInputChange("customerName", e.target.value)
+                      }
+                    />
+                    <input
+                      type="text"
+                      className="text-white/60 bg-transparent border-b border-gray-600 focus:outline-none focus:border-blue-500 mt-20 md:mt-0"
+                      placeholder="Customer ID"
+                      value={formData.id}
+                      onChange={(e) => handleInputChange("id", e.target.value)}
+                    />
                   </div>
                 </div>
-                <div className="flex items-center justify-between mt-2 gap-3">
-                  <span className="text-white/60 text-sm">27Jun25</span>
-                  <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-medium">
-                    Google
-                  </span>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      isProcessing
-                        ? "bg-purple-500 text-white"
-                        : "bg-gray-500 text-white"
-                    }`}
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between mt-2 gap-3">
+                  <input
+                    type="date"
+                    className="text-white/60 text-sm bg-transparent border-b border-gray-600 focus:outline-none focus:border-blue-500"
+                    placeholder="Date"
+                    value={formData.date}
+                    onChange={(e) => handleInputChange("date", e.target.value)}
+                  />
+                  <select
+                    className={`bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-medium focus:outline-none`}
+                    value={formData.source}
+                    onChange={(e) =>
+                      handleInputChange("source", e.target.value)
+                    }
                   >
-                    {isProcessing ? "Processing" : "Completed"}
-                  </span>
+                    <option value="">Source</option>
+                    <option value="meta ads">Meta Ads</option>
+                    <option value="meta organic">Meta Organic</option>
+                    <option value="ucpc google ads">UCPC G Ads</option>
+                    <option value="ucpc organic">UCPC Organic</option>
+                    <option value="upr google ads">UPR G Ads</option>
+                    <option value="upr organic">UPR Organic</option>
+                    <option value="uap google ads">UAP G Ads</option>
+                    <option value="uap organic">UAP Organic</option>
+                    <option value="ap google ads">AP G Ads</option>
+                    <option value="ap organic">AP Organic</option>
+                  </select>
+                  <select
+                    className={`bg-gray-500 text-white px-3 py-1 rounded-full text-xs font-medium focus:outline-none`}
+                    value={formData.status}
+                    onChange={(e) =>
+                      handleInputChange("status", e.target.value)
+                    }
+                  >
+                    <option value="order created">Order Created</option>
+                    <option value="invoice sent">Invoice Sent</option>
+                    <option value="invoice confirmed">Invoice Confirmed</option>
+                    <option value="unpaid">Unpaid</option>
+                    <option value="paid">Paid</option>
+                    <option value="balance due">Balance Due</option>
+                    <option value="po sent">PO Sent</option>
+                    <option value="po confirmed">PO Confirmed</option>
+                    <option value="picture sent">Picture Sent</option>
+                    <option value="tracking sent">Tracking Sent</option>
+                    <option value="get w/d">Get W/D</option>
+                    <option value="create bol">Create BOL</option>
+                    <option value="send bol">Send BOL</option>
+                    <option value="confirm bol">Confirm BOL</option>
+                    <option value="cx picked the part">
+                      CX Picked the part
+                    </option>
+                    <option value="delivery appointment done">
+                      Delivery Appointment done
+                    </option>
+                    <option value="delivered">Delivered</option>
+                  </select>
                   <button className="text-white/60 hover:text-white">
                     <svg
                       width="16"
@@ -1786,34 +1882,7 @@ const OrderDetails = () => {
                       />
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Miles Promised
-                    </label>
-                    <div className="relative">
-                      <select
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none disabled:opacity-50"
-                        value={formData.milesPromised}
-                        onChange={handleMileageChange}
-                        disabled={!selectedSubpart}
-                      >
-                        <option value="">Select Miles</option>
-                        {selectedSubpart?.variants.map((variant, idx) => (
-                          <option key={idx} value={variant.miles}>
-                            {variant.miles} miles
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                        size={16}
-                      />
-                    </div>
-                  </div>
-                </div>
 
-                {/* Product Details Section - Before Send Invoice Button */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-6">
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
                       Make *
@@ -1852,6 +1921,10 @@ const OrderDetails = () => {
                       {fieldErrors.make || "placeholder"}
                     </p>
                   </div>
+                </div>
+
+                {/* Product Details Section - Before Send Invoice Button */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-6">
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
                       Model *
@@ -1902,8 +1975,12 @@ const OrderDetails = () => {
                             : "border-gray-600 focus:border-blue-500"
                         }`}
                         value={formData.year}
-                        onChange={(e) => handleInputChange("year", e.target.value)}
-                        disabled={!formData.model || availableYears.length === 0}
+                        onChange={(e) =>
+                          handleInputChange("year", e.target.value)
+                        }
+                        disabled={
+                          !formData.model || availableYears.length === 0
+                        }
                       >
                         <option value="">Select year</option>
                         {availableYears.map((year) => (
@@ -1994,6 +2071,31 @@ const OrderDetails = () => {
                   </div>
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
+                      Miles Promised
+                    </label>
+                    <div className="relative">
+                      <select
+                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none disabled:opacity-50"
+                        value={formData.milesPromised}
+                        onChange={handleMileageChange}
+                        disabled={!selectedSubpart}
+                      >
+                        <option value="">Select Miles</option>
+                        {selectedSubpart?.variants.map((variant, idx) => (
+                          <option key={idx} value={variant.miles}>
+                            {variant.miles} miles
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                        size={16}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
                       Sale Made By
                     </label>
                     <div className="relative">
@@ -2027,168 +2129,6 @@ const OrderDetails = () => {
                       }
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-[#FFFFFF33] rounded-lg p-2">
-                  {showOwnShipping && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4 p-4 border border-gray-700 rounded-lg md:col-span-3">
-                      <h3 className="md:col-span-3 text-white font-semibold mb-2">
-                        Own Shipping Details
-                      </h3>
-                      {/* Product Type */}
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          Product Type
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white"
-                          placeholder="e.g., Engine, Transmission"
-                          value={formData.ownShippingInfo.productType}
-                          onChange={(e) =>
-                            handleOwnShippingInfoChange(
-                              "productType",
-                              e.target.value
-                            )
-                          }
-                        />
-                      </div>
-                      {/* Package Type */}
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          Package Type
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white"
-                          placeholder="e.g., Pallet, Crate"
-                          value={formData.ownShippingInfo.packageType}
-                          onChange={(e) =>
-                            handleOwnShippingInfoChange(
-                              "packageType",
-                              e.target.value
-                            )
-                          }
-                        />
-                      </div>
-                      {/* Weight */}
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          Weight (lbs)
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white"
-                          placeholder="Enter weight"
-                          value={formData.ownShippingInfo.weight}
-                          onChange={(e) =>
-                            handleOwnShippingInfoChange("weight", e.target.value)
-                          }
-                        />
-                      </div>
-                      {/* Dimensions */}
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          Dimensions (LxWxH)
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white"
-                          placeholder="e.g., 48x40x30"
-                          value={formData.ownShippingInfo.dimensions}
-                          onChange={(e) =>
-                            handleOwnShippingInfoChange(
-                              "dimensions",
-                              e.target.value
-                            )
-                          }
-                        />
-                      </div>
-                      {/* Pick-up Date */}
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          Pick-up Date
-                        </label>
-                        <input
-                          type="date"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white"
-                          value={formData.ownShippingInfo.pickUpDate}
-                          onChange={(e) =>
-                            handleOwnShippingInfoChange(
-                              "pickUpDate",
-                              e.target.value
-                            )
-                          }
-                        />
-                      </div>
-                      {/* Carrier */}
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          Carrier
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white"
-                          placeholder="e.g., FedEx, UPS"
-                          value={formData.ownShippingInfo.carrier}
-                          onChange={(e) =>
-                            handleOwnShippingInfoChange("carrier", e.target.value)
-                          }
-                        />
-                      </div>
-                      {/* Price */}
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          Price
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white"
-                          placeholder="Enter price"
-                          value={formData.ownShippingInfo.price}
-                          onChange={(e) =>
-                            handleOwnShippingInfoChange("price", e.target.value)
-                          }
-                        />
-                      </div>
-                      {/* Variance */}
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          Variance
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white"
-                          placeholder="Enter variance"
-                          value={formData.ownShippingInfo.variance}
-                          onChange={(e) =>
-                            handleOwnShippingInfoChange(
-                              "variance",
-                              e.target.value
-                            )
-                          }
-                        />
-                      </div>
-                      {/* BOL Number */}
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          BOL Number
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white"
-                          placeholder="Enter BOL number"
-                          value={formData.ownShippingInfo.bolNumber}
-                          onChange={(e) =>
-                            handleOwnShippingInfoChange(
-                              "bolNumber",
-                              e.target.value
-                            )
-                          }
-                        />
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 {/* Send Invoice Button */}
@@ -2830,22 +2770,22 @@ const OrderDetails = () => {
                         </label>
                         <div className="relative">
                           <select
-  className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-  value={formData.ownShippingInfo.productType}
-  onChange={e =>
-    setFormData(prev => ({
-      ...prev,
-      ownShippingInfo: {
-        ...prev.ownShippingInfo,
-        productType: e.target.value
-      }
-    }))
-  }
->
-  <option value="">Select Product Type</option>
-  <option>LTL</option>
-  <option>Parcel</option>
-</select>
+                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                            value={formData.ownShippingInfo.productType}
+                            onChange={(e) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                ownShippingInfo: {
+                                  ...prev.ownShippingInfo,
+                                  productType: e.target.value,
+                                },
+                              }))
+                            }
+                          >
+                            <option value="">Select Product Type</option>
+                            <option>LTL</option>
+                            <option>Parcel</option>
+                          </select>
                           <ChevronDown
                             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
                             size={16}
@@ -2858,23 +2798,23 @@ const OrderDetails = () => {
                         </label>
                         <div className="relative">
                           <select
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                          value={formData.ownShippingInfo.packageType}
-                          onChange={e =>
-                            setFormData(prev => ({
-                              ...prev,
-                              ownShippingInfo: {
-                                ...prev.ownShippingInfo,
-                                packageType: e.target.value
-                              }
-                            }))
-                          }
-                        >
-                          <option value="">Select Package Type</option>
-                          <option>Pallet</option>
-                          <option>Box</option>
-                          <option>Crate</option>
-                        </select>
+                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                            value={formData.ownShippingInfo.packageType}
+                            onChange={(e) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                ownShippingInfo: {
+                                  ...prev.ownShippingInfo,
+                                  packageType: e.target.value,
+                                },
+                              }))
+                            }
+                          >
+                            <option value="">Select Package Type</option>
+                            <option>Pallet</option>
+                            <option>Box</option>
+                            <option>Crate</option>
+                          </select>
                           <ChevronDown
                             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
                             size={16}
@@ -2890,13 +2830,13 @@ const OrderDetails = () => {
                           className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
                           placeholder="Enter weight"
                           value={formData.ownShippingInfo.weight}
-                          onChange={e =>
-                            setFormData(prev => ({
+                          onChange={(e) =>
+                            setFormData((prev) => ({
                               ...prev,
                               ownShippingInfo: {
                                 ...prev.ownShippingInfo,
-                                weight: e.target.value
-                              }
+                                weight: e.target.value,
+                              },
                             }))
                           }
                         />
@@ -2906,40 +2846,40 @@ const OrderDetails = () => {
                           Dimensions
                         </label>
                         <input
-                        type="number"
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                        placeholder="Enter dimensions"
-                        value={formData.ownShippingInfo.dimensions}
-                        onChange={e =>
-                          setFormData(prev => ({
-                            ...prev,
-                            ownShippingInfo: {
-                              ...prev.ownShippingInfo,
-                              dimensions: e.target.value
-                            }
-                          }))
-                        }
-                      />
+                          type="number"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                          placeholder="Enter dimensions"
+                          value={formData.ownShippingInfo.dimensions}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              ownShippingInfo: {
+                                ...prev.ownShippingInfo,
+                                dimensions: e.target.value,
+                              },
+                            }))
+                          }
+                        />
                       </div>
                       <div>
                         <label className="block text-white/60 text-sm mb-2">
                           Pick Up Date
                         </label>
                         <input
-  type="date"
-  className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-  placeholder="Enter pick up date"
-  value={formData.ownShippingInfo.pickUpDate}
-  onChange={e =>
-    setFormData(prev => ({
-      ...prev,
-      ownShippingInfo: {
-        ...prev.ownShippingInfo,
-        pickUpDate: e.target.value
-      }
-    }))
-  }
-/>
+                          type="date"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                          placeholder="Enter pick up date"
+                          value={formData.ownShippingInfo.pickUpDate}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              ownShippingInfo: {
+                                ...prev.ownShippingInfo,
+                                pickUpDate: e.target.value,
+                              },
+                            }))
+                          }
+                        />
                       </div>
                       <div>
                         <label className="block text-white/60 text-sm mb-2">
@@ -2950,13 +2890,13 @@ const OrderDetails = () => {
                           className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
                           placeholder="Enter carrier"
                           value={formData.ownShippingInfo.carrier}
-                          onChange={e =>
-                            setFormData(prev => ({
+                          onChange={(e) =>
+                            setFormData((prev) => ({
                               ...prev,
                               ownShippingInfo: {
                                 ...prev.ownShippingInfo,
-                                carrier: e.target.value
-                              }
+                                carrier: e.target.value,
+                              },
                             }))
                           }
                         />
@@ -2966,40 +2906,40 @@ const OrderDetails = () => {
                           Price
                         </label>
                         <input
-  type="number"
-  className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-  placeholder="Enter price"
-  value={formData.ownShippingInfo.price}
-  onChange={e =>
-    setFormData(prev => ({
-      ...prev,
-      ownShippingInfo: {
-        ...prev.ownShippingInfo,
-        price: e.target.value
-      }
-    }))
-  }
-/>
+                          type="number"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                          placeholder="Enter price"
+                          value={formData.ownShippingInfo.price}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              ownShippingInfo: {
+                                ...prev.ownShippingInfo,
+                                price: e.target.value,
+                              },
+                            }))
+                          }
+                        />
                       </div>
                       <div>
                         <label className="block text-white/60 text-sm mb-2">
                           Variance
                         </label>
                         <input
-  type="number"
-  className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-  placeholder="Enter variance"
-  value={formData.ownShippingInfo.variance}
-  onChange={e =>
-    setFormData(prev => ({
-      ...prev,
-      ownShippingInfo: {
-        ...prev.ownShippingInfo,
-        variance: e.target.value
-      }
-    }))
-  }
-/>
+                          type="number"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                          placeholder="Enter variance"
+                          value={formData.ownShippingInfo.variance}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              ownShippingInfo: {
+                                ...prev.ownShippingInfo,
+                                variance: e.target.value,
+                              },
+                            }))
+                          }
+                        />
                       </div>
                       <div className="flex justify-end">
                         <button
@@ -3014,20 +2954,20 @@ const OrderDetails = () => {
                           BOL Number
                         </label>
                         <input
-  type="text"
-  className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:border-blue-500 focus:outline-none"
-  placeholder="Enter BOL number"
-  value={formData.ownShippingInfo.bolNumber}
-  onChange={e =>
-    setFormData(prev => ({
-      ...prev,
-      ownShippingInfo: {
-        ...prev.ownShippingInfo,
-        bolNumber: e.target.value
-      }
-    }))
-  }
-/>
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:border-blue-500 focus:outline-none"
+                          placeholder="Enter BOL number"
+                          value={formData.ownShippingInfo.bolNumber}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              ownShippingInfo: {
+                                ...prev.ownShippingInfo,
+                                bolNumber: e.target.value,
+                              },
+                            }))
+                          }
+                        />
                       </div>
                     </div>
                   </>
@@ -3185,4 +3125,3 @@ export default OrderDetails;
 function setCartItems(arg0: any) {
   throw new Error("Function not implemented.");
 }
-
