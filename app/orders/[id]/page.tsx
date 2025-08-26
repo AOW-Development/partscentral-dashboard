@@ -2382,7 +2382,7 @@ const OrderDetails = () => {
                   <div className="flex justify-end">
                     <button
                       onClick={addPaymentEntry}
-                      className="flex items-center gap-2 bg-[#006BA9] hover:bg-[#006BA9]/90 text-white px-4 py-2 rounded-lg transition-colors"
+                      className="flex items-center gap-2 bg-[#006BA9] hover:bg-[#006BA9]/90 text-white px-4 py-2 rounded-lg transition-colors cursor-pointer"
                     >
                       <Plus size={18} />
                       Add Payment
@@ -3075,12 +3075,12 @@ const OrderDetails = () => {
               {/* Action Buttons */}
               <div className="flex justify-end gap-4 mt-8 mb-8">
                 <button
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg cursor-pointer"
                     onClick={handleSave}
                   >
                     Save
                   </button>
-                <button className="bg-gray-600 cursor-pointer hover:bg-gray-700 text-white px-8 py-3 rounded-lg font-medium transition-colors">
+                <button className="bg-gray-600 cursor-pointer hover:bg-gray-700 text-white px-8 py-3 rounded-lg font-medium transition-colors cursor-pointer">
                   Close
                 </button>
               </div>
@@ -3109,7 +3109,7 @@ const OrderDetails = () => {
                     />
                     <button
                       onClick={handleManualAddCustomerNote}
-                      className="bg-[#006BA9] hover:bg-[#006BA9]/90 text-white px-4 py-2 rounded-lg"
+                      className="bg-[#006BA9] hover:bg-[#006BA9]/90 text-white px-4 py-2 rounded-lg cursor-pointer"
                     >
                       Add
                     </button>
@@ -3152,7 +3152,7 @@ const OrderDetails = () => {
                     />
                     <button
                       onClick={handleManualAddYardNote}
-                      className="bg-[#006BA9] hover:bg-[#006BA9]/90 text-white px-4 py-2 rounded-lg"
+                      className="bg-[#006BA9] hover:bg-[#006BA9]/90 text-white px-4 py-2 rounded-lg cursor-pointer"
                     >
                       Add
                     </button>
