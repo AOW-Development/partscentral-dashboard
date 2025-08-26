@@ -29,6 +29,11 @@ export const createOrderFromAdmin = async (formData: any, cartItems: CartItem[])
   // Debug: log ownShippingInfo and yardShipping before constructing orderData
   console.log('DEBUG ownShippingInfo:', formData.ownShippingInfo);
   console.log('DEBUG yardShipping:', formData.yardShipping);
+
+  console.log('Form data before submission:', {
+    customerNotes: formData.customerNotes,
+    yardNotes: formData.yardNotes
+  });
   // Prepare order items with required fields
   const orderItems = cartItems.map(item => ({
     productVariantId: item.id, // This should be the variant SKU

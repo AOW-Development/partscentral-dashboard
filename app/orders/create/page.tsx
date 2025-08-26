@@ -57,7 +57,8 @@ const OrderCreate = () => {
     pictureStatus: "",
     carrierName: "",
     trackingNumber: "",
-    notes: "",
+        customerNotes: "",
+    yardNotes: "",
   });
   const [invoiceDate, setInvoiceData] = useState(false);
   const [isProcessing, setIsProcessing] = useState(true);
@@ -2332,7 +2333,7 @@ const OrderCreate = () => {
                   className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none resize-none"
                   placeholder="Add any notes here..."
                   rows={4}
-                  value={formData.notes || ""}
+                  // value={formData.customerNotes || ""}
                   onChange={(e) => handleInputChange("notes", e.target.value)}
                 />
               </div>

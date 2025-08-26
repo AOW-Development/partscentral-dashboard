@@ -40,6 +40,16 @@ const OrderDetails = () => {
           const yard = data.yardInfo || {};
           const ownShipping = yard.yardOwnShippingInfo || {};
 
+          const customerNotesArray = data.customerNotes && typeof data.customerNotes === 'string'
+              ? JSON.parse(data.customerNotes)
+              : (Array.isArray(data.customerNotes) ? data.customerNotes : []);
+          const yardNotesArray = data.yardNotes && typeof data.yardNotes === 'string'
+              ? JSON.parse(data.yardNotes)
+              : (Array.isArray(data.yardNotes) ? data.yardNotes : []);
+
+          setCustomerNotes(customerNotesArray);
+          setYardNotes(yardNotesArray);
+
           setFormData({
             ...formData,
             email: billing.email || "",
@@ -89,8 +99,8 @@ const OrderDetails = () => {
             pictureStatus: data.pictureStatus || "",
             carrierName: data.carrierName || "",
             trackingNumber: data.trackingNumber || "",
-            customerNotes: data.customerNotes || "",
-            yardNotes: data.yardNotes || "",
+            customerNotes: customerNotesArray,
+            yardNotes: yardNotesArray,
             invoiceStatus: data.invoiceStatus || "",
             invoiceSentAt: data.invoiceSentAt
               ? new Date(data.invoiceSentAt).toISOString().split("T")[0]
@@ -111,6 +121,26 @@ const OrderDetails = () => {
             },
           });
           setCartItems(data.items || []);
+          if (data.customerNotes && typeof data.customerNotes === 'string') {
+            try {
+              const parsedCustomerNotes = JSON.parse(data.customerNotes);
+              setCustomerNotes(Array.isArray(parsedCustomerNotes) ? parsedCustomerNotes : []);
+            } catch (error) {
+              console.error("Failed to parse customer notes:", error);
+              setCustomerNotes([]);
+            }
+          }
+
+          if (data.yardNotes && typeof data.yardNotes === 'string') {
+            try {
+              const parsedYardNotes = JSON.parse(data.yardNotes);
+              setYardNotes(Array.isArray(parsedYardNotes) ? parsedYardNotes : []);
+            } catch (error) {
+              console.error("Failed to parse yard notes:", error);
+              setYardNotes([]);
+            }
+          }
+
         })
         .catch((err) => {
           console.error("Failed to fetch order details", err);
@@ -1044,27 +1074,41 @@ const OrderDetails = () => {
   const [yardNoteInput, setYardNoteInput] = useState("");
 
   const addCustomerNote = (message: string, actor?: string) => {
-    setCustomerNotes((prev) => [
-      {
-        id: Date.now() + Math.floor(Math.random() * 1000000),
-        timestamp: new Date(),
-        message,
-        actor,
-      },
-      ...prev,
-    ]);
+    console.log('Adding customer note:', { message, actor });
+    const newNote = {
+      id: Date.now() + Math.floor(Math.random() * 1000000),
+      timestamp: new Date(),
+      message,
+      actor,
+    }
+    setCustomerNotes(prev=> {
+      const updatedNotes = [newNote , ...prev]  ;
+      // setFormData(prev => ({
+      //   ...prev ,
+      //           customerNotes: updatedNotes
+      // }))
+      return updatedNotes ;
+    }) ;
   };
 
   const addYardNote = (message: string, actor?: string) => {
-    setYardNotes((prev) => [
-      {
-        id: Date.now() + Math.floor(Math.random() * 1000000),
-        timestamp: new Date(),
-        message,
-        actor,
-      },
-      ...prev,
-    ]);
+    console.log('Adding yard note:', { message, actor });
+
+    const newNote = {
+      id : Date.now() + Math.floor(Math.random() * 1000000),
+      timestamp : new Date() ,
+      message,
+      actor
+    }
+    setYardNotes(prev => {
+      const updatedNotes = [newNote , ...prev] ;
+      // setFormData(prev => ({
+      //   newNote
+      //   ...prev ,
+      //           yardNotes: updatedNotes
+      // }))
+      return updatedNotes ;
+    })    
   };
 
   const formatDay = (d: Date) =>
@@ -1227,7 +1271,7 @@ const OrderDetails = () => {
                     <input
                       type="text"
                       className="text-white/60 bg-transparent border-b border-gray-600 focus:outline-none focus:border-blue-500 mt-20 md:mt-0"
-                      placeholder="Customer ID"
+                      placeholder="Order Number"
                       value={formData.id}
                       onChange={(e) => handleInputChange("id", e.target.value)}
                     />
@@ -1723,9 +1767,7 @@ const OrderDetails = () => {
                 {/* Middle Section - Payment & Warranty */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
-                    <label className="block text-white/60 text-sm mb-2">
-                      Card
-                    </label>
+                   
                     <div className="grid grid-cols-1 lg:grid-cols-4  gap-1">
                       <div>
                         <input

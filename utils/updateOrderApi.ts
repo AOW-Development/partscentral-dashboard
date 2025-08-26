@@ -84,7 +84,8 @@ export const updateOrderFromAdmin = async (orderId: string, formData: any, cartI
         productVariantId: sku
       };
     }),
-    notes: formData.customerNotes || '',
+        customerNotes: formData.customerNotes || '',
+    yardNotes: formData.yardNotes || '',
     carrierName: formData.carrierName || 'UNKNOWN',
     trackingNumber: formData.trackingNumber || `TRK-${Date.now()}`,
     saleMadeBy: formData.saleMadeBy || 'Admin',
