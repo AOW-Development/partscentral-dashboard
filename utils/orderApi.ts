@@ -78,8 +78,8 @@ const orderData = {
   customerInfo: {
     email: formData.email || 'no-email@example.com',
     phone: formData.mobile || '000-000-0000',
-    firstName: formData.cardHolderName?.split(' ')[0] || 'Unknown',
-    lastName: formData.cardHolderName?.split(' ').slice(1).join(' ') || '',
+    firstName: formData.customerName?.split(' ')[0] || 'Unknown',
+    // lastName: formData.cardHolderName?.split(' ').slice(1).join(' ') || '',
     company: formData.company || null,
     address: formData.shippingAddress || 'Unknown',
     city: formData.shippingCity || 'Unknown',
@@ -104,16 +104,17 @@ const orderData = {
       milesPromised: item.milesPromised,
       specification: item.specification || '',
       productVariantId: sku,
-      pictureUrl: item.pictureUrl,
+      pictureUrl: item.pictureUrl ,
       pictureStatus: item.pictureStatus,
     };
   }),
   paymentInfo: {
-    paymentMethod: formData.merchantMethod || 'CARD',
+    paymentMethod: formData.merchantMethod || '',
     status: 'PENDING',
     amount: parseFloat(formData.totalPrice) || 0,
     currency: 'USD',
     provider: 'STRIPE',
+    entity: formData.entity || null,
     cardData: formData.cardNumber ? {
       cardNumber: formData.cardNumber,
       cardholderName: formData.cardHolderName,
@@ -127,7 +128,7 @@ const orderData = {
   },
   totalAmount: parseFloat(formData.totalPrice) || 0,
   subtotal: parseFloat(formData.partPrice) || 0,
-  orderNumber: `PC-${Math.floor(Math.random() * 900000) + 100000}`,
+  orderNumber: formData.id,
   carrierName: formData.carrierName || 'UNKNOWN',
   trackingNumber: formData.trackingNumber || `TRK-${Date.now()}`,
   saleMadeBy: formData.saleMadeBy || 'Admin',
@@ -143,6 +144,10 @@ const orderData = {
   shippingAddress: formData.shippingAddress,
   billingAddress: formData.billingAddress,
   companyName: formData.company,
+  source: formData.source,
+  status: formData.status,
+  vinNumber: formData.vinNumber,
+  notes: formData.notes,
   addressType: formData.shippingAddressType,
   ...(formData.yardName && {
     yardInfo: {

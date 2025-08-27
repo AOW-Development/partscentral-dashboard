@@ -174,6 +174,7 @@ const OrderDetails = () => {
     billingAddress: "",
     cardHolderName: "",
     cardNumber: "",
+   
     cardDate: "",
     cardCvv: "",
     warranty: "",
@@ -201,6 +202,7 @@ const OrderDetails = () => {
     yardShipping: "",
     yardCost: "",
     pictureStatus: "",
+    pictureUrl :"",
     carrierName: "",
     trackingNumber: "",
     customerNotes: "",
@@ -208,6 +210,8 @@ const OrderDetails = () => {
     invoiceStatus: "",
     invoiceSentAt: "",
     invoiceConfirmAt: "",
+    vinNumber: "" ,
+    notes:"",
     ownShippingInfo: {
       productType: "",
       packageType: "",
@@ -480,6 +484,7 @@ const OrderDetails = () => {
     ]);
   };
 
+
   // Remove a payment entry
   const removePaymentEntry = (id: number) => {
     if (paymentEntries.length > 1) {
@@ -683,7 +688,7 @@ const OrderDetails = () => {
       const invoiceData = {
         orderId: "PC#022705", // You can get this from URL params
         customerInfo: {
-          name: "Shiva Shankar Reddy",
+          name: formData.customerName,
           email: formData.email,
           mobile: formData.mobile,
           partPrice: formData.partPrice,
@@ -903,9 +908,22 @@ const OrderDetails = () => {
           warranty: formData.warranty,
           milesPromised: formData.milesPromised,
           specification: formData.specification,
+          pictureUrl: formData.pictureUrl || '',
+          pictureStatus: formData.pictureStatus || 'PENDING',
         },
       ];
-      const result = await createOrderFromAdmin(formData, cartItems);
+      // Get the first payment entry (or use default values if none exists)
+      const paymentEntry = paymentEntries[0] || {};
+      
+      const updatedFormData = {  
+        ...formData,  
+        customerNotes: customerNotes,  
+        yardNotes: yardNotes,
+        approvalCode: paymentEntry.approvalCode || '',
+        charged: paymentEntry.charged || 'No',
+        merchantMethod: paymentEntry.merchantMethod || ''
+,      };  
+      const result = await createOrderFromAdmin(updatedFormData, cartItems);
 
       setMessage({
         type: "success",
@@ -1167,15 +1185,44 @@ const OrderDetails = () => {
     );
   };
 
-  const handleSendPicture = () => {
+  const handleSendPicture = async () => {
     if (uploadedPicture) {
+      // Create a URL for the uploaded file
+      // const pictureUrl = window.URL.createObjectURL(uploadedPicture);
+      
+ // Convert the file to base64 to send it to the server
+ const base64Image = await convertToBase64(uploadedPicture);
+
+      // Update form data with picture information
+      setFormData(prev => ({
+        ...prev,
+        pictureUrl: base64Image,
+        pictureStatus: 'SENT' 
+      }));
+      
       addCustomerNote(
         `Picture Uploaded – ${uploadedPicture.name} sent to customer.`,
         "By Agent"
       );
     } else {
+      // Reset picture status if no file is selected
+      setFormData(prev => ({
+        ...prev,
+        pictureUrl: '',
+        pictureStatus: 'PENDING'
+      }));
       addCustomerNote("Picture – No file selected.", "By Agent");
     }
+
+    
+  };
+  const convertToBase64 = (file: File): Promise<string> => {
+    return new  Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
   };
 
   // Initialize a base note once
@@ -2168,6 +2215,33 @@ const OrderDetails = () => {
                       value={formData.totalSellingPrice}
                       onChange={(e) =>
                         handleInputChange("totalSellingPrice", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      VIN Number
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                      placeholder="VIN Number"
+                      value={formData.vinNumber}
+                      onChange={(e) =>
+                        handleInputChange("vinNumber", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Note
+                    </label>
+                    <textarea
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                      placeholder="Please type additional Note here ...."
+                      value={formData.notes}
+                      onChange={(e) =>
+                        handleInputChange("notes", e.target.value)
                       }
                     />
                   </div>
