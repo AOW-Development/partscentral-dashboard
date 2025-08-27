@@ -44,7 +44,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const user = users.find(
-        (user) => user.email === email && user.password === password
+        (user) =>
+          user.email === email.trim() && user.password === password.trim()
       );
       if (!user) {
         setError("Invalid credentials");
@@ -95,11 +96,7 @@ export default function LoginPage() {
           <h1 className="text-3xl font-bold mb-6 font-audiowide">
             Admin Login
           </h1>
-          <form
-            className="w-full max-w-sm space-y-4"
-            onSubmit={handleSubmit}
-            noValidate
-          >
+          <form className="w-full space-y-4" onSubmit={handleSubmit} noValidate>
             <input
               type="email"
               placeholder="Email"

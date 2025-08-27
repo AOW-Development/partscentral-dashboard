@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodeMailer from "nodemailer";
-import path from "path";
+// import path from "path";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+// import { BufferStream } from "pdf-lib";
 
 interface InvoiceData {
   customerInfo: {
@@ -62,14 +64,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate invoice HTML (CID image will be attached via email)
+    // Generate invoice HTML and PDF
     const invoiceHTML = generateInvoiceHTML(invoiceData);
+    const pdfContent = await generateInvoicePDF(invoiceData);
 
-    // Send email with invoice
+    // Send email with invoice and PDF attachment
     const emailResult = await sendInvoiceEmail(
       invoiceData.customerInfo.email,
       invoiceHTML,
-      invoiceData.orderId
+      invoiceData.orderId,
+      pdfContent
     );
 
     if (emailResult.success) {
@@ -101,133 +105,222 @@ function generateInvoiceHTML(data: InvoiceData) {
     <head>
       <meta charset="utf-8">
       <title>Invoice - ${data.orderId}</title>
-      <style>
-        body { font-family: Arial, sans-serif; margin: 0; }
-        .invoice-header {font-size: 30px; text-align: center; margin-bottom: 30px; }
-        .invoice-details {font-size: 40px; margin-bottom: 20px; }
-        .customer-info, .payment-info {font-size: 40px; margin-bottom: 20px; }
-        .product-info {font-size: 40px; margin-bottom: 20px; }
-        .total { font-size: 40px; font-weight: bold; margin-top: 20px; }
-        table {font-size: 25px; width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th, td { font-size: 25px;padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { font-size: 25px;background-color: #f5f5f5; }
-      </style>
     </head>
     <body>
-      <div style="width:100vh;padding:60px 15px;background:#091627;border-bottom:2px solid #e5e5e5;text-align:left;margin-bottom:24px;margin-left:0px">
-        <img src="cid:invoice-logo" alt="Parts Central" style="height:60px;display:inline-block;" />
-      </div>
-      <div class="invoice-header">
-        <h1>INVOICE</h1>
-        <p>Order ID: ${data.orderId}</p>
-        <p>Date: ${new Date().toLocaleDateString()}</p>
-      </div>
-
       <div>
-        <h3 style="font-size: 40px;">Customer Information</h3>
-        <p style="font-size: 30px;"><strong>Name:</strong> ${
-          data.customerInfo.name
-        }</p>
-        <p style="font-size: 30px;"><strong>Email:</strong> ${
-          data.customerInfo.email
-        }</p>
-        <p style="font-size: 30px;"><strong>Mobile:</strong> ${
-          data.customerInfo.mobile
-        }</p>
-         <p style="font-size: 30px;"><strong>shipping Address Type:</strong> ${
-           data.customerInfo.shippingAddressType
-         }</p>
-        <p style="font-size: 30px;"><strong>Company:</strong> ${
-          data.customerInfo.company
-        }</p>
-        <p style="font-size: 30px;"><strong>Shipping Address:</strong> ${
-          data.customerInfo.shippingAddress
-        }</p>
-        <p style="font-size: 30px;"><strong>Billing Address:</strong> ${
-          data.customerInfo.billingAddress
-        }</p>
-      </div>
-
-      <div class="product-info">
-        <h3 style="font-size: 40px;">Product Information</h3>
-        <table>
-          <tr>
-            <th>Make</th>
-            <th>Model</th>
-            <th>Year</th>
-            <th>Parts</th>
-            <th>Specification</th>
-            <th>Sale Made By</th>
-          </tr>
-          <tr>
-            <td>${data.productInfo.make}</td>
-            <td>${data.productInfo.model}</td>
-            <td>${data.productInfo.year}</td>
-            <td>${data.productInfo.parts}</td>
-            <td>${data.productInfo.specification}</td>
-            <td>${data.productInfo.saleMadeBy}</td>
-          </tr>
-        </table>
-      </div>
-
-      <div>
-        <h3 style="font-size: 40px;">Payment Information</h3>
-        <p style="font-size: 30px;"><strong>Selling Price:</strong> $${
-          data.customerInfo.totalSellingPrice
-        }</p>
-        <p style="font-size: 30px;"><strong>Card Holder Name:</strong> ${
-          data.paymentInfo.cardHolderName
-        }</p>
-        <p style="font-size: 30px;"><strong>Card Number:</strong> **** **** **** ${data.paymentInfo.cardNumber.slice(
-          15,
-          19
-        )}</p>
-        <p style="font-size: 30px;"><strong>Expire Date:</strong> ${
-          data.paymentInfo.cardDate
-        }</p>
-        <p style="font-size: 30px;"><strong>CVV:</strong> ${
-          data.paymentInfo.cardCvv
-        }</p>
-        <p style="font-size: 30px;"><strong>Warranty:</strong> ${
-          data.paymentInfo.warranty
-        }</p>
-        
-      </div>
-      <div class="total">
-        <p><strong>Total Amount:</strong> $${
-          data.customerInfo.totalSellingPrice
-        }</p>
-      </div>
-      <div style="margin-top:32px;padding-top:16px;border-top:1px solid #eee;color:#222;font-size: 30px;line-height:1.6;">
-        <h2 style="font-size:40px;margin:0 0 12px 0;">Why choose Parts Central?</h2>
-        <ul style="margin:0 0 16px 20px;padding:0;">
-          <li>Friendly customer support available to assist you.</li>
-          <li>Wide selection of quality used OEM parts available in all over USA.</li>
-          <li>Fast shipping within 8-9 business days.</li>
-          <li>Buy Now &amp; Pay Later options available.</li>
-        </ul>
-
-        <p style="text-align:center;font-weight:600;font-size:40px;margin:24px 0;">
-          We look forward to hearing from you soon!
-        </p>
-
-        <div style="margin-top:16px;">
-          <p style="margin:0 0 6px 0;font-weight:600;font-size: 40px;">Best regards,</p>
-          <p style="margin:0;">Parts Central LLC</p>
-          <p style="margin:0;">76 Imperial Dr Suite E Evanston, WY 82930, USA</p>
-          <p style="margin:0;">Phone: +1 (888) 338-2540</p>
-        </div>
+      <h3 >Hello,${data.customerInfo.name}</h3>
+      <p >Please find the attached invoice for the order you have placed with us.</p>
+      <p>Kindly reply "YES" to this email as an acknowledgement, and also sign the invoice copy and send it back to us.  Please send us a Valid ID proof as well.</p>
+      <p >As per our tele-conversation, we will charge your card ending with (${data.paymentInfo.cardNumber.slice(
+        -4
+      )}) for the amount of $${
+    data.customerInfo.totalSellingPrice
+  }. This authorization is for a single transaction only and does not provide authorization for any additional unrelated debits or credits to your account.</p>
+      <p style="margin-top:36px;">Regards,</p>
+      <p >Parts Central LLC</p>
+      <p >Contact: (888) 338-2540</p>
+      <p >Fax#: (312) 845-9711</p>
       </div>
     </body>
     </html>
   `;
 }
 
+async function generateInvoicePDF(data: InvoiceData) {
+  const pdfDoc = await PDFDocument.create();
+
+  // Embed the Times Roman font
+  const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
+
+  // Add a blank page to the document
+  const page = pdfDoc.addPage();
+
+  // Get the width and height of the page
+  const { height } = page.getSize();
+
+  // Draw invoice content
+  const fontSize = 12;
+  let y = height - 50;
+
+  // Add invoice header
+  page.drawText(`INVOICE #${data.orderId}`, {
+    x: 50,
+    y: y,
+    size: 20,
+    font: timesRomanFont,
+    color: rgb(0, 0.53, 0.71),
+  });
+  y -= 30;
+
+  // Add customer info
+  page.drawText(`Customer Name: ${data.customerInfo.name}`, {
+    x: 50,
+    y: y,
+    size: fontSize,
+    font: timesRomanFont,
+  });
+  y -= 20;
+
+  // Add order details
+  page.drawText(`Order Total: $${data.customerInfo.totalSellingPrice}`, {
+    x: 50,
+    y: y,
+    size: fontSize,
+    font: timesRomanFont,
+  });
+  y -= 20;
+
+  // Add warranty info if available
+  if (data.customerInfo.email) {
+    page.drawText(`Email: ${data.customerInfo.email}`, {
+      x: 50,
+      y: y,
+      size: fontSize,
+      font: timesRomanFont,
+    });
+    y -= 20;
+  }
+  if (data.customerInfo.mobile) {
+    page.drawText(`Mobile: ${data.customerInfo.mobile}`, {
+      x: 50,
+      y: y,
+      size: fontSize,
+      font: timesRomanFont,
+    });
+    y -= 20;
+  }
+  if (data.customerInfo.shippingAddress) {
+    page.drawText(`Shipping Address: ${data.customerInfo.shippingAddress}`, {
+      x: 50,
+      y: y,
+      size: fontSize,
+      font: timesRomanFont,
+    });
+    y -= 20;
+  }
+  if (data.customerInfo.billingAddress) {
+    page.drawText(`Billing Address: ${data.customerInfo.billingAddress}`, {
+      x: 50,
+      y: y,
+      size: fontSize,
+      font: timesRomanFont,
+    });
+    y -= 20;
+  }
+  if (data.customerInfo.shippingAddressType) {
+    page.drawText(
+      `Shipping Address Type: ${data.customerInfo.shippingAddressType}`,
+      {
+        x: 50,
+        y: y,
+        size: fontSize,
+        font: timesRomanFont,
+      }
+    );
+    y -= 20;
+  }
+  if (data.paymentInfo.cardHolderName) {
+    page.drawText(`Card Holder Name: ${data.paymentInfo.cardHolderName}`, {
+      x: 50,
+      y: y,
+      size: fontSize,
+      font: timesRomanFont,
+    });
+    y -= 20;
+  }
+  if (data.paymentInfo.cardNumber) {
+    page.drawText(`Card Number: ${data.paymentInfo.cardNumber.slice(-4)}`, {
+      x: 50,
+      y: y,
+      size: fontSize,
+      font: timesRomanFont,
+    });
+    y -= 20;
+  }
+  if (data.paymentInfo.cardDate) {
+    page.drawText(`Card Date: ${data.paymentInfo.cardDate}`, {
+      x: 50,
+      y: y,
+      size: fontSize,
+      font: timesRomanFont,
+    });
+    y -= 20;
+  }
+  if (data.paymentInfo.cardCvv) {
+    page.drawText(`Card CVV: ${data.paymentInfo.cardCvv}`, {
+      x: 50,
+      y: y,
+      size: fontSize,
+      font: timesRomanFont,
+    });
+    y -= 20;
+  }
+  if (data.productInfo.make) {
+    page.drawText(`Make: ${data.productInfo.make}`, {
+      x: 50,
+      y: y,
+      size: fontSize,
+      font: timesRomanFont,
+    });
+    y -= 20;
+  }
+  if (data.productInfo.model) {
+    page.drawText(`Model: ${data.productInfo.model}`, {
+      x: 50,
+      y: y,
+      size: fontSize,
+      font: timesRomanFont,
+    });
+    y -= 20;
+  }
+  if (data.productInfo.year) {
+    page.drawText(`Year: ${data.productInfo.year}`, {
+      x: 50,
+      y: y,
+      size: fontSize,
+      font: timesRomanFont,
+    });
+    y -= 20;
+  }
+  if (data.productInfo.parts) {
+    page.drawText(`Parts: ${data.productInfo.parts}`, {
+      x: 50,
+      y: y,
+      size: fontSize,
+      font: timesRomanFont,
+    });
+    y -= 20;
+  }
+  if (data.productInfo.specification) {
+    page.drawText(`Specification: ${data.productInfo.specification}`, {
+      x: 50,
+      y: y,
+      size: fontSize,
+      font: timesRomanFont,
+    });
+    y -= 20;
+  }
+  if (data.productInfo.saleMadeBy) {
+    page.drawText(`Sale Made By: ${data.productInfo.saleMadeBy}`, {
+      x: 50,
+      y: y,
+      size: fontSize,
+      font: timesRomanFont,
+    });
+    y -= 20;
+  }
+
+  // Serialize the PDFDocument to bytes (a Uint8Array)
+  const pdfBytes = await pdfDoc.save();
+  return pdfBytes;
+}
+
 // Send email function (you'll need to configure this with your email service)
 async function sendInvoiceEmail(
   toEmail: string,
   htmlContent: string,
-  orderId: string
+  orderId: string,
+  pdfContent: Uint8Array
 ) {
   try {
     // Example using a hypothetical email service
@@ -238,21 +331,21 @@ async function sendInvoiceEmail(
     const transporter = nodeMailer.createTransport({
       service: "gmail", // or your email service
       auth: {
-        user: "shankarreddyshiva83@gmail.com",
-        pass: "njhr auka tqbd oxva",
+        user: "leadspartscentral.us@gmail.com",
+        pass: "ftzc nrta ufnx sudz",
       },
     });
 
     const mailOptions = {
-      from: "shankarreddyshiva83@gmail.com",
+      from: "leadspartscentral.us@gmail.com",
       to: toEmail,
       subject: `Invoice - Order ${orderId}`,
       html: htmlContent,
       attachments: [
         {
-          filename: "header-3.png",
-          path: path.join(process.cwd(), "public", "header-3.png"),
-          cid: "invoice-logo",
+          filename: `invoice-${orderId}.pdf`,
+          content: Buffer.from(pdfContent.buffer),
+          contentType: "application/pdf",
         },
       ],
     };
@@ -278,8 +371,9 @@ async function sendInvoiceEmail(
 
     // For now, we'll simulate success
     // In production, replace this with actual email sending
-    console.log(`Invoice email would be sent to: ${toEmail}`);
+    console.log(`Sending invoice email to: ${toEmail}`);
     console.log(`Order ID: ${orderId}`);
+    console.log(`PDF size: ${pdfContent.length} bytes`);
 
     // Simulate email sending delay
     await new Promise((resolve) => setTimeout(resolve, 1000));
