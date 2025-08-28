@@ -3,7 +3,7 @@ import Header from "@/app/components/Header";
 import ProtectRoute from "@/app/components/ProtectRoute";
 import Sidebar from "@/app/components/Sidebar";
 import { useParams } from "next/navigation";
-import { ChevronDown, X, Plus } from "lucide-react";
+import { ChevronDown, X, Plus, Minus, Calendar } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -29,6 +29,8 @@ const OrderDetails = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const params = useParams();
   const orderId = params.id as string;
+  const [showAlternateMobileNumber, setShowAlternateMobileNumber] =
+    useState(false);
 
   useEffect(() => {
     if (orderId && orderId !== "create" && orderId !== "new") {
@@ -40,12 +42,18 @@ const OrderDetails = () => {
           const yard = data.yardInfo || {};
           const ownShipping = yard.yardOwnShippingInfo || {};
 
-          const customerNotesArray = data.customerNotes && typeof data.customerNotes === 'string'
+          const customerNotesArray =
+            data.customerNotes && typeof data.customerNotes === "string"
               ? JSON.parse(data.customerNotes)
-              : (Array.isArray(data.customerNotes) ? data.customerNotes : []);
-          const yardNotesArray = data.yardNotes && typeof data.yardNotes === 'string'
+              : Array.isArray(data.customerNotes)
+              ? data.customerNotes
+              : [];
+          const yardNotesArray =
+            data.yardNotes && typeof data.yardNotes === "string"
               ? JSON.parse(data.yardNotes)
-              : (Array.isArray(data.yardNotes) ? data.yardNotes : []);
+              : Array.isArray(data.yardNotes)
+              ? data.yardNotes
+              : [];
 
           setCustomerNotes(customerNotesArray);
           setYardNotes(yardNotesArray);
@@ -147,26 +155,29 @@ const OrderDetails = () => {
             },
           });
           setCartItems(data.items || []);
-          if (data.customerNotes && typeof data.customerNotes === 'string') {
+          if (data.customerNotes && typeof data.customerNotes === "string") {
             try {
               const parsedCustomerNotes = JSON.parse(data.customerNotes);
-              setCustomerNotes(Array.isArray(parsedCustomerNotes) ? parsedCustomerNotes : []);
+              setCustomerNotes(
+                Array.isArray(parsedCustomerNotes) ? parsedCustomerNotes : []
+              );
             } catch (error) {
               console.error("Failed to parse customer notes:", error);
               setCustomerNotes([]);
             }
           }
 
-          if (data.yardNotes && typeof data.yardNotes === 'string') {
+          if (data.yardNotes && typeof data.yardNotes === "string") {
             try {
               const parsedYardNotes = JSON.parse(data.yardNotes);
-              setYardNotes(Array.isArray(parsedYardNotes) ? parsedYardNotes : []);
+              setYardNotes(
+                Array.isArray(parsedYardNotes) ? parsedYardNotes : []
+              );
             } catch (error) {
               console.error("Failed to parse yard notes:", error);
               setYardNotes([]);
             }
           }
-
         })
         .catch((err) => {
           console.error("Failed to fetch order details", err);
@@ -180,6 +191,7 @@ const OrderDetails = () => {
   const [selectedMileage, setSelectedMileage] = useState("");
   const [isLoadingVariants, setIsLoadingVariants] = useState(false);
   const [variantError, setVariantError] = useState("");
+  const [cardEntry, setCardEntry] = useState(false);
 
   const [formData, setFormData] = useState({
     customerName: "",
@@ -189,6 +201,7 @@ const OrderDetails = () => {
     status: "",
     email: "",
     mobile: "",
+    alternateMobile: "",
     partPrice: "",
     taxesPrice: "",
     handlingPrice: "",
@@ -357,6 +370,7 @@ const OrderDetails = () => {
   const [showCompany, setShowCompany] = useState(false);
   const [showOwnShipping, setShowOwnShipping] = useState(false);
   const [showYardShippingCost, setShowYardShippingCost] = useState(false);
+  const [invoiceButtonState, setInvoiceButtonState] = useState(false);
 
   const [message, setMessage] = useState<{
     type: "success" | "error";
@@ -1139,41 +1153,41 @@ const OrderDetails = () => {
   const [yardNoteInput, setYardNoteInput] = useState("");
 
   const addCustomerNote = (message: string, actor?: string) => {
-    console.log('Adding customer note:', { message, actor });
+    console.log("Adding customer note:", { message, actor });
     const newNote = {
       id: Date.now() + Math.floor(Math.random() * 1000000),
       timestamp: new Date(),
       message,
       actor,
-    }
-    setCustomerNotes(prev=> {
-      const updatedNotes = [newNote , ...prev]  ;
+    };
+    setCustomerNotes((prev) => {
+      const updatedNotes = [newNote, ...prev];
       // setFormData(prev => ({
       //   ...prev ,
       //           customerNotes: updatedNotes
       // }))
-      return updatedNotes ;
-    }) ;
+      return updatedNotes;
+    });
   };
 
   const addYardNote = (message: string, actor?: string) => {
-    console.log('Adding yard note:', { message, actor });
+    console.log("Adding yard note:", { message, actor });
 
     const newNote = {
-      id : Date.now() + Math.floor(Math.random() * 1000000),
-      timestamp : new Date() ,
+      id: Date.now() + Math.floor(Math.random() * 1000000),
+      timestamp: new Date(),
       message,
-      actor
-    }
-    setYardNotes(prev => {
-      const updatedNotes = [newNote , ...prev] ;
+      actor,
+    };
+    setYardNotes((prev) => {
+      const updatedNotes = [newNote, ...prev];
       // setFormData(prev => ({
       //   newNote
       //   ...prev ,
       //           yardNotes: updatedNotes
       // }))
-      return updatedNotes ;
-    })    
+      return updatedNotes;
+    });
   };
 
   const formatDay = (d: Date | string | number) => {
@@ -1475,23 +1489,32 @@ const OrderDetails = () => {
                       {fieldErrors.email || "placeholder"}
                     </p>
                   </div>
-                  <div>
+                  <div className="relative">
                     <label className="block text-white/60 text-sm mb-2">
                       Mobile *
                     </label>
-                    <input
-                      type="tel"
-                      className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                        fieldErrors.mobile
-                          ? "border-red-500 focus:border-red-500"
-                          : "border-gray-600 focus:border-blue-500"
-                      }`}
-                      placeholder="Enter mobile number"
-                      value={formData.mobile}
-                      onChange={(e) =>
-                        handleInputChange("mobile", e.target.value)
-                      }
-                    />
+                    <div className="relative" ref={priceOptionsRef}>
+                      <input
+                        type="tel"
+                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                          fieldErrors.mobile
+                            ? "border-red-500 focus:border-red-500"
+                            : "border-gray-600 focus:border-blue-500"
+                        }`}
+                        placeholder="Enter mobile number"
+                        value={formData.mobile}
+                        onChange={(e) =>
+                          handleInputChange("mobile", e.target.value)
+                        }
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowAlternateMobileNumber(true)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold transition-colors"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
                     <p
                       className={`text-red-400 text-xs mt-1 h-4 ${
                         fieldErrors.mobile ? "" : "invisible"
@@ -1500,6 +1523,45 @@ const OrderDetails = () => {
                       {fieldErrors.mobile || "placeholder"}
                     </p>
                   </div>
+                  {showAlternateMobileNumber && (
+                    <div className="relative">
+                      <label className="block text-white/60 text-sm mb-2">
+                        Alternate Mobile *
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="tel"
+                          className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                            fieldErrors.alternateMobile
+                              ? "border-red-500 focus:border-red-500"
+                              : "border-gray-600 focus:border-blue-500"
+                          }`}
+                          placeholder="Enter alternate mobile number"
+                          value={formData.alternateMobile}
+                          onChange={(e) =>
+                            handleInputChange("alternateMobile", e.target.value)
+                          }
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowAlternateMobileNumber(false);
+                            handleInputChange("alternateMobile", "");
+                          }}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold transition-colors"
+                        >
+                          <Minus size={14} />
+                        </button>
+                      </div>
+                      <p
+                        className={`text-red-400 text-xs mt-1 h-4 ${
+                          fieldErrors.mobile ? "" : "invisible"
+                        }`}
+                      >
+                        {fieldErrors.mobile || "placeholder"}
+                      </p>
+                    </div>
+                  )}
                   <div className="relative">
                     <label className="block text-white/60 text-sm mb-2">
                       Part Price *
@@ -1587,287 +1649,425 @@ const OrderDetails = () => {
                     </p>
                   </div>
                 </div>
-                {/* Dynamic additional price fields */}
-                {(visiblePriceFields.taxesPrice ||
-                  visiblePriceFields.handlingPrice ||
-                  visiblePriceFields.processingPrice ||
-                  visiblePriceFields.corePrice) && (
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                    {visiblePriceFields.taxesPrice && (
-                      <div className="relative">
-                        {true && (
-                          <button
-                            onClick={() => {
-                              setVisiblePriceFields((prev) => ({
-                                ...prev,
-                                ["taxesPrice"]: false,
-                              }));
-                              handleInputChange("taxesPrice", "");
-                            }}
-                            className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                            title="Remove payment"
-                          >
-                            <X size={16} />
-                          </button>
-                        )}
-                        <label className="block text-white/60 text-sm mb-2">
-                          Taxes Price
-                        </label>
-                        <input
-                          type="number"
-                          className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                            fieldErrors.taxesPrice
-                              ? "border-red-500 focus:border-red-500"
-                              : "border-gray-600 focus:border-blue-500"
-                          }`}
-                          placeholder="Enter price"
-                          value={formData.taxesPrice}
-                          onChange={(e) =>
-                            handleInputChange("taxesPrice", e.target.value)
-                          }
-                        />
-                        {fieldErrors.taxesPrice && (
-                          <p className="text-red-400 text-xs mt-1">
-                            {fieldErrors.taxesPrice}
-                          </p>
-                        )}
-                      </div>
-                    )}
-
-                    {visiblePriceFields.handlingPrice && (
-                      <div className="relative">
-                        {true && (
-                          <button
-                            onClick={() => {
-                              setVisiblePriceFields((prev) => ({
-                                ...prev,
-                                ["handlingPrice"]: false,
-                              }));
-                              handleInputChange("handlingPrice", "");
-                            }}
-                            className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                            title="Remove payment"
-                          >
-                            <X size={16} />
-                          </button>
-                        )}
-                        <label className="block text-white/60 text-sm mb-2">
-                          Handling Price
-                        </label>
-                        <input
-                          type="number"
-                          className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                            fieldErrors.handlingPrice
-                              ? "border-red-500 focus:border-red-500"
-                              : "border-gray-600 focus:border-blue-500"
-                          }`}
-                          placeholder="Enter price"
-                          value={formData.handlingPrice}
-                          onChange={(e) =>
-                            handleInputChange("handlingPrice", e.target.value)
-                          }
-                        />
-                        {fieldErrors.handlingPrice && (
-                          <p className="text-red-400 text-xs mt-1">
-                            {fieldErrors.handlingPrice}
-                          </p>
-                        )}
-                      </div>
-                    )}
-
-                    {visiblePriceFields.processingPrice && (
-                      <div className="relative">
-                        {true && (
-                          <button
-                            onClick={() => {
-                              setVisiblePriceFields((prev) => ({
-                                ...prev,
-                                ["processingPrice"]: false,
-                              }));
-                              handleInputChange("processingPrice", "");
-                            }}
-                            className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                            title="Remove payment"
-                          >
-                            <X size={16} />
-                          </button>
-                        )}
-                        <label className="block text-white/60 text-sm mb-2">
-                          Processing Price
-                        </label>
-                        <input
-                          type="number"
-                          className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                            fieldErrors.processingPrice
-                              ? "border-red-500 focus:border-red-500"
-                              : "border-gray-600 focus:border-blue-500"
-                          }`}
-                          placeholder="Enter price"
-                          value={formData.processingPrice}
-                          onChange={(e) =>
-                            handleInputChange("processingPrice", e.target.value)
-                          }
-                        />
-                        {fieldErrors.processingPrice && (
-                          <p className="text-red-400 text-xs mt-1">
-                            {fieldErrors.processingPrice}
-                          </p>
-                        )}
-                      </div>
-                    )}
-
-                    {visiblePriceFields.corePrice && (
-                      <div className="relative">
-                        {true && (
-                          <button
-                            onClick={() => {
-                              setVisiblePriceFields((prev) => ({
-                                ...prev,
-                                ["corePrice"]: false,
-                              }));
-                              handleInputChange("corePrice", "");
-                            }}
-                            className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                            title="Remove payment"
-                          >
-                            <X size={16} />
-                          </button>
-                        )}
-                        <label className="block text-white/60 text-sm mb-2">
-                          Core Price
-                        </label>
-                        <input
-                          type="number"
-                          className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                            fieldErrors.corePrice
-                              ? "border-red-500 focus:border-red-500"
-                              : "border-gray-600 focus:border-blue-500"
-                          }`}
-                          placeholder="Enter price"
-                          value={formData.corePrice}
-                          onChange={(e) =>
-                            handleInputChange("corePrice", e.target.value)
-                          }
-                        />
-                        {fieldErrors.corePrice && (
-                          <p className="text-red-400 text-xs mt-1">
-                            {fieldErrors.corePrice}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {/* Row 2 */}
-                  <div className="col-span-1">
-                    <div>
-                      <label className="block text-white/60 text-sm mb-2">
-                        Shipping Address Type
-                      </label>
-                      <div className="relative">
-                        <select
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                          value={formData.shippingAddressType}
-                          onChange={(e) => {
-                            handleInputChange(
-                              "shippingAddressType",
-                              e.target.value
-                            );
-                            if (e.target.value === "Commercial") {
-                              setShowCompany(true);
-                            } else {
-                              setShowCompany(false);
-                            }
+              </div>
+              {/* Dynamic additional price fields */}
+              {(visiblePriceFields.taxesPrice ||
+                visiblePriceFields.handlingPrice ||
+                visiblePriceFields.processingPrice ||
+                visiblePriceFields.corePrice) && (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-3">
+                  {visiblePriceFields.taxesPrice && (
+                    <div className="relative">
+                      {true && (
+                        <button
+                          onClick={() => {
+                            setVisiblePriceFields((prev) => ({
+                              ...prev,
+                              ["taxesPrice"]: false,
+                            }));
+                            handleInputChange("taxesPrice", "");
                           }}
+                          className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                          title="Remove payment"
                         >
-                          <option value="">Select address type</option>
-                          <option value="Residential">Residential</option>
-                          {/* <option value="Non Residential">
-                            Non Residential
-                          </option> */}
-                          <option value="Terminal">Terminal</option>
-                          <option value="Commercial">Commercial</option>
-                        </select>
-                        <ChevronDown
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                          size={16}
-                        />
-                      </div>
-                      {showCompany && (
-                        <div className="mt-2 relative">
-                          <label className=" block text-white/60 text-sm mb-2">
-                            Company Name
-                          </label>
-                          <input
-                            type="text"
-                            className="block bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
-                            placeholder="Company name"
-                            value={formData.company}
-                            onChange={(e) =>
-                              handleInputChange("company", e.target.value)
-                            }
-                          />
-                        </div>
+                          <X size={16} />
+                        </button>
+                      )}
+                      <label className="block text-white/60 text-sm mb-2">
+                        Taxes Price
+                      </label>
+                      <input
+                        type="number"
+                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                          fieldErrors.taxesPrice
+                            ? "border-red-500 focus:border-red-500"
+                            : "border-gray-600 focus:border-blue-500"
+                        }`}
+                        placeholder="Enter price"
+                        value={formData.taxesPrice}
+                        onChange={(e) =>
+                          handleInputChange("taxesPrice", e.target.value)
+                        }
+                      />
+                      {fieldErrors.taxesPrice && (
+                        <p className="text-red-400 text-xs mt-1">
+                          {fieldErrors.taxesPrice}
+                        </p>
                       )}
                     </div>
-                  </div>
+                  )}
+
+                  {visiblePriceFields.handlingPrice && (
+                    <div className="relative">
+                      {true && (
+                        <button
+                          onClick={() => {
+                            setVisiblePriceFields((prev) => ({
+                              ...prev,
+                              ["handlingPrice"]: false,
+                            }));
+                            handleInputChange("handlingPrice", "");
+                          }}
+                          className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                          title="Remove payment"
+                        >
+                          <X size={16} />
+                        </button>
+                      )}
+                      <label className="block text-white/60 text-sm mb-2">
+                        Handling Price
+                      </label>
+                      <input
+                        type="number"
+                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                          fieldErrors.handlingPrice
+                            ? "border-red-500 focus:border-red-500"
+                            : "border-gray-600 focus:border-blue-500"
+                        }`}
+                        placeholder="Enter price"
+                        value={formData.handlingPrice}
+                        onChange={(e) =>
+                          handleInputChange("handlingPrice", e.target.value)
+                        }
+                      />
+                      {fieldErrors.handlingPrice && (
+                        <p className="text-red-400 text-xs mt-1">
+                          {fieldErrors.handlingPrice}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {visiblePriceFields.processingPrice && (
+                    <div className="relative">
+                      {true && (
+                        <button
+                          onClick={() => {
+                            setVisiblePriceFields((prev) => ({
+                              ...prev,
+                              ["processingPrice"]: false,
+                            }));
+                            handleInputChange("processingPrice", "");
+                          }}
+                          className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                          title="Remove payment"
+                        >
+                          <X size={16} />
+                        </button>
+                      )}
+                      <label className="block text-white/60 text-sm mb-2">
+                        Processing Price
+                      </label>
+                      <input
+                        type="number"
+                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                          fieldErrors.processingPrice
+                            ? "border-red-500 focus:border-red-500"
+                            : "border-gray-600 focus:border-blue-500"
+                        }`}
+                        placeholder="Enter price"
+                        value={formData.processingPrice}
+                        onChange={(e) =>
+                          handleInputChange("processingPrice", e.target.value)
+                        }
+                      />
+                      {fieldErrors.processingPrice && (
+                        <p className="text-red-400 text-xs mt-1">
+                          {fieldErrors.processingPrice}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {visiblePriceFields.corePrice && (
+                    <div className="relative">
+                      {true && (
+                        <button
+                          onClick={() => {
+                            setVisiblePriceFields((prev) => ({
+                              ...prev,
+                              ["corePrice"]: false,
+                            }));
+                            handleInputChange("corePrice", "");
+                          }}
+                          className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                          title="Remove payment"
+                        >
+                          <X size={16} />
+                        </button>
+                      )}
+                      <label className="block text-white/60 text-sm mb-2">
+                        Core Price
+                      </label>
+                      <input
+                        type="number"
+                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                          fieldErrors.corePrice
+                            ? "border-red-500 focus:border-red-500"
+                            : "border-gray-600 focus:border-blue-500"
+                        }`}
+                        placeholder="Enter price"
+                        value={formData.corePrice}
+                        onChange={(e) =>
+                          handleInputChange("corePrice", e.target.value)
+                        }
+                      />
+                      {fieldErrors.corePrice && (
+                        <p className="text-red-400 text-xs mt-1">
+                          {fieldErrors.corePrice}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Row 2 */}
+                <div className="col-span-1">
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
-                      Shipping Address *
+                      Shipping Address Type
                     </label>
-                    <textarea
-                      className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none h-20 resize-none ${
-                        fieldErrors.shippingAddress
-                          ? "border-red-500 focus:border-red-500"
-                          : "border-gray-600 focus:border-blue-500"
-                      }`}
-                      placeholder="Enter shipping address"
-                      value={formData.shippingAddress}
-                      onChange={(e) =>
-                        handleInputChange("shippingAddress", e.target.value)
-                      }
-                    />
-                    <p
-                      className={`text-red-400 text-xs mt-1 h-4 ${
-                        fieldErrors.shippingAddress ? "" : "invisible"
-                      }`}
-                    >
-                      {fieldErrors.shippingAddress || "placeholder"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Billing Address *
-                    </label>
-                    <textarea
-                      className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none h-20 resize-none ${
-                        fieldErrors.billingAddress
-                          ? "border-red-500 focus:border-red-500"
-                          : "border-gray-600 focus:border-blue-500"
-                      }`}
-                      placeholder="Enter billing address"
-                      value={formData.billingAddress}
-                      onChange={(e) =>
-                        handleInputChange("billingAddress", e.target.value)
-                      }
-                    />
-                    <p
-                      className={`text-red-400 text-xs mt-1 h-4 ${
-                        fieldErrors.billingAddress ? "" : "invisible"
-                      }`}
-                    >
-                      {fieldErrors.billingAddress || "placeholder"}
-                    </p>
+                    <div className="relative">
+                      <select
+                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                        value={formData.shippingAddressType}
+                        onChange={(e) => {
+                          handleInputChange(
+                            "shippingAddressType",
+                            e.target.value
+                          );
+                          if (e.target.value === "Commercial") {
+                            setShowCompany(true);
+                          } else {
+                            setShowCompany(false);
+                          }
+                        }}
+                      >
+                        <option value="">Select address type</option>
+                        <option value="Residential">Residential</option>
+                        {/* <option value="Non Residential">
+                            Non Residential
+                          </option> */}
+                        <option value="Terminal">Terminal</option>
+                        <option value="Commercial">Commercial</option>
+                      </select>
+                      <ChevronDown
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                        size={16}
+                      />
+                    </div>
+                    {showCompany && (
+                      <div className="mt-2 relative">
+                        <label className=" block text-white/60 text-sm mb-2">
+                          Company Name
+                        </label>
+                        <input
+                          type="text"
+                          className="block bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
+                          placeholder="Company name"
+                          value={formData.company}
+                          onChange={(e) =>
+                            handleInputChange("company", e.target.value)
+                          }
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
+                <div>
+                  <label className="block text-white/60 text-sm mb-2">
+                    Shipping Address *
+                  </label>
+                  <textarea
+                    className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none h-20 resize-none ${
+                      fieldErrors.shippingAddress
+                        ? "border-red-500 focus:border-red-500"
+                        : "border-gray-600 focus:border-blue-500"
+                    }`}
+                    placeholder="Enter shipping address"
+                    value={formData.shippingAddress}
+                    onChange={(e) =>
+                      handleInputChange("shippingAddress", e.target.value)
+                    }
+                  />
+                  <p
+                    className={`text-red-400 text-xs mt-1 h-4 ${
+                      fieldErrors.shippingAddress ? "" : "invisible"
+                    }`}
+                  >
+                    {fieldErrors.shippingAddress || "placeholder"}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-white/60 text-sm mb-2">
+                    Billing Address *
+                  </label>
+                  <textarea
+                    className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none h-20 resize-none ${
+                      fieldErrors.billingAddress
+                        ? "border-red-500 focus:border-red-500"
+                        : "border-gray-600 focus:border-blue-500"
+                    }`}
+                    placeholder="Enter billing address"
+                    value={formData.billingAddress}
+                    onChange={(e) =>
+                      handleInputChange("billingAddress", e.target.value)
+                    }
+                  />
+                  <p
+                    className={`text-red-400 text-xs mt-1 h-4 ${
+                      fieldErrors.billingAddress ? "" : "invisible"
+                    }`}
+                  >
+                    {fieldErrors.billingAddress || "placeholder"}
+                  </p>
+                </div>
+              </div>
 
-                {/* Middle Section - Payment & Warranty */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
-                   
-                    <div className="grid grid-cols-1 lg:grid-cols-4  gap-1">
+              {/* Middle Section - Payment & Warranty */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-white text-lg font-semibold mb-2">
+                      Card Info
+                    </h3>
+                    <button
+                      onClick={() => {
+                        setCardEntry(true);
+                      }}
+                      className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                    >
+                      Add New Card
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-4  gap-1">
+                    <div>
+                      <input
+                        type="text"
+                        className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
+                        placeholder="Card holder name"
+                        value={formData.cardHolderName}
+                        onChange={(e) =>
+                          handleInputChange("cardHolderName", e.target.value)
+                        }
+                      />
+                      <p className="text-red-400 text-xs mt-1 h-4 invisible">
+                        placeholder
+                      </p>
+                    </div>
+                    <div>
+                      <input
+                        type="text"
+                        className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
+                        placeholder="Card Number"
+                        value={formData.cardNumber}
+                        inputMode="numeric"
+                        maxLength={23}
+                        onChange={(e) => {
+                          const formatted = formatCardNumber(e.target.value);
+                          handleInputChange("cardNumber", formatted);
+                        }}
+                        onBlur={(e) => {
+                          const err = validateField(
+                            "cardNumber",
+                            e.target.value
+                          );
+                          if (err)
+                            setFieldErrors((prev) => ({
+                              ...prev,
+                              cardNumber: err,
+                            }));
+                        }}
+                      />
+                      <p
+                        className={`text-red-400 text-xs mt-1 h-4 ${
+                          fieldErrors.cardNumber ? "" : "invisible"
+                        }`}
+                      >
+                        {fieldErrors.cardNumber || "placeholder"}
+                      </p>
+                      {!fieldErrors.cardNumber && formData.cardNumber && (
+                        <p className="text-white/60 text-xs">
+                          Detected card:{" "}
+                          {getCardType(formData.cardNumber) || "Unknown"}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <input
+                        type="text"
+                        className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
+                        placeholder="Expire Date"
+                        value={formData.cardDate}
+                        inputMode="numeric"
+                        maxLength={7}
+                        onChange={(e) => {
+                          const formatted = formatExpiryDate(e.target.value);
+                          handleInputChange("cardDate", formatted);
+                        }}
+                        onBlur={(e) => {
+                          const err = validateField("cardDate", e.target.value);
+                          if (err)
+                            setFieldErrors((prev) => ({
+                              ...prev,
+                              cardDate: err,
+                            }));
+                        }}
+                      />
+                      <p
+                        className={`text-red-400 text-xs mt-1 h-4 ${
+                          fieldErrors.cardDate ? "" : "invisible"
+                        }`}
+                      >
+                        {fieldErrors.cardDate || "placeholder"}
+                      </p>
+                    </div>
+                    <div>
+                      <input
+                        type="text"
+                        className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
+                        placeholder="CVV"
+                        value={formData.cardCvv}
+                        inputMode="numeric"
+                        maxLength={
+                          getCardType(formData.cardNumber) ===
+                          "American Express"
+                            ? 4
+                            : 3
+                        }
+                        onChange={(e) => {
+                          const expected =
+                            getCardType(formData.cardNumber) ===
+                            "American Express"
+                              ? 4
+                              : 3;
+                          const digits = e.target.value
+                            .replace(/\D/g, "")
+                            .slice(0, expected);
+                          handleInputChange("cardCvv", digits);
+                        }}
+                        onBlur={(e) => {
+                          const err = validateField("cardCvv", e.target.value);
+                          if (err)
+                            setFieldErrors((prev) => ({
+                              ...prev,
+                              cardCvv: err,
+                            }));
+                        }}
+                      />
+                      <p
+                        className={`text-red-400 text-xs mt-1 h-4 ${
+                          fieldErrors.cardCvv ? "" : "invisible"
+                        }`}
+                      >
+                        {fieldErrors.cardCvv || "placeholder"}
+                      </p>
+                    </div>
+                  </div>
+                  {cardEntry && (
+                    <div className="relative grid grid-cols-1 lg:grid-cols-4  gap-1">
                       <div>
                         <input
                           type="text"
@@ -1996,73 +2196,81 @@ const OrderDetails = () => {
                           {fieldErrors.cardCvv || "placeholder"}
                         </p>
                       </div>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Warranty
-                    </label>
-                    <div className="relative">
-                      <select
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                        value={formData.warranty}
-                        onChange={(e) =>
-                          handleInputChange("warranty", e.target.value)
-                        }
+                      <button
+                        type="button"
+                        onClick={() => setCardEntry(false)}
+                        className=" absolute right-0 top-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-2 rounded-full  flex items-center justify-center text-sm font-bold transition-colors"
                       >
-                        <option value="">Select warranty</option>
-                        <option>30 Days</option>
-                        <option>60 Days</option>
-                        <option>90 Days</option>
-                        <option>6 Months</option>
-                        <option>1 Year</option>
-                      </select>
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                        size={16}
-                      />
+                        Remove
+                      </button>
                     </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Make *
-                    </label>
-                    <div className="relative">
-                      <select
-                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
-                          fieldErrors.make
-                            ? "border-red-500 focus:border-red-500"
-                            : "border-gray-600 focus:border-blue-500"
-                        }`}
-                        value={formData.make}
-                        onChange={(e) => {
-                          handleInputChange("make", e.target.value);
-                          handleInputChange("model", "");
-                          handleInputChange("year", "");
-                        }}
-                      >
-                        <option value="">Select make</option>
-                        {MAKES.map((make) => (
-                          <option key={make} value={make}>
-                            {make}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                        size={16}
-                      />
-                    </div>
-                    <p
-                      className={`text-red-400 text-xs mt-1 h-4 ${
-                        fieldErrors.make ? "" : "invisible"
-                      }`}
+                  )}
+                </div>
+                <div>
+                  <label className="block text-white/60 text-sm mb-2">
+                    Warranty
+                  </label>
+                  <div className="relative">
+                    <select
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                      value={formData.warranty}
+                      onChange={(e) =>
+                        handleInputChange("warranty", e.target.value)
+                      }
                     >
-                      {fieldErrors.make || "placeholder"}
-                    </p>
+                      <option value="">Select warranty</option>
+                      <option>30 Days</option>
+                      <option>60 Days</option>
+                      <option>90 Days</option>
+                      <option>6 Months</option>
+                      <option>1 Year</option>
+                    </select>
+                    <ChevronDown
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                      size={16}
+                    />
                   </div>
                 </div>
+
+                <div>
+                  <label className="block text-white/60 text-sm mb-2">
+                    Make *
+                  </label>
+                  <div className="relative">
+                    <select
+                      className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
+                        fieldErrors.make
+                          ? "border-red-500 focus:border-red-500"
+                          : "border-gray-600 focus:border-blue-500"
+                      }`}
+                      value={formData.make}
+                      onChange={(e) => {
+                        handleInputChange("make", e.target.value);
+                        handleInputChange("model", "");
+                        handleInputChange("year", "");
+                      }}
+                    >
+                      <option value="">Select make</option>
+                      {MAKES.map((make) => (
+                        <option key={make} value={make}>
+                          {make}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                      size={16}
+                    />
+                  </div>
+                  <p
+                    className={`text-red-400 text-xs mt-1 h-4 ${
+                      fieldErrors.make ? "" : "invisible"
+                    }`}
+                  >
+                    {fieldErrors.make || "placeholder"}
+                  </p>
+                </div>
+              </div>
 
                 {/* Product Details Section - Before Send Invoice Button */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-6">
@@ -2301,430 +2509,802 @@ const OrderDetails = () => {
                   </div>
                 </div>
 
-                {/* Send Invoice Button */}
-                <div className="flex justify-end gap-4">
-                  <button
-                    className={`cursor-pointer mt-8 w-40 h-10 px-2 py-1 rounded-lg font-medium transition-colors ${
-                      isLoading
-                        ? "bg-gray-500 cursor-not-allowed"
-                        : "bg-[#006BA9] hover:bg-[#006BA9]/90"
-                    } text-white`}
-                    onClick={handleSendInvoice}
-                    disabled={isLoading}
+              {/* Send Invoice Button */}
+              <div className="flex justify-end gap-4">
+                <button
+                  className={` mt-8 w-40 h-10 px-2 py-1 rounded-lg font-medium transition-colors ${
+                    isLoading || invoiceButtonState
+                      ? "bg-gray-500 cursor-not-allowed"
+                      : "bg-[#006BA9] hover:bg-[#006BA9]/90 cursor-pointer"
+                  } text-white`}
+                  onClick={handleSendInvoice}
+                  disabled={isLoading || invoiceButtonState}
+                >
+                  {isLoading ? "Sending Invoice..." : "Send Invoice"}
+                </button>
+                <div>
+                  {/* <label className="block text-white/60 text-sm mb-2">
+                    Invoice Status
+                  </label> */}
+                  <select
+                    className="bg-[#0a1929] py-3 text-green-400 outline-none"
+                    onChange={(e) => {
+                      if (e.target.value == "no") {
+                        setInvoiceButtonState(false);
+                      } else if (e.target.value == "yes") {
+                        setInvoiceButtonState(true);
+                      } else {
+                        setInvoiceButtonState(false);
+                      }
+                    }}
                   >
-                    {isLoading ? "Sending Invoice..." : "Send Invoice"}
-                  </button>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Invoice Status
-                    </label>
-                    <div className="space-y-2">
+                    <option value="">Invoice Sent Status</option>
+
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                  </select>
+                  <div className="space-y-2">
+                    {!invoiceButtonState && (
                       <div className="flex items-center justify-between bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3">
                         <span className="text-green-400 text-sm">
                           Invoice Sent
                         </span>
+
                         <span className="text-white/60 text-xs">
                           {/* 27Jun25 7:11pm */}
                           {invoiceDate &&
                             `${formatDay(TIME)} ${formatTime(TIME)}`}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between gap-0.5 bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3">
+                    )}
+                    {invoiceButtonState && (
+                      <div className="flex items-center justify-between bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3">
                         <span className="text-green-400 text-sm">
-                          Invoice Confirm
+                          Invoice Sent
                         </span>
-                        {/* <span className="text-white/60 text-xs">
+
+                        <div className="relative">
+                          <input type="date" className="text-white text-sm placeholder:text-white" />
+                          
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between gap-0.5 bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 mb-2">
+                      <span className="text-green-400 text-sm">
+                        Invoice Confirm
+                      </span>
+                      {/* <span className="text-white/60 text-xs">
                           28Jun25 7:11pm
                         </span> */}
-                        <input type="date" />
-                      </div>
+                      <input type="date" className="text-white text-sm ml-2 placeholder:text-white" />
                     </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Payment Entries */}
-                <div className="space-y-6">
-                  {paymentEntries.map((entry, index) => (
-                    <div
-                      key={entry.id}
-                      className="relative bg-[#0f1e35] p-4 rounded-lg border border-gray-700"
-                    >
-                      {index > 0 && (
-                        <button
-                          onClick={() => removePaymentEntry(entry.id)}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                          title="Remove payment"
-                        >
-                          <X size={16} />
-                        </button>
-                      )}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <label className="block text-white/60 text-sm mb-2">
-                            Merchant Method
-                          </label>
-                          <div className="relative">
-                            <select
-                              className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                              value={entry.merchantMethod}
-                              onChange={(e) =>
-                                handlePaymentEntryChange(
-                                  entry.id,
-                                  "merchantMethod",
-                                  e.target.value
-                                )
-                              }
-                            >
-                              <option value="">Select merchant</option>
-                              <option>Paypal</option>
-                              <option>Wire Transfer</option>
-                              <option>Zelle</option>
-                              <option>EMS</option>
-                              <option>EPX</option>
-                              <option>CLOVER</option>
-                              <option>MAVRICK</option>
-                              <option>ALTRUPAY</option>
-                              <option>Stripe</option>
-                              {/* <option>Bank Transfer</option> */}
-                              <option>Cash</option>
-                              <option>Cheque</option>
-                              <option>Other</option>
-                            </select>
-                            <ChevronDown
-                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                              size={16}
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-white/60 text-sm mb-2">
-                            Total Price
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                            placeholder="Total Price"
-                            value={entry.totalPrice}
-                            onChange={(e) =>
-                              handlePaymentEntryChange(
-                                entry.id,
-                                "totalPrice",
-                                e.target.value
-                              )
-                            }
-                          />
-                        </div>
-                        <div>
-                          <button
-                            className={`cursor-pointer w-full mt-7 px-6 py-3 rounded-lg font-medium transition-colors ${
-                              isLoading
-                                ? "bg-gray-500 cursor-not-allowed"
-                                : "bg-[#006BA9] hover:bg-[#006BA9]/90"
-                            } text-white`}
-                            onClick={() => handleCharge(entry.id)}
-                            disabled={isLoading}
-                          >
-                            {entry.chargeClicked ? "Re-charge" : "Charge"}
-                          </button>
-                        </div>
-                        <div>
-                          <label className="block text-white/60 text-sm mb-2">
-                            Approval Code
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                            placeholder="Enter approval code"
-                            value={entry.approvalCode}
-                            onChange={(e) =>
-                              handlePaymentEntryChange(
-                                entry.id,
-                                "approvalCode",
-                                e.target.value
-                              )
-                            }
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-white/60 text-sm mb-2">
-                            Entity
-                          </label>
-                          <div className="relative">
-                            <select
-                              className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                              value={formData.entity}
-                              onChange={(e) =>
-                                handleInputChange("entity", e.target.value)
-                              }
-                            >
-                              <option value="">Select entity</option>
-                              <option>WY</option>
-                              <option>IL</option>
-                            </select>
-                            <ChevronDown
-                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                              size={16}
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-white/60 text-sm mb-2">
-                            Charged
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                            placeholder="Enter charged status"
-                            value={entry.charged}
-                            onChange={(e) =>
-                              handlePaymentEntryChange(
-                                entry.id,
-                                "charged",
-                                e.target.value
-                              )
-                            }
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-
-                  <div className="flex justify-end">
-                    <button
-                      onClick={addPaymentEntry}
-                      className="flex items-center gap-2 bg-[#006BA9] hover:bg-[#006BA9]/90 text-white px-4 py-2 rounded-lg transition-colors cursor-pointer"
-                    >
-                      <Plus size={18} />
-                      Add Payment
-                    </button>
-                  </div>
-                </div>
-                {/* Yard Info Section */}
-                <div className=" p-2 mt-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-white text-lg font-semibold">
-                      Yard Info
-                    </h3>
-                    <button
-                      className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
-                      onClick={() => setShowPreviousYard((prev) => !prev)}
-                    >
-                      {showPreviousYard
-                        ? "Hide Previous Yard"
-                        : "Show Previous Yard"}
-                    </button>
-                  </div>
-                  {showPreviousYard && previousYards.length > 0 && (
-                    <div className="mb-6 bg-[#222c3a] rounded-lg p-4 border border-blue-700">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-white font-semibold">
-                          Previous Yard Details
-                        </span>
-                        {previousYards.length > 1 && (
+              {/* Payment Entries */}
+              <div className="space-y-6">
+                {paymentEntries.map((entry, index) => (
+                  <div
+                    key={entry.id}
+                    className="relative bg-[#0f1e35] p-4 rounded-lg border border-gray-700"
+                  >
+                    {index > 0 && (
+                      <button
+                        onClick={() => removePaymentEntry(entry.id)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                        title="Remove payment"
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Merchant Method
+                        </label>
+                        <div className="relative">
                           <select
-                            className="bg-[#0a1929] border border-gray-600 rounded px-2 py-1 text-white text-xs"
-                            value={selectedPrevYardIdx}
+                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                            value={entry.merchantMethod}
                             onChange={(e) =>
-                              setSelectedPrevYardIdx(Number(e.target.value))
+                              handlePaymentEntryChange(
+                                entry.id,
+                                "merchantMethod",
+                                e.target.value
+                              )
                             }
                           >
-                            {previousYards.map((_, idx) => (
-                              <option key={idx} value={idx}>
-                                Yard #{idx + 1}
-                              </option>
-                            ))}
+                            <option value="">Select merchant</option>
+                            <option>Paypal</option>
+                            <option>Wire Transfer</option>
+                            <option>Zelle</option>
+                            <option>EMS</option>
+                            <option>EPX</option>
+                            <option>CLOVER</option>
+                            <option>MAVRICK</option>
+                            <option>ALTRUPAY</option>
+                            <option>Stripe</option>
+                            {/* <option>Bank Transfer</option> */}
+                            <option>Cash</option>
+                            <option>Cheque</option>
+                            <option>Other</option>
                           </select>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <label className="block text-white/60 text-xs mb-1">
-                            Yard Name
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                            value={previousYards[selectedPrevYardIdx].yardName}
-                            disabled
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-white/60 text-xs mb-1">
-                            Address
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                            value={
-                              previousYards[selectedPrevYardIdx].yardAddress
-                            }
-                            disabled
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-white/60 text-xs mb-1">
-                            Mobile
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                            value={
-                              previousYards[selectedPrevYardIdx].yardMobile
-                            }
-                            disabled
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-white/60 text-xs mb-1">
-                            Email
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                            value={previousYards[selectedPrevYardIdx].yardEmail}
-                            disabled
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-white/60 text-xs mb-1">
-                            Price
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                            value={previousYards[selectedPrevYardIdx].yardPrice}
-                            disabled
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-white/60 text-xs mb-1">
-                            Warranty
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                            value={
-                              previousYards[selectedPrevYardIdx].yardWarranty
-                            }
-                            disabled
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-white/60 text-xs mb-1">
-                            Miles
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                            value={previousYards[selectedPrevYardIdx].yardMiles}
-                            disabled
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-white/60 text-xs mb-1">
-                            Shipping
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                            value={
-                              previousYards[selectedPrevYardIdx].yardShipping
-                            }
-                            disabled
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-white/60 text-xs mb-1">
-                            Yard Cost
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                            value={previousYards[selectedPrevYardIdx].yardCost}
-                            disabled
-                          />
-                        </div>
-                        <div className="md:col-span-3">
-                          <label className="block text-white/60 text-xs mb-1">
-                            Reason
-                          </label>
-                          <textarea
-                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                            value={previousYards[selectedPrevYardIdx].reason}
-                            disabled
+                          <ChevronDown
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                            size={16}
                           />
                         </div>
                       </div>
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Total Price
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                          placeholder="Total Price"
+                          value={entry.totalPrice}
+                          onChange={(e) =>
+                            handlePaymentEntryChange(
+                              entry.id,
+                              "totalPrice",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+                      <div>
+                        <button
+                          className={`cursor-pointer w-full mt-7 px-6 py-3 rounded-lg font-medium transition-colors ${
+                            isLoading
+                              ? "bg-gray-500 cursor-not-allowed"
+                              : "bg-[#006BA9] hover:bg-[#006BA9]/90"
+                          } text-white`}
+                          onClick={() => handleCharge(entry.id)}
+                          disabled={isLoading}
+                        >
+                          {entry.chargeClicked ? "Re-charge" : "Charge"}
+                        </button>
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Approval Code
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                          placeholder="Enter approval code"
+                          value={entry.approvalCode}
+                          onChange={(e) =>
+                            handlePaymentEntryChange(
+                              entry.id,
+                              "approvalCode",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Entity
+                        </label>
+                        <div className="relative">
+                          <select
+                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                            value={formData.entity}
+                            onChange={(e) =>
+                              handleInputChange("entity", e.target.value)
+                            }
+                          >
+                            <option value="">Select entity</option>
+                            <option>WY</option>
+                            <option>IL</option>
+                          </select>
+                          <ChevronDown
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                            size={16}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Charged
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                          placeholder="Enter charged status"
+                          value={entry.charged}
+                          onChange={(e) =>
+                            handlePaymentEntryChange(
+                              entry.id,
+                              "charged",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                <div className="flex justify-end">
+                  <button
+                    onClick={addPaymentEntry}
+                    className="flex items-center gap-2 bg-[#006BA9] hover:bg-[#006BA9]/90 text-white px-4 py-2 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <Plus size={18} />
+                    Add Payment
+                  </button>
+                </div>
+              </div>
+              {/* Yard Info Section */}
+              <div className=" p-2 mt-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-white text-lg font-semibold">
+                    Yard Info
+                  </h3>
+                  <button
+                    className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                    onClick={() => setShowPreviousYard((prev) => !prev)}
+                  >
+                    {showPreviousYard
+                      ? "Hide Previous Yard"
+                      : "Show Previous Yard"}
+                  </button>
+                </div>
+                {showPreviousYard && previousYards.length > 0 && (
+                  <div className="mb-6 bg-[#222c3a] rounded-lg p-4 border border-blue-700">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-white font-semibold">
+                        Previous Yard Details
+                      </span>
+                      {previousYards.length > 1 && (
+                        <select
+                          className="bg-[#0a1929] border border-gray-600 rounded px-2 py-1 text-white text-xs"
+                          value={selectedPrevYardIdx}
+                          onChange={(e) =>
+                            setSelectedPrevYardIdx(Number(e.target.value))
+                          }
+                        >
+                          {previousYards.map((_, idx) => (
+                            <option key={idx} value={idx}>
+                              Yard #{idx + 1}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-white/60 text-xs mb-1">
+                          Yard Name
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                          value={previousYards[selectedPrevYardIdx].yardName}
+                          disabled
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-xs mb-1">
+                          Address
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                          value={previousYards[selectedPrevYardIdx].yardAddress}
+                          disabled
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-xs mb-1">
+                          Mobile
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                          value={previousYards[selectedPrevYardIdx].yardMobile}
+                          disabled
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-xs mb-1">
+                          Email
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                          value={previousYards[selectedPrevYardIdx].yardEmail}
+                          disabled
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-xs mb-1">
+                          Price
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                          value={previousYards[selectedPrevYardIdx].yardPrice}
+                          disabled
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-xs mb-1">
+                          Warranty
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                          value={
+                            previousYards[selectedPrevYardIdx].yardWarranty
+                          }
+                          disabled
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-xs mb-1">
+                          Miles
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                          value={previousYards[selectedPrevYardIdx].yardMiles}
+                          disabled
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-xs mb-1">
+                          Shipping
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                          value={
+                            previousYards[selectedPrevYardIdx].yardShipping
+                          }
+                          disabled
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-xs mb-1">
+                          Yard Cost
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                          value={previousYards[selectedPrevYardIdx].yardCost}
+                          disabled
+                        />
+                      </div>
+                      <div className="md:col-span-3">
+                        <label className="block text-white/60 text-xs mb-1">
+                          Reason
+                        </label>
+                        <textarea
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                          value={previousYards[selectedPrevYardIdx].reason}
+                          disabled
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <h3 className="text-white text-lg font-semibold mb-4">
+                  Current Yard Info
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-[#FFFFFF33] rounded-lg p-2">
+                  {/* Name */}
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Yard Name
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                      placeholder="Enter name"
+                      value={formData.yardName}
+                      onChange={(e) =>
+                        handleInputChange("yardName", e.target.value)
+                      }
+                    />
+                  </div>
+                  {/* Address */}
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Address
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                      placeholder="Enter address"
+                      value={formData.yardAddress}
+                      onChange={(e) =>
+                        handleInputChange("yardAddress", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  {/* Mobile */}
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Mobile
+                    </label>
+                    <input
+                      type="tel"
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                      placeholder="Enter mobile number"
+                      value={formData.yardMobile}
+                      onChange={(e) =>
+                        handleInputChange("yardMobile", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                      placeholder="Enter email"
+                      value={formData.yardEmail}
+                      onChange={(e) =>
+                        handleInputChange("yardEmail", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  {/* Price */}
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Price
+                    </label>
+                    <input
+                      type="number"
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                      placeholder="Enter price"
+                      value={formData.yardPrice}
+                      onChange={(e) =>
+                        handleInputChange("yardPrice", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  {/* Warranty */}
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Warranty
+                    </label>
+                    <div className="relative">
+                      <select
+                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                        value={formData.yardWarranty}
+                        onChange={(e) =>
+                          handleInputChange("yardWarranty", e.target.value)
+                        }
+                      >
+                        <option value="">Select warranty</option>
+                        <option>30 Days</option>
+                        <option>60 Days</option>
+                        <option>90 Days</option>
+                        <option>6 Months</option>
+                        <option>1 Year</option>
+                      </select>
+                      <ChevronDown
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                        size={16}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Miles */}
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Miles
+                    </label>
+                    <input
+                      type="number"
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                      placeholder="Enter miles"
+                      value={formData.yardMiles}
+                      onChange={(e) =>
+                        handleInputChange("yardMiles", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  {/* Shipping */}
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Shipping
+                    </label>
+                    <div className="relative">
+                      <select
+                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                        value={formData.yardShipping}
+                        onChange={(e) => {
+                          handleInputChange("yardShipping", e.target.value);
+                        }}
+                      >
+                        <option value="">Select shipping option</option>
+                        <option value="Own Shipping">Own Shipping</option>
+                        <option value="Yard Shipping">Yard Shipping</option>
+                      </select>
+                      <ChevronDown
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                        size={16}
+                      />
+                    </div>
+                  </div>
+                  {showYardShippingCost && (
+                    <div>
+                      <label className="block text-white/60 text-sm mb-2">
+                        Yard Shipping Cost
+                      </label>
+                      <input
+                        type="number"
+                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                        placeholder="Enter yard cost"
+                        value={formData.yardCost}
+                        onChange={(e) =>
+                          handleInputChange("yardCost", e.target.value)
+                        }
+                      />
                     </div>
                   )}
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={handleSendPO}
+                  className="bg-[#006BA9] hover:bg-[#006BA9]/90 cursor-pointer mt-8 w-40 h-10 px-2 py-1 text-white  rounded-lg font-medium transition-colors"
+                >
+                  Send PO
+                </button>
+                {/* PO Status & Approval/Sales */}
+                <div>
+                  <label className="block text-white/60 text-sm mb-2">
+                    PO Status
+                  </label>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3">
+                      <span className="text-green-400 text-sm">PO Sent</span>
+                      <span className="text-white/60 text-xs">
+                        27Jun25 7:11pm
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3">
+                      <span className="text-green-400 text-sm">PO Confirm</span>
+                      <span className="text-white/60 text-xs">
+                        28Jun25 7:11pm
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-10 my-2">
+                <div>
+                  <label className="block text-white/60 text-sm mb-2">
+                    Picture Status
+                  </label>
+                  <select
+                    className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                    value={formData.pictureStatus}
+                    onChange={(e) =>
+                      handleInputChange("pictureStatus", e.target.value)
+                    }
+                  >
+                    <option value="">Select</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                  {formData.pictureStatus === "Yes" && (
+                    <div className="mt-4 p-4 bg-[#1a2636] rounded-lg border border-blue-700 flex flex-col items-center gap-4 shadow-lg">
+                      <label
+                        htmlFor="picture-upload"
+                        className="w-full flex flex-col items-center justify-center cursor-pointer bg-[#22304a] border-2 border-dashed border-blue-400 rounded-lg p-6 hover:bg-[#2a3a5a] transition-colors text-white/80 text-center"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-10 w-10 mb-2 text-blue-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"
+                          />
+                        </svg>
+                        <span className="font-semibold">
+                          Click to upload picture
+                        </span>
+                        <span className="text-xs text-white/50 mt-1">
+                          (JPG, PNG, or GIF)
+                        </span>
+                        <input
+                          id="picture-upload"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              setUploadedPicture(e.target.files[0]);
+                            }
+                          }}
+                        />
+                      </label>
+                      {uploadedPicture && (
+                        <div className="text-white/80 text-sm mt-2">
+                          Selected:{" "}
+                          <span className="font-semibold">
+                            {uploadedPicture.name}
+                          </span>
+                        </div>
+                      )}
+                      <button
+                        className="bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white px-6 py-2 rounded-lg font-semibold shadow-md transition-colors w-full"
+                        onClick={handleSendPicture}
+                      >
+                        Send Picture
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {showOwnShipping && (
+                <>
                   <h3 className="text-white text-lg font-semibold mb-4">
-                    Current Yard Info
+                    Own Shipping Info
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-[#FFFFFF33] rounded-lg p-2">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-[#FFFFFF33] rounded-lg p-2 my-4">
                     {/* Name */}
                     <div>
                       <label className="block text-white/60 text-sm mb-2">
-                        Yard Name
+                        Product type
+                      </label>
+                      <div className="relative">
+                        <select
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                          value={formData.ownShippingInfo.productType}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              ownShippingInfo: {
+                                ...prev.ownShippingInfo,
+                                productType: e.target.value,
+                              },
+                            }))
+                          }
+                        >
+                          <option value="">Select Product Type</option>
+                          <option>LTL</option>
+                          <option>Parcel</option>
+                        </select>
+                        <ChevronDown
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                          size={16}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-white/60 text-sm mb-2">
+                        Package type
+                      </label>
+                      <div className="relative">
+                        <select
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                          value={formData.ownShippingInfo.packageType}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              ownShippingInfo: {
+                                ...prev.ownShippingInfo,
+                                packageType: e.target.value,
+                              },
+                            }))
+                          }
+                        >
+                          <option value="">Select Package Type</option>
+                          <option>Pallet</option>
+                          <option>Box</option>
+                          <option>Crate</option>
+                        </select>
+                        <ChevronDown
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                          size={16}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-white/60 text-sm mb-2">
+                        Weight
+                      </label>
+                      <input
+                        type="number"
+                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                        placeholder="Enter weight"
+                        value={formData.ownShippingInfo.weight}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            ownShippingInfo: {
+                              ...prev.ownShippingInfo,
+                              weight: e.target.value,
+                            },
+                          }))
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/60 text-sm mb-2">
+                        Dimensions
+                      </label>
+                      <input
+                        type="number"
+                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                        placeholder="Enter dimensions"
+                        value={formData.ownShippingInfo.dimensions}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            ownShippingInfo: {
+                              ...prev.ownShippingInfo,
+                              dimensions: e.target.value,
+                            },
+                          }))
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/60 text-sm mb-2">
+                        Pick Up Date
+                      </label>
+                      <input
+                        type="date"
+                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                        placeholder="Enter pick up date"
+                        value={formData.ownShippingInfo.pickUpDate}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            ownShippingInfo: {
+                              ...prev.ownShippingInfo,
+                              pickUpDate: e.target.value,
+                            },
+                          }))
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/60 text-sm mb-2">
+                        Carrier
                       </label>
                       <input
                         type="text"
                         className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                        placeholder="Enter name"
-                        value={formData.yardName}
+                        placeholder="Enter carrier"
+                        value={formData.ownShippingInfo.carrier}
                         onChange={(e) =>
-                          handleInputChange("yardName", e.target.value)
+                          setFormData((prev) => ({
+                            ...prev,
+                            ownShippingInfo: {
+                              ...prev.ownShippingInfo,
+                              carrier: e.target.value,
+                            },
+                          }))
                         }
                       />
                     </div>
-                    {/* Address */}
-                    <div>
-                      <label className="block text-white/60 text-sm mb-2">
-                        Address
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                        placeholder="Enter address"
-                        value={formData.yardAddress}
-                        onChange={(e) =>
-                          handleInputChange("yardAddress", e.target.value)
-                        }
-                      />
-                    </div>
-
-                    {/* Mobile */}
-                    <div>
-                      <label className="block text-white/60 text-sm mb-2">
-                        Mobile
-                      </label>
-                      <input
-                        type="tel"
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                        placeholder="Enter mobile number"
-                        value={formData.yardMobile}
-                        onChange={(e) =>
-                          handleInputChange("yardMobile", e.target.value)
-                        }
-                      />
-                    </div>
-
-                    {/* Email */}
-                    <div>
-                      <label className="block text-white/60 text-sm mb-2">
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                        placeholder="Enter email"
-                        value={formData.yardEmail}
-                        onChange={(e) =>
-                          handleInputChange("yardEmail", e.target.value)
-                        }
-                      />
-                    </div>
-
-                    {/* Price */}
                     <div>
                       <label className="block text-white/60 text-sm mb-2">
                         Price
@@ -2733,554 +3313,207 @@ const OrderDetails = () => {
                         type="number"
                         className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
                         placeholder="Enter price"
-                        value={formData.yardPrice}
+                        value={formData.ownShippingInfo.price}
                         onChange={(e) =>
-                          handleInputChange("yardPrice", e.target.value)
+                          setFormData((prev) => ({
+                            ...prev,
+                            ownShippingInfo: {
+                              ...prev.ownShippingInfo,
+                              price: e.target.value,
+                            },
+                          }))
                         }
                       />
                     </div>
-
-                    {/* Warranty */}
                     <div>
                       <label className="block text-white/60 text-sm mb-2">
-                        Warranty
-                      </label>
-                      <div className="relative">
-                        <select
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                          value={formData.yardWarranty}
-                          onChange={(e) =>
-                            handleInputChange("yardWarranty", e.target.value)
-                          }
-                        >
-                          <option value="">Select warranty</option>
-                          <option>30 Days</option>
-                          <option>60 Days</option>
-                          <option>90 Days</option>
-                          <option>6 Months</option>
-                          <option>1 Year</option>
-                        </select>
-                        <ChevronDown
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                          size={16}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Miles */}
-                    <div>
-                      <label className="block text-white/60 text-sm mb-2">
-                        Miles
+                        Variance
                       </label>
                       <input
                         type="number"
                         className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                        placeholder="Enter miles"
-                        value={formData.yardMiles}
+                        placeholder="Enter variance"
+                        value={formData.ownShippingInfo.variance}
                         onChange={(e) =>
-                          handleInputChange("yardMiles", e.target.value)
+                          setFormData((prev) => ({
+                            ...prev,
+                            ownShippingInfo: {
+                              ...prev.ownShippingInfo,
+                              variance: e.target.value,
+                            },
+                          }))
                         }
                       />
                     </div>
-
-                    {/* Shipping */}
+                    <div className="flex justify-end">
+                      <button
+                        onClick={handleCreateBOL}
+                        className="bg-[#006BA9] hover:bg-[#006BA9]/90 cursor-pointer mt-8 w-40 h-10 px-2 py-2 text-white  rounded-lg font-medium transition-colors"
+                      >
+                        Create BOL
+                      </button>
+                    </div>
                     <div>
                       <label className="block text-white/60 text-sm mb-2">
-                        Shipping
+                        BOL Number
                       </label>
-                      <div className="relative">
-                        <select
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                          value={formData.yardShipping}
-                          onChange={(e) => {
-                            handleInputChange("yardShipping", e.target.value);
-                          }}
-                        >
-                          <option value="">Select shipping option</option>
-                          <option value="Own Shipping">Own Shipping</option>
-                          <option value="Yard Shipping">Yard Shipping</option>
-                        </select>
-                        <ChevronDown
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                          size={16}
-                        />
-                      </div>
-                    </div>
-                    {showYardShippingCost && (
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          Yard Shipping Cost
-                        </label>
-                        <input
-                          type="number"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                          placeholder="Enter yard cost"
-                          value={formData.yardCost}
-                          onChange={(e) =>
-                            handleInputChange("yardCost", e.target.value)
-                          }
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <button
-                    onClick={handleSendPO}
-                    className="bg-[#006BA9] hover:bg-[#006BA9]/90 cursor-pointer mt-8 w-40 h-10 px-2 py-1 text-white  rounded-lg font-medium transition-colors"
-                  >
-                    Send PO
-                  </button>
-                  {/* PO Status & Approval/Sales */}
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      PO Status
-                    </label>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3">
-                        <span className="text-green-400 text-sm">PO Sent</span>
-                        <span className="text-white/60 text-xs">
-                          27Jun25 7:11pm
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3">
-                        <span className="text-green-400 text-sm">
-                          PO Confirm
-                        </span>
-                        <span className="text-white/60 text-xs">
-                          28Jun25 7:11pm
-                        </span>
-                      </div>
+                      <input
+                        type="text"
+                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:border-blue-500 focus:outline-none"
+                        placeholder="Enter BOL number"
+                        value={formData.ownShippingInfo.bolNumber}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            ownShippingInfo: {
+                              ...prev.ownShippingInfo,
+                              bolNumber: e.target.value,
+                            },
+                          }))
+                        }
+                      />
                     </div>
                   </div>
-                </div>
-                <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-10 my-2">
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Picture Status
-                    </label>
-                    <select
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                      value={formData.pictureStatus}
-                      onChange={(e) =>
-                        handleInputChange("pictureStatus", e.target.value)
-                      }
-                    >
-                      <option value="">Select</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
-                    {formData.pictureStatus === "Yes" && (
-                      <div className="mt-4 p-4 bg-[#1a2636] rounded-lg border border-blue-700 flex flex-col items-center gap-4 shadow-lg">
-                        <label
-                          htmlFor="picture-upload"
-                          className="w-full flex flex-col items-center justify-center cursor-pointer bg-[#22304a] border-2 border-dashed border-blue-400 rounded-lg p-6 hover:bg-[#2a3a5a] transition-colors text-white/80 text-center"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-10 w-10 mb-2 text-blue-400"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"
-                            />
-                          </svg>
-                          <span className="font-semibold">
-                            Click to upload picture
-                          </span>
-                          <span className="text-xs text-white/50 mt-1">
-                            (JPG, PNG, or GIF)
-                          </span>
-                          <input
-                            id="picture-upload"
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              if (e.target.files && e.target.files[0]) {
-                                setUploadedPicture(e.target.files[0]);
-                              }
-                            }}
-                          />
-                        </label>
-                        {uploadedPicture && (
-                          <div className="text-white/80 text-sm mt-2">
-                            Selected:{" "}
-                            <span className="font-semibold">
-                              {uploadedPicture.name}
-                            </span>
-                          </div>
-                        )}
-                        <button
-                          className="bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white px-6 py-2 rounded-lg font-semibold shadow-md transition-colors w-full"
-                          onClick={handleSendPicture}
-                        >
-                          Send Picture
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {showOwnShipping && (
-                  <>
-                    <h3 className="text-white text-lg font-semibold mb-4">
-                      Own Shipping Info
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-[#FFFFFF33] rounded-lg p-2 my-4">
-                      {/* Name */}
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          Product type
-                        </label>
-                        <div className="relative">
-                          <select
-                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                            value={formData.ownShippingInfo.productType}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                ownShippingInfo: {
-                                  ...prev.ownShippingInfo,
-                                  productType: e.target.value,
-                                },
-                              }))
-                            }
-                          >
-                            <option value="">Select Product Type</option>
-                            <option>LTL</option>
-                            <option>Parcel</option>
-                          </select>
-                          <ChevronDown
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                            size={16}
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          Package type
-                        </label>
-                        <div className="relative">
-                          <select
-                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                            value={formData.ownShippingInfo.packageType}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                ownShippingInfo: {
-                                  ...prev.ownShippingInfo,
-                                  packageType: e.target.value,
-                                },
-                              }))
-                            }
-                          >
-                            <option value="">Select Package Type</option>
-                            <option>Pallet</option>
-                            <option>Box</option>
-                            <option>Crate</option>
-                          </select>
-                          <ChevronDown
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                            size={16}
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          Weight
-                        </label>
-                        <input
-                          type="number"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                          placeholder="Enter weight"
-                          value={formData.ownShippingInfo.weight}
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              ownShippingInfo: {
-                                ...prev.ownShippingInfo,
-                                weight: e.target.value,
-                              },
-                            }))
-                          }
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          Dimensions
-                        </label>
-                        <input
-                          type="number"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                          placeholder="Enter dimensions"
-                          value={formData.ownShippingInfo.dimensions}
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              ownShippingInfo: {
-                                ...prev.ownShippingInfo,
-                                dimensions: e.target.value,
-                              },
-                            }))
-                          }
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          Pick Up Date
-                        </label>
-                        <input
-                          type="date"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                          placeholder="Enter pick up date"
-                          value={formData.ownShippingInfo.pickUpDate}
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              ownShippingInfo: {
-                                ...prev.ownShippingInfo,
-                                pickUpDate: e.target.value,
-                              },
-                            }))
-                          }
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          Carrier
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                          placeholder="Enter carrier"
-                          value={formData.ownShippingInfo.carrier}
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              ownShippingInfo: {
-                                ...prev.ownShippingInfo,
-                                carrier: e.target.value,
-                              },
-                            }))
-                          }
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          Price
-                        </label>
-                        <input
-                          type="number"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                          placeholder="Enter price"
-                          value={formData.ownShippingInfo.price}
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              ownShippingInfo: {
-                                ...prev.ownShippingInfo,
-                                price: e.target.value,
-                              },
-                            }))
-                          }
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          Variance
-                        </label>
-                        <input
-                          type="number"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                          placeholder="Enter variance"
-                          value={formData.ownShippingInfo.variance}
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              ownShippingInfo: {
-                                ...prev.ownShippingInfo,
-                                variance: e.target.value,
-                              },
-                            }))
-                          }
-                        />
-                      </div>
-                      <div className="flex justify-end">
-                        <button
-                          onClick={handleCreateBOL}
-                          className="bg-[#006BA9] hover:bg-[#006BA9]/90 cursor-pointer mt-8 w-40 h-10 px-2 py-2 text-white  rounded-lg font-medium transition-colors"
-                        >
-                          Create BOL
-                        </button>
-                      </div>
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          BOL Number
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:border-blue-500 focus:outline-none"
-                          placeholder="Enter BOL number"
-                          value={formData.ownShippingInfo.bolNumber}
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              ownShippingInfo: {
-                                ...prev.ownShippingInfo,
-                                bolNumber: e.target.value,
-                              },
-                            }))
-                          }
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
+                </>
+              )}
+            </div>
+            <div className="grid md:grid-cols-3 gap-10">
+              <div>
+                <label className="block text-white/60 text-sm mb-2">
+                  Carrier Name
+                </label>
+                <input
+                  type="text"
+                  className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                  placeholder="Carrier Name"
+                  value={formData.carrierName}
+                  onChange={(e) =>
+                    handleInputChange("carrierName", e.target.value)
+                  }
+                />
               </div>
-              <div className="grid md:grid-cols-3 gap-10">
-                <div>
-                  <label className="block text-white/60 text-sm mb-2">
-                    Carrier Name
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                    placeholder="Carrier Name"
-                    value={formData.carrierName}
-                    onChange={(e) =>
-                      handleInputChange("carrierName", e.target.value)
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="block text-white/60 text-sm mb-2">
-                    Tracking Number
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                    placeholder="Tracking Number"
-                    value={formData.trackingNumber}
-                    onChange={(e) =>
-                      handleInputChange("trackingNumber", e.target.value)
-                    }
-                  />
-                </div>
-                <div className="col-span-1">
-                  <button
-                    onClick={handleSendTracking}
-                    className="cursor-pointer mt-8 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white px-6 py-2 rounded-lg font-semibold shadow-md transition-colors w-full"
-                  >
-                    Send Tracking details
-                  </button>
-                </div>
+              <div>
+                <label className="block text-white/60 text-sm mb-2">
+                  Tracking Number
+                </label>
+                <input
+                  type="text"
+                  className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                  placeholder="Tracking Number"
+                  value={formData.trackingNumber}
+                  onChange={(e) =>
+                    handleInputChange("trackingNumber", e.target.value)
+                  }
+                />
               </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-4 mt-8 mb-8">
+              <div className="col-span-1">
                 <button
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg cursor-pointer"
-                    onClick={handleSave}
-                  >
-                    Save
-                  </button>
-                <button className="bg-gray-600 cursor-pointer hover:bg-gray-700 text-white px-8 py-3 rounded-lg font-medium transition-colors cursor-pointer">
-                  Close
+                  onClick={handleSendTracking}
+                  className="cursor-pointer mt-8 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white px-6 py-2 rounded-lg font-semibold shadow-md transition-colors w-full"
+                >
+                  Send Tracking details
                 </button>
               </div>
+            </div>
 
-              {/* Notes Section */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-                {/* Customer Notes */}
-                <div className="bg-[#0a1929] rounded-lg p-4 border border-gray-700">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-white text-lg font-semibold">
-                      Customer Notes
-                    </h3>
-                  </div>
-                  <div className="flex flex-col md:flex-row items-start md:items-center gap-2 mb-3">
-                    <input
-                      className="flex-1 bg-[#0f1e35] border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none"
-                      placeholder="Notes"
-                      value={customerNoteInput}
-                      onChange={(e) => setCustomerNoteInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          handleManualAddCustomerNote();
-                        }
-                      }}
-                    />
-                    <button
-                      onClick={handleManualAddCustomerNote}
-                      className="bg-[#006BA9] hover:bg-[#006BA9]/90 text-white px-4 py-2 rounded-lg cursor-pointer"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  <div className="max-h-80 overflow-auto pr-1 space-y-3">
-                    {customerNotes.length === 0 && (
-                      <p className="text-white/60 text-sm">No notes yet</p>
-                    )}
-                    {customerNotes.map((n) => (
-                      <div key={n.id} className="text-sm">
-                        <div className="text-white/80">{n.message}</div>
-                        <div className="text-white/40 text-xs">
-                          {formatDay(n.timestamp)} {formatTime(n.timestamp)}
-                          {n.actor ? `  |  ${n.actor}` : ""}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-4 mt-8 mb-8">
+              <button
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg cursor-pointer"
+                onClick={handleSave}
+              >
+                Save
+              </button>
+              <button className="bg-gray-600 cursor-pointer hover:bg-gray-700 text-white px-8 py-3 rounded-lg font-medium transition-colors cursor-pointer">
+                Close
+              </button>
+            </div>
+
+            {/* Notes Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+              {/* Customer Notes */}
+              <div className="bg-[#0a1929] rounded-lg p-4 border border-gray-700">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-white text-lg font-semibold">
+                    Customer Notes
+                  </h3>
                 </div>
-
-                {/* Yard Notes */}
-                <div className="bg-[#0a1929] rounded-lg p-4 border border-gray-700">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-white text-lg font-semibold">
-                      Yard Notes
-                    </h3>
-                  </div>
-                  <div className="flex flex-col md:flex-row items-start md:items-center gap-2 mb-3">
-                    <input
-                      className="flex-1 bg-[#0f1e35] border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none"
-                      placeholder="Notes"
-                      value={yardNoteInput}
-                      onChange={(e) => setYardNoteInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          handleManualAddYardNote();
-                        }
-                      }}
-                    />
-                    <button
-                      onClick={handleManualAddYardNote}
-                      className="bg-[#006BA9] hover:bg-[#006BA9]/90 text-white px-4 py-2 rounded-lg cursor-pointer"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  <div className="max-h-80 overflow-auto pr-1 space-y-3">
-                    {yardNotes.length === 0 && (
-                      <p className="text-white/60 text-sm">No notes yet</p>
-                    )}
-                    {yardNotes.map((n) => (
-                      <div key={n.id} className="text-sm">
-                        <div className="text-white/80">{n.message}</div>
-                        <div className="text-white/40 text-xs">
-                          {formatDay(n.timestamp)} {formatTime(n.timestamp)}
-                          {n.actor ? `  |  ${n.actor}` : ""}
-                        </div>
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-2 mb-3">
+                  <input
+                    className="flex-1 bg-[#0f1e35] border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none"
+                    placeholder="Notes"
+                    value={customerNoteInput}
+                    onChange={(e) => setCustomerNoteInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleManualAddCustomerNote();
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={handleManualAddCustomerNote}
+                    className="bg-[#006BA9] hover:bg-[#006BA9]/90 text-white px-4 py-2 rounded-lg cursor-pointer"
+                  >
+                    Add
+                  </button>
+                </div>
+                <div className="max-h-80 overflow-auto pr-1 space-y-3">
+                  {customerNotes.length === 0 && (
+                    <p className="text-white/60 text-sm">No notes yet</p>
+                  )}
+                  {customerNotes.map((n) => (
+                    <div key={n.id} className="text-sm">
+                      <div className="text-white/80">{n.message}</div>
+                      <div className="text-white/40 text-xs">
+                        {formatDay(n.timestamp)} {formatTime(n.timestamp)}
+                        {n.actor ? `  |  ${n.actor}` : ""}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Yard Notes */}
+              <div className="bg-[#0a1929] rounded-lg p-4 border border-gray-700">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-white text-lg font-semibold">
+                    Yard Notes
+                  </h3>
+                </div>
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-2 mb-3">
+                  <input
+                    className="flex-1 bg-[#0f1e35] border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none"
+                    placeholder="Notes"
+                    value={yardNoteInput}
+                    onChange={(e) => setYardNoteInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleManualAddYardNote();
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={handleManualAddYardNote}
+                    className="bg-[#006BA9] hover:bg-[#006BA9]/90 text-white px-4 py-2 rounded-lg cursor-pointer"
+                  >
+                    Add
+                  </button>
+                </div>
+                <div className="max-h-80 overflow-auto pr-1 space-y-3">
+                  {yardNotes.length === 0 && (
+                    <p className="text-white/60 text-sm">No notes yet</p>
+                  )}
+                  {yardNotes.map((n) => (
+                    <div key={n.id} className="text-sm">
+                      <div className="text-white/80">{n.message}</div>
+                      <div className="text-white/40 text-xs">
+                        {formatDay(n.timestamp)} {formatTime(n.timestamp)}
+                        {n.actor ? `  |  ${n.actor}` : ""}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

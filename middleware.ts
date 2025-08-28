@@ -19,13 +19,12 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Otherwise block access
+  // Block access for unauthorized IPs
   console.log("IP blocked: ", clientIp);
-  alert("IP blocked: " + clientIp);
   return NextResponse.redirect(new URL("/no-access", req.url));
 }
 
 export const config = {
-  matcher: ["/production"],
+  matcher: ["/production", "/dashboard/production"],
   //   matcher: ["/", "/orders/:path*"],
 };
