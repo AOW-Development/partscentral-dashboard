@@ -963,7 +963,8 @@ const OrderDetails = () => {
       const paymentEntry = paymentEntries[0] || {};
       
       const updatedFormData = {  
-        ...formData,  
+        ...formData, 
+        status: formData.status || 'NA', 
         customerNotes: customerNotes,  
         yardNotes: yardNotes,
         approvalCode: paymentEntry.approvalCode || '',
@@ -2292,7 +2293,7 @@ const OrderDetails = () => {
                     </label>
                     <textarea
                       className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                      placeholder="Please type additional Note here ...."
+                      placeholder="Example : Enter VIN Number .... "
                       value={formData.notes}
                       onChange={(e) =>
                         handleInputChange("notes", e.target.value)

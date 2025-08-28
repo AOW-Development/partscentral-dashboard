@@ -22,7 +22,7 @@ type Value = ValuePiece | [ValuePiece, ValuePiece];
 interface Order {
   id: string;
   name: string;
-  date: string;
+  orderDate: string;
   sum: string;
   email: string;
   mobile: string;
@@ -30,6 +30,7 @@ interface Order {
 }
 
 interface RawOrder {
+  [x: string]: any;
   id: string;
   orderNumber: string;
   createdAt: string;
@@ -90,7 +91,9 @@ export default function Orders() {
           const mappedOrders = data.map((order: RawOrder) => ({
             id: order.id,
             name: order.customer.full_name,
-            date: new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).replace(/ /g, ' '),
+            orderDate: order.orderDate 
+              ? new Date(order.orderDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).replace(/ /g, ' ')
+              : new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).replace(/ /g, ' '),
             sum: `${order.totalAmount}`,
             email: order.customer.email,
             mobile: order.shippingSnapshot?.phone || order.billingSnapshot?.phone || '',
@@ -116,7 +119,8 @@ export default function Orders() {
         id: data.order.id,
         // name: data.order.customer.full_name,
         name: data.order.customerName ,
-        date: new Date(data.order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).replace(/ /g, ' '),
+        orderDate: data.order.orderDate,
+        // ordate: new Date(data.order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).replace(/ /g, ' '),
         sum: `${data.order.total}`,
         email: data.order.customer_email,
         mobile: data.order.mobile,
@@ -200,7 +204,7 @@ export default function Orders() {
     }
     if (dateRange.from && dateRange.to) {
       filtered = filtered.filter(
-        (order) => order.date >= dateRange.from && order.date <= dateRange.to
+        (order) => order.orderDate >= dateRange.from && order.orderDate <= dateRange.to
       );
     }
     // Dropdown Status
@@ -421,12 +425,16 @@ export default function Orders() {
                         </td>
                         <td className="px-4 py-6">{order.id}</td>
                         <td className="px-4 py-6">{order.name}</td>
-                        <td className="px-4 py-6">{order.date}</td>
+                        <td className="px-4 py-6">{order.orderDate}</td>
                         <td className="px-4 py-6">{order.email}</td>
                         <td className="px-4 py-6">{order.mobile}</td>
                         <td className="px-4 py-6">{order.sum}</td>
                         <td className="px-4 py-6">
-                          {order.status === "Processing" && (
+                          <span className="bg-[#8b88f9] px-5 py-2 rounded-full text-xs">
+                            {String(order.status || '')}
+                          </span>
+                        </td>
+                        {/* {order.status === "Processing" && (
                             <span className="bg-[#8b88f9] text-white px-5 py-3 rounded-full text-xs">
                               Processing
                             </span>
@@ -451,7 +459,12 @@ export default function Orders() {
                               Refunded
                             </span>
                           )}
-                        </td>
+                          {order.status === "Refunded" && (
+                            <span className="bg-blue-600 text-white px-5 py-3 rounded-full text-xs">
+                              Refunded
+                            </span>
+                          )} */}
+                        
                         <td className="px-4 py-3 relative">
                           <button
                             className="text-white hover:text-blue-400 order-action-pen"

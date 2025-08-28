@@ -104,8 +104,8 @@ const orderData = {
       milesPromised: item.milesPromised,
       specification: item.specification || '',
       productVariantId: sku,
-      pictureUrl: item.pictureUrl ,
-      pictureStatus: item.pictureStatus,
+pictureUrl: item.pictureUrl || formData.pictureUrl || '',
+      pictureStatus: item.pictureStatus || formData.pictureStatus || 'PENDING',
     };
   }),
   paymentInfo: {
@@ -148,7 +148,7 @@ const orderData = {
   status: formData.status,
   vinNumber: formData.vinNumber,
   notes: formData.notes,
-  orderDate: formData.date,
+  orderDate: formData.date ? new Date(formData.date).toISOString() : new Date().toISOString(),
   addressType: formData.shippingAddressType,
   ...(formData.yardName && {
     yardInfo: {
