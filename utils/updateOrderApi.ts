@@ -29,7 +29,7 @@ export const updateOrderFromAdmin = async (orderId: string, formData: any, cartI
   const orderData: any = {
     billingInfo: {
       firstName: formData.cardHolderName?.split(' ')[0] || 'Unknown',
-      lastName: formData.cardHolderName?.split(' ').slice(1).join(' ') || 'Customer',
+      lastName: formData.cardHolderName?.split(' ').slice(1).join(' ') || '',
       address: formData.billingAddress || formData.shippingAddress || 'Unknown',
       city: formData.billingCity || formData.shippingCity || 'Unknown',
       state: formData.billingState || formData.shippingState || 'CA',
@@ -42,7 +42,7 @@ export const updateOrderFromAdmin = async (orderId: string, formData: any, cartI
     },
     shippingInfo: {
       firstName: formData.cardHolderName?.split(' ')[0] || 'Unknown',
-      lastName: formData.cardHolderName?.split(' ').slice(1).join(' ') || 'Customer',
+      lastName: formData.cardHolderName?.split(' ').slice(1).join(' ') || '',
       address: formData.shippingAddress || 'Unknown',
       city: formData.shippingCity || 'Unknown',
       state: formData.shippingState || 'CA',
@@ -57,7 +57,7 @@ export const updateOrderFromAdmin = async (orderId: string, formData: any, cartI
       email: formData.email || 'no-email@example.com',
       phone: formData.mobile || '000-000-0000',
       firstName: formData.cardHolderName?.split(' ')[0] || 'Unknown',
-      lastName: formData.cardHolderName?.split(' ').slice(1).join(' ') || 'Customer',
+      lastName: formData.cardHolderName?.split(' ').slice(1).join(' ') || '',
       company: formData.company || null,
       address: formData.shippingAddress || 'Unknown',
       city: formData.shippingCity || 'Unknown',

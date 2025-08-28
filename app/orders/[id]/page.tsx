@@ -213,7 +213,7 @@ const OrderDetails = () => {
     billingAddress: "",
     cardHolderName: "",
     cardNumber: "",
-   
+    
     cardDate: "",
     cardCvv: "",
     warranty: "",

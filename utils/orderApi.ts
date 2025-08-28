@@ -51,7 +51,7 @@ export const createOrderFromAdmin = async (formData: any, cartItems: CartItem[])
 const orderData = {
   billingInfo: {
     firstName: formData.cardHolderName?.split(' ')[0] || 'Unknown',
-    lastName: formData.cardHolderName?.split(' ').slice(1).join(' ') || 'Customer',
+    lastName: formData.cardHolderName?.split(' ').slice(1).join(' ') || '',
     address: formData.billingAddress || formData.shippingAddress || 'Unknown',
     city: formData.billingCity || formData.shippingCity || 'Unknown',
     state: formData.billingState || formData.shippingState || 'CA',
@@ -64,7 +64,7 @@ const orderData = {
   },
   shippingInfo: {
     firstName: formData.cardHolderName?.split(' ')[0] || 'Unknown',
-    lastName: formData.cardHolderName?.split(' ').slice(1).join(' ') || 'Customer',
+    lastName: formData.cardHolderName?.split(' ').slice(1).join(' ') || '',
     address: formData.shippingAddress || 'Unknown',
     city: formData.shippingCity || 'Unknown',
     state: formData.shippingState || 'CA',
@@ -78,6 +78,7 @@ const orderData = {
   customerInfo: {
     email: formData.email || 'no-email@example.com',
     phone: formData.mobile || '000-000-0000',
+    alternativePhone: formData. alternateMobile ,
     firstName: formData.customerName?.split(' ')[0] || 'Unknown',
     // lastName: formData.cardHolderName?.split(' ').slice(1).join(' ') || '',
     company: formData.company || null,
