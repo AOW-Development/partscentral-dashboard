@@ -62,15 +62,17 @@ const OrderDetails = () => {
             ...formData,
             // Basic order info
             id: data.orderNumber || "",
-            date: data.orderDate ? new Date(data.orderDate).toISOString().split("T")[0] : "",
+            date: data.orderDate
+              ? new Date(data.orderDate).toISOString().split("T")[0]
+              : "",
             source: data.source || "",
             status: data.status || "",
-            
+
             // Customer info
             customerName: data.customer?.full_name || "",
             email: billing.email || "",
             mobile: billing.phone || "",
-            
+
             // Pricing
             partPrice: data.subtotal || "",
             taxesPrice: data.taxesAmount || "",
@@ -79,13 +81,13 @@ const OrderDetails = () => {
             corePrice: data.corePrice || "",
             totalSellingPrice: data.totalAmount || "",
             totalPrice: data.totalAmount || "",
-            
+
             // Address info
             shippingAddressType: shipping.addressType || data.addressType || "",
             company: shipping.company || data.companyName || "",
             shippingAddress: data.shippingAddress || shipping.address || "",
             billingAddress: data.billingAddress || billing.address || "",
-            
+
             // Payment info
             cardHolderName: payment.cardHolderName || "",
             cardNumber: payment.cardNumber || "",
@@ -97,13 +99,17 @@ const OrderDetails = () => {
               : "",
             cardCvv: payment.cardCvv || "",
             merchantMethod: payment.method || "",
-            approvalCode: payment.approvelCode || payment.providerPaymentId || "",
+            approvalCode:
+              payment.approvelCode || payment.providerPaymentId || "",
             entity: payment.entity || "",
             charged: payment.status === "SUCCEEDED" ? "Yes" : "No",
-            
+
             // Product info (from first item if available)
             warranty: data.items?.[0]?.metadata?.warranty || "",
-            milesPromised: data.milesPromised || data.items?.[0]?.metadata?.milesPromised || "",
+            milesPromised:
+              data.milesPromised ||
+              data.items?.[0]?.metadata?.milesPromised ||
+              "",
             make: data.items?.[0]?.makeName || "",
             model: data.items?.[0]?.modelName || "",
             year: data.year || data.items?.[0]?.yearName || "",
@@ -112,16 +118,16 @@ const OrderDetails = () => {
             variantSku: data.items?.[0]?.sku || "",
             pictureUrl: data.items?.[0]?.pictureUrl || "",
             pictureStatus: data.items?.[0]?.pictureStatus || "",
-            
+
             // Order management
             saleMadeBy: data.saleMadeBy || "",
             carrierName: data.carrierName || "",
             trackingNumber: data.trackingNumber || "",
-            
+
             // Notes and metadata
             notes: data.notes || "",
             vinNumber: data.vinNumber || "",
-            
+
             // Yard info
             yardName: yard.yardName || "",
             yardMobile: yard.yardMobile || "",
@@ -213,9 +219,12 @@ const OrderDetails = () => {
     billingAddress: "",
     cardHolderName: "",
     cardNumber: "",
-   
     cardDate: "",
     cardCvv: "",
+    alternateCardHolderName: "",
+    alternateCardNumber: "",
+    alternateCardDate: "",
+    alternateCardCvv: "",
     warranty: "",
     milesPromised: "",
     make: "",
@@ -241,7 +250,7 @@ const OrderDetails = () => {
     yardShipping: "",
     yardCost: "",
     pictureStatus: "",
-    pictureUrl :"",
+    pictureUrl: "",
     carrierName: "",
     trackingNumber: "",
     customerNotes: "",
@@ -249,8 +258,8 @@ const OrderDetails = () => {
     invoiceStatus: "",
     invoiceSentAt: "",
     invoiceConfirmAt: "",
-    vinNumber: "" ,
-    notes:"",
+    vinNumber: "",
+    notes: "",
     ownShippingInfo: {
       productType: "",
       packageType: "",
@@ -530,7 +539,6 @@ const OrderDetails = () => {
     ]);
   };
 
-
   // Remove a payment entry
   const removePaymentEntry = (id: number) => {
     if (paymentEntries.length > 1) {
@@ -615,6 +623,13 @@ const OrderDetails = () => {
         if (!type) return "Unsupported card type";
         return "";
       }
+      case "alternateCardNumber": {
+        if (!value) return ""; // not required, validate only if provided
+        if (!isValidCardNumber(value)) return "Enter a valid card number";
+        const type = getCardType(value);
+        if (!type) return "Unsupported card type";
+        return "";
+      }
 
       case "cardCvv": {
         if (!value) return ""; // not required
@@ -625,8 +640,30 @@ const OrderDetails = () => {
           return `CVV must be ${expected} digits${type ? ` for ${type}` : ""}`;
         return "";
       }
+      case "alternateCardCvv": {
+        if (!value) return ""; // not required
+        if (!/^\d+$/.test(value)) return "CVV must be numeric";
+        const type = getCardType(formData.alternateCardNumber);
+        const expected = type === "American Express" ? 4 : 3;
+        if (value.length !== expected)
+          return `CVV must be ${expected} digits${type ? ` for ${type}` : ""}`;
+        return "";
+      }
 
       case "cardDate": {
+        if (!value) return ""; // not required
+        // Accept MM/YY or MM/YYYY
+        const match = /^(0[1-9]|1[0-2])\/(\d{2}|\d{4})$/.exec(value.trim());
+        if (!match) return "Use MM/YY or MM/YYYY";
+        const month = parseInt(match[1], 10);
+        let year = parseInt(match[2], 10);
+        if (year < 100) year += 2000;
+        const now = new Date();
+        const expEnd = new Date(year, month, 0, 23, 59, 59); // end of month
+        if (expEnd < now) return "Card is expired";
+        return "";
+      }
+      case "alternateCardDate": {
         if (!value) return ""; // not required
         // Accept MM/YY or MM/YYYY
         const match = /^(0[1-9]|1[0-2])\/(\d{2}|\d{4})$/.exec(value.trim());
@@ -947,12 +984,12 @@ const OrderDetails = () => {
       // Auto-process uploaded picture if it exists and hasn't been processed yet
       if (uploadedPicture && !formData.pictureUrl) {
         const base64Image = await convertToBase64(uploadedPicture);
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           pictureUrl: base64Image,
-          pictureStatus: 'SENT'
+          pictureStatus: "SENT",
         }));
-        
+
         addCustomerNote(
           `Picture Uploaded – ${uploadedPicture.name} sent to customer (auto-processed during order creation).`,
           "By Agent"
@@ -969,22 +1006,22 @@ const OrderDetails = () => {
           warranty: formData.warranty,
           milesPromised: formData.milesPromised,
           specification: formData.specification,
-          pictureUrl: formData.pictureUrl || '',
-          pictureStatus: formData.pictureStatus || 'PENDING',
+          pictureUrl: formData.pictureUrl || "",
+          pictureStatus: formData.pictureStatus || "PENDING",
         },
       ];
       // Get the first payment entry (or use default values if none exists)
       const paymentEntry = paymentEntries[0] || {};
-      
-      const updatedFormData = {  
-        ...formData, 
-        status: formData.status || 'NA', 
-        customerNotes: customerNotes,  
+
+      const updatedFormData = {
+        ...formData,
+        status: formData.status || "NA",
+        customerNotes: customerNotes,
         yardNotes: yardNotes,
-        approvalCode: paymentEntry.approvalCode || '',
-        charged: paymentEntry.charged || 'No',
-        merchantMethod: paymentEntry.merchantMethod || ''
-,      };  
+        approvalCode: paymentEntry.approvalCode || "",
+        charged: paymentEntry.charged || "No",
+        merchantMethod: paymentEntry.merchantMethod || "",
+      };
       const result = await createOrderFromAdmin(updatedFormData, cartItems);
 
       setMessage({
@@ -1195,10 +1232,13 @@ const OrderDetails = () => {
     const date = d instanceof Date ? d : new Date(d);
     return date.toLocaleDateString("en-US", { day: "2-digit", month: "short" });
   };
-  
+
   const formatTime = (d: Date | string | number) => {
     const date = d instanceof Date ? d : new Date(d);
-    return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    });
   };
 
   const handleManualAddCustomerNote = () => {
@@ -1256,39 +1296,37 @@ const OrderDetails = () => {
     if (uploadedPicture) {
       // Create a URL for the uploaded file
       // const pictureUrl = window.URL.createObjectURL(uploadedPicture);
-      
- // Convert the file to base64 to send it to the server
- const base64Image = await convertToBase64(uploadedPicture);
+
+      // Convert the file to base64 to send it to the server
+      const base64Image = await convertToBase64(uploadedPicture);
 
       // Update form data with picture information
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         pictureUrl: base64Image,
-        pictureStatus: 'SENT' 
+        pictureStatus: "SENT",
       }));
-      
+
       addCustomerNote(
         `Picture Uploaded – ${uploadedPicture.name} sent to customer.`,
         "By Agent"
       );
     } else {
       // Reset picture status if no file is selected
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        pictureUrl: '',
-        pictureStatus: 'PENDING'
+        pictureUrl: "",
+        pictureStatus: "PENDING",
       }));
       addCustomerNote("Picture – No file selected.", "By Agent");
     }
-
-    
   };
   const convertToBase64 = (file: File): Promise<string> => {
-    return new  Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => resolve(reader.result as string);
-      reader.onerror = error => reject(error);
+      reader.onerror = (error) => reject(error);
     });
   };
 
@@ -2074,9 +2112,12 @@ const OrderDetails = () => {
                           type="text"
                           className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
                           placeholder="Card holder name"
-                          value={formData.cardHolderName}
+                          value={formData.alternateCardHolderName}
                           onChange={(e) =>
-                            handleInputChange("cardHolderName", e.target.value)
+                            handleInputChange(
+                              "alternateCardHolderName",
+                              e.target.value
+                            )
                           }
                         />
                         <p className="text-red-400 text-xs mt-1 h-4 invisible">
@@ -2088,69 +2129,71 @@ const OrderDetails = () => {
                           type="text"
                           className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
                           placeholder="Card Number"
-                          value={formData.cardNumber}
+                          value={formData.alternateCardNumber}
                           inputMode="numeric"
                           maxLength={23}
                           onChange={(e) => {
                             const formatted = formatCardNumber(e.target.value);
-                            handleInputChange("cardNumber", formatted);
+                            handleInputChange("alternateCardNumber", formatted);
                           }}
                           onBlur={(e) => {
                             const err = validateField(
-                              "cardNumber",
+                              "alternateCardNumber",
                               e.target.value
                             );
                             if (err)
                               setFieldErrors((prev) => ({
                                 ...prev,
-                                cardNumber: err,
+                                alternateCardNumber: err,
                               }));
                           }}
                         />
                         <p
                           className={`text-red-400 text-xs mt-1 h-4 ${
-                            fieldErrors.cardNumber ? "" : "invisible"
+                            fieldErrors.alternateCardNumber ? "" : "invisible"
                           }`}
                         >
-                          {fieldErrors.cardNumber || "placeholder"}
+                          {fieldErrors.alternateCardNumber || "placeholder"}
                         </p>
-                        {!fieldErrors.cardNumber && formData.cardNumber && (
-                          <p className="text-white/60 text-xs">
-                            Detected card:{" "}
-                            {getCardType(formData.cardNumber) || "Unknown"}
-                          </p>
-                        )}
+                        {!fieldErrors.alternateCardNumber &&
+                          formData.alternateCardNumber && (
+                            <p className="text-white/60 text-xs">
+                              Detected card:{" "}
+                              {getCardType(formData.alternateCardNumber) ||
+                                "Unknown"}
+                            </p>
+                          )}
                       </div>
                       <div>
                         <input
                           type="text"
                           className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
                           placeholder="Expire Date"
-                          value={formData.cardDate}
+                          value={formData.alternateCardDate}
                           inputMode="numeric"
                           maxLength={7}
                           onChange={(e) => {
                             const formatted = formatExpiryDate(e.target.value);
-                            handleInputChange("cardDate", formatted);
+                            handleInputChange("alternateCardDate", formatted);
                           }}
                           onBlur={(e) => {
                             const err = validateField(
-                              "cardDate",
+                              "alternateCardDate",
                               e.target.value
                             );
                             if (err)
                               setFieldErrors((prev) => ({
                                 ...prev,
-                                cardDate: err,
+                                alternateCardDate: err,
                               }));
                           }}
                         />
                         <p
                           className={`text-red-400 text-xs mt-1 h-4 ${
-                            fieldErrors.cardDate ? "" : "invisible"
+                            fieldErrors.alternateCardDate ? "" : "invisible"
                           }`}
                         >
-                          {fieldErrors.cardDate || "placeholder"}
+                          {fieldErrors.alternateCardDate || "placeholder"}
                         </p>
                       </div>
                       <div>
@@ -2158,48 +2201,57 @@ const OrderDetails = () => {
                           type="text"
                           className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
                           placeholder="CVV"
-                          value={formData.cardCvv}
+                          value={formData.alternateCardCvv}
                           inputMode="numeric"
                           maxLength={
-                            getCardType(formData.cardNumber) ===
+                            getCardType(formData.alternateCardNumber) ===
                             "American Express"
                               ? 4
                               : 3
                           }
                           onChange={(e) => {
                             const expected =
-                              getCardType(formData.cardNumber) ===
+                              getCardType(formData.alternateCardNumber) ===
                               "American Express"
                                 ? 4
                                 : 3;
                             const digits = e.target.value
                               .replace(/\D/g, "")
                               .slice(0, expected);
-                            handleInputChange("cardCvv", digits);
+                            handleInputChange("alternateCardCvv", digits);
                           }}
                           onBlur={(e) => {
                             const err = validateField(
-                              "cardCvv",
+                              "alternateCardCvv",
                               e.target.value
                             );
                             if (err)
                               setFieldErrors((prev) => ({
                                 ...prev,
-                                cardCvv: err,
+                                alternateCardCvv: err,
                               }));
                           }}
                         />
                         <p
                           className={`text-red-400 text-xs mt-1 h-4 ${
-                            fieldErrors.cardCvv ? "" : "invisible"
+                            fieldErrors.alternateCardCvv ? "" : "invisible"
                           }`}
                         >
-                          {fieldErrors.cardCvv || "placeholder"}
+                          {fieldErrors.alternateCardCvv || "placeholder"}
                         </p>
                       </div>
                       <button
                         type="button"
-                        onClick={() => setCardEntry(false)}
+                        onClick={() => {
+                          setCardEntry(false);
+                          setFormData((prev) => ({
+                            ...prev,
+                            alternateCardNumber: "",
+                            alternateCardHolderName: "",
+                            alternateCardDate: "",
+                            alternateCardCvv: "",
+                          }));
+                        }}
                         className=" absolute right-0 top-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-2 rounded-full  flex items-center justify-center text-sm font-bold transition-colors"
                       >
                         Remove
@@ -2273,242 +2325,238 @@ const OrderDetails = () => {
                 </div>
               </div>
 
-                {/* Product Details Section - Before Send Invoice Button */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-6">
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Model *
-                    </label>
-                    <div className="relative">
-                      <select
-                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
-                          fieldErrors.model
-                            ? "border-red-500 focus:border-red-500"
-                            : "border-gray-600 focus:border-blue-500"
-                        }`}
-                        value={formData.model}
-                        onChange={(e) => {
-                          handleInputChange("model", e.target.value);
-                          handleInputChange("year", "");
-                        }}
-                        disabled={!formData.make}
-                      >
-                        <option value="">Select model</option>
-                        {(MODELS[formData.make] || []).map((model) => (
-                          <option key={model} value={model}>
-                            {model}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                        size={16}
-                      />
-                    </div>
-                    <p
-                      className={`text-red-400 text-xs mt-1 h-4 ${
-                        fieldErrors.model ? "" : "invisible"
+              {/* Product Details Section - Before Send Invoice Button */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-6">
+                <div>
+                  <label className="block text-white/60 text-sm mb-2">
+                    Model *
+                  </label>
+                  <div className="relative">
+                    <select
+                      className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
+                        fieldErrors.model
+                          ? "border-red-500 focus:border-red-500"
+                          : "border-gray-600 focus:border-blue-500"
                       }`}
+                      value={formData.model}
+                      onChange={(e) => {
+                        handleInputChange("model", e.target.value);
+                        handleInputChange("year", "");
+                      }}
+                      disabled={!formData.make}
                     >
-                      {fieldErrors.model || "placeholder"}
-                    </p>
+                      <option value="">Select model</option>
+                      {(MODELS[formData.make] || []).map((model) => (
+                        <option key={model} value={model}>
+                          {model}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                      size={16}
+                    />
                   </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Year *
-                    </label>
-                    <div className="relative">
-                      <select
-                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
-                          fieldErrors.year
-                            ? "border-red-500 focus:border-red-500"
-                            : "border-gray-600 focus:border-blue-500"
-                        }`}
-                        value={formData.year}
-                        onChange={(e) =>
-                          handleInputChange("year", e.target.value)
-                        }
-                        disabled={
-                          !formData.model || availableYears.length === 0
-                        }
-                      >
-                        <option value="">Select year</option>
-                        {availableYears.map((year) => (
-                          <option key={year} value={year}>
-                            {year}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                        size={16}
-                      />
-                    </div>
-                    <p
-                      className={`text-red-400 text-xs mt-1 h-4 ${
-                        fieldErrors.year ? "" : "invisible"
+                  <p
+                    className={`text-red-400 text-xs mt-1 h-4 ${
+                      fieldErrors.model ? "" : "invisible"
+                    }`}
+                  >
+                    {fieldErrors.model || "placeholder"}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-white/60 text-sm mb-2">
+                    Year *
+                  </label>
+                  <div className="relative">
+                    <select
+                      className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
+                        fieldErrors.year
+                          ? "border-red-500 focus:border-red-500"
+                          : "border-gray-600 focus:border-blue-500"
                       }`}
+                      value={formData.year}
+                      onChange={(e) =>
+                        handleInputChange("year", e.target.value)
+                      }
+                      disabled={!formData.model || availableYears.length === 0}
                     >
-                      {fieldErrors.year || "placeholder"}
-                    </p>
+                      <option value="">Select year</option>
+                      {availableYears.map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                      size={16}
+                    />
                   </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Parts *
-                    </label>
-                    <div className="relative">
-                      <select
-                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
-                          fieldErrors.parts
-                            ? "border-red-500 focus:border-red-500"
-                            : "border-gray-600 focus:border-blue-500"
-                        }`}
-                        value={formData.parts}
-                        onChange={(e) =>
-                          handleInputChange("parts", e.target.value)
-                        }
-                      >
-                        <option value="">Select parts</option>
-                        <option>Engine</option>
-                        <option>Transmission</option>
-                        {/* <option>Ford</option> */}
-                      </select>
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                        size={16}
-                      />
-                    </div>
-                    <p
-                      className={`text-red-400 text-xs mt-1 h-4 ${
-                        fieldErrors.parts ? "" : "invisible"
+                  <p
+                    className={`text-red-400 text-xs mt-1 h-4 ${
+                      fieldErrors.year ? "" : "invisible"
+                    }`}
+                  >
+                    {fieldErrors.year || "placeholder"}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-white/60 text-sm mb-2">
+                    Parts *
+                  </label>
+                  <div className="relative">
+                    <select
+                      className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
+                        fieldErrors.parts
+                          ? "border-red-500 focus:border-red-500"
+                          : "border-gray-600 focus:border-blue-500"
                       }`}
+                      value={formData.parts}
+                      onChange={(e) =>
+                        handleInputChange("parts", e.target.value)
+                      }
                     >
-                      {fieldErrors.parts || "placeholder"}
+                      <option value="">Select parts</option>
+                      <option>Engine</option>
+                      <option>Transmission</option>
+                      {/* <option>Ford</option> */}
+                    </select>
+                    <ChevronDown
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                      size={16}
+                    />
+                  </div>
+                  <p
+                    className={`text-red-400 text-xs mt-1 h-4 ${
+                      fieldErrors.parts ? "" : "invisible"
+                    }`}
+                  >
+                    {fieldErrors.parts || "placeholder"}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-white/60 text-sm mb-2">
+                    Specification *
+                  </label>
+                  <div className="relative">
+                    <select
+                      className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
+                        fieldErrors.specification
+                          ? "border-red-500 focus:border-red-500"
+                          : "border-gray-600 focus:border-blue-500"
+                      }`}
+                      value={formData.specification}
+                      onChange={handleSpecificationChange}
+                      disabled={!productVariants.length}
+                    >
+                      <option value="">Select Specification</option>
+                      {productVariants.map((variant, idx) => (
+                        <option key={idx} value={variant.subPart.name}>
+                          {variant.subPart.name}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                      size={16}
+                    />
+                  </div>
+                  {fieldErrors.specification && (
+                    <p className="text-red-400 text-xs mt-1">
+                      {fieldErrors.specification}
                     </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-white/60 text-sm mb-2">
+                    Miles Promised
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none pr-10"
+                      value={formData.milesPromised}
+                      onChange={handleMileageChange}
+                      placeholder="Enter miles or select from dropdown"
+                      list="miles-suggestions"
+                    />
+                    <ChevronDown
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 pointer-events-none"
+                      size={16}
+                    />
+                    <datalist id="miles-suggestions">
+                      {selectedSubpart?.variants.map((variant, idx) => (
+                        <option key={idx} value={variant.miles}>
+                          {variant.miles} miles
+                        </option>
+                      ))}
+                    </datalist>
                   </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Specification *
-                    </label>
-                    <div className="relative">
-                      <select
-                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
-                          fieldErrors.specification
-                            ? "border-red-500 focus:border-red-500"
-                            : "border-gray-600 focus:border-blue-500"
-                        }`}
-                        value={formData.specification}
-                        onChange={handleSpecificationChange}
-                        disabled={!productVariants.length}
-                      >
-                        <option value="">Select Specification</option>
-                        {productVariants.map((variant, idx) => (
-                          <option key={idx} value={variant.subPart.name}>
-                            {variant.subPart.name}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                        size={16}
-                      />
-                    </div>
-                    {fieldErrors.specification && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {fieldErrors.specification}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Miles Promised
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none pr-10"
-                        value={formData.milesPromised}
-                        onChange={handleMileageChange}
-                        placeholder="Enter miles or select from dropdown"
-                        list="miles-suggestions"
-                      />
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 pointer-events-none"
-                        size={16}
-                      />
-                      <datalist id="miles-suggestions">
-                        {selectedSubpart?.variants.map((variant, idx) => (
-                          <option key={idx} value={variant.miles}>
-                            {variant.miles} miles
-                          </option>
-                        ))}
-                      </datalist>
-                    </div>
-                  </div>
+                </div>
 
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Sale Made By
-                    </label>
-                    <div className="relative">
-                      <select
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                        value={formData.saleMadeBy}
-                        onChange={(e) =>
-                          handleInputChange("saleMadeBy", e.target.value)
-                        }
-                      >
-                        <option value="">Select person</option>
-                        <option>Shiva</option>
-                      </select>
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                        size={16}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Total Selling Price
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                      placeholder="Total Selling Price"
-                      value={formData.totalSellingPrice}
+                <div>
+                  <label className="block text-white/60 text-sm mb-2">
+                    Sale Made By
+                  </label>
+                  <div className="relative">
+                    <select
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                      value={formData.saleMadeBy}
                       onChange={(e) =>
-                        handleInputChange("totalSellingPrice", e.target.value)
+                        handleInputChange("saleMadeBy", e.target.value)
                       }
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      VIN Number
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                      placeholder="VIN Number"
-                      value={formData.vinNumber}
-                      onChange={(e) =>
-                        handleInputChange("vinNumber", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Note
-                    </label>
-                    <textarea
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                      placeholder="Example : Enter VIN Number .... "
-                      value={formData.notes}
-                      onChange={(e) =>
-                        handleInputChange("notes", e.target.value)
-                      }
+                    >
+                      <option value="">Select person</option>
+                      <option>Shiva</option>
+                    </select>
+                    <ChevronDown
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                      size={16}
                     />
                   </div>
                 </div>
+                <div>
+                  <label className="block text-white/60 text-sm mb-2">
+                    Total Selling Price
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                    placeholder="Total Selling Price"
+                    value={formData.totalSellingPrice}
+                    onChange={(e) =>
+                      handleInputChange("totalSellingPrice", e.target.value)
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="block text-white/60 text-sm mb-2">
+                    VIN Number
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                    placeholder="VIN Number"
+                    value={formData.vinNumber}
+                    onChange={(e) =>
+                      handleInputChange("vinNumber", e.target.value)
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="block text-white/60 text-sm mb-2">
+                    Note
+                  </label>
+                  <textarea
+                    className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                    placeholder="Example : Enter VIN Number .... "
+                    value={formData.notes}
+                    onChange={(e) => handleInputChange("notes", e.target.value)}
+                  />
+                </div>
+              </div>
 
               {/* Send Invoice Button */}
               <div className="flex justify-end gap-4">
@@ -2565,8 +2613,10 @@ const OrderDetails = () => {
                         </span>
 
                         <div className="relative">
-                          <input type="date" className="text-white text-sm placeholder:text-white" />
-                          
+                          <input
+                            type="date"
+                            className="text-white text-sm placeholder:text-white"
+                          />
                         </div>
                       </div>
                     )}
@@ -2577,7 +2627,10 @@ const OrderDetails = () => {
                       {/* <span className="text-white/60 text-xs">
                           28Jun25 7:11pm
                         </span> */}
-                      <input type="date" className="text-white text-sm ml-2 placeholder:text-white" />
+                      <input
+                        type="date"
+                        className="text-white text-sm ml-2 placeholder:text-white"
+                      />
                     </div>
                   </div>
                 </div>
