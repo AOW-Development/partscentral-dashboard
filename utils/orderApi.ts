@@ -148,6 +148,7 @@ const orderData = {
   status: formData.status,
   vinNumber: formData.vinNumber,
   notes: formData.notes,
+  orderDate: formData.date,
   addressType: formData.shippingAddressType,
   ...(formData.yardName && {
     yardInfo: {

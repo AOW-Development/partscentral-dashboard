@@ -81,20 +81,60 @@ export const updateOrderFromAdmin = async (orderId: string, formData: any, cartI
         warranty: item.warranty || '30 Days',
         milesPromised: item.milesPromised,
         specification: item.specification || '',
+        pictureUrl: item.pictureUrl || '',
+        pictureStatus: item.pictureStatus || 'PENDING',
         productVariantId: sku
       };
     }),
-        customerNotes: formData.customerNotes || '',
-    yardNotes: formData.yardNotes || '',
+    
+    // Order fields
+    orderNumber: formData.id,
+    totalAmount: parseFloat(formData.totalPrice) || 0,
+    subtotal: parseFloat(formData.partPrice) || 0,
+    source: formData.source,
+    status: formData.status,
+    year: parseInt(formData.year, 10) || null,
+    saleMadeBy: formData.saleMadeBy || 'Admin',
+    notes: formData.notes,
+    vinNumber: formData.vinNumber,
+    orderDate: formData.date ? new Date(formData.date).toISOString() : null,
     carrierName: formData.carrierName || 'UNKNOWN',
     trackingNumber: formData.trackingNumber || `TRK-${Date.now()}`,
-    saleMadeBy: formData.saleMadeBy || 'Admin',
+    shippingAddress: formData.shippingAddress,
+    billingAddress: formData.billingAddress,
+    companyName: formData.company,
+    
+    // Financial fields
     taxesAmount: parseFloat(formData.taxesPrice) || 0,
     shippingAmount: parseFloat(formData.yardCost) || 0,
     handlingFee: parseFloat(formData.handlingPrice) || 0,
     processingFee: parseFloat(formData.processingPrice) || 0,
     corePrice: parseFloat(formData.corePrice) || 0,
     milesPromised: parseFloat(formData.milesPromised) || 0,
+    
+    // Notes
+    customerNotes: formData.customerNotes || '',
+    yardNotes: formData.yardNotes || '',
+    
+    // Payment info
+    paymentInfo: {
+      paymentMethod: formData.merchantMethod || '',
+      status: 'PENDING',
+      amount: parseFloat(formData.totalPrice) || 0,
+      currency: 'USD',
+      provider: 'STRIPE',
+      entity: formData.entity || null,
+      approvelCode: formData.approvalCode,
+      charged: formData.charged,
+      cardData: formData.cardNumber ? {
+        cardNumber: formData.cardNumber,
+        cardholderName: formData.cardHolderName,
+        expirationDate: formData.cardDate,
+        securityCode: formData.cardCvv,
+        last4: formData.cardNumber.slice(-4),
+        brand: formData.cardNumber.startsWith('4') ? 'Visa' : 'Mastercard'
+      } : null
+    },
   };
 
   if (formData.yardName) {

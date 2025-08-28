@@ -52,17 +52,33 @@ const OrderDetails = () => {
 
           setFormData({
             ...formData,
+            // Basic order info
+            id: data.orderNumber || "",
+            date: data.orderDate ? new Date(data.orderDate).toISOString().split("T")[0] : "",
+            source: data.source || "",
+            status: data.status || "",
+            
+            // Customer info
+            customerName: data.customer?.full_name || "",
             email: billing.email || "",
             mobile: billing.phone || "",
+            
+            // Pricing
             partPrice: data.subtotal || "",
             taxesPrice: data.taxesAmount || "",
             handlingPrice: data.handlingFee || "",
             processingPrice: data.processingFee || "",
             corePrice: data.corePrice || "",
-            shippingAddressType: shipping.addressType || "",
-            company: shipping.company || "",
-            shippingAddress: shipping.address || "",
-            billingAddress: billing.address || "",
+            totalSellingPrice: data.totalAmount || "",
+            totalPrice: data.totalAmount || "",
+            
+            // Address info
+            shippingAddressType: shipping.addressType || data.addressType || "",
+            company: shipping.company || data.companyName || "",
+            shippingAddress: data.shippingAddress || shipping.address || "",
+            billingAddress: data.billingAddress || billing.address || "",
+            
+            // Payment info
             cardHolderName: payment.cardHolderName || "",
             cardNumber: payment.cardNumber || "",
             cardDate: payment.cardExpiry
@@ -72,21 +88,33 @@ const OrderDetails = () => {
                 })
               : "",
             cardCvv: payment.cardCvv || "",
-            warranty: data.warranty || "",
-            milesPromised: data.milesPromised || "",
-            make: data.make || "",
-            model: data.model || "",
-            year: data.year || "",
-            parts: data.parts || "",
-            specification: data.specification || "",
-            variantSku: data.variantSku || "",
-            totalSellingPrice: data.totalAmount || "",
-            totalPrice: data.totalAmount || "",
             merchantMethod: payment.method || "",
-            approvalCode: payment.providerPaymentId || "",
+            approvalCode: payment.approvelCode || payment.providerPaymentId || "",
             entity: payment.entity || "",
             charged: payment.status === "SUCCEEDED" ? "Yes" : "No",
+            
+            // Product info (from first item if available)
+            warranty: data.items?.[0]?.metadata?.warranty || "",
+            milesPromised: data.milesPromised || data.items?.[0]?.metadata?.milesPromised || "",
+            make: data.items?.[0]?.makeName || "",
+            model: data.items?.[0]?.modelName || "",
+            year: data.year || data.items?.[0]?.yearName || "",
+            parts: data.items?.[0]?.partName || "",
+            specification: data.items?.[0]?.specification || "",
+            variantSku: data.items?.[0]?.sku || "",
+            pictureUrl: data.items?.[0]?.pictureUrl || "",
+            pictureStatus: data.items?.[0]?.pictureStatus || "",
+            
+            // Order management
             saleMadeBy: data.saleMadeBy || "",
+            carrierName: data.carrierName || "",
+            trackingNumber: data.trackingNumber || "",
+            
+            // Notes and metadata
+            notes: data.notes || "",
+            vinNumber: data.vinNumber || "",
+            
+            // Yard info
             yardName: yard.yardName || "",
             yardMobile: yard.yardMobile || "",
             yardAddress: yard.yardAddress || "",
@@ -96,9 +124,7 @@ const OrderDetails = () => {
             yardMiles: yard.yardMiles || "",
             yardShipping: yard.yardShippingType || "",
             yardCost: yard.yardShippingCost || "",
-            pictureStatus: data.pictureStatus || "",
-            carrierName: data.carrierName || "",
-            trackingNumber: data.trackingNumber || "",
+            // reason: yard.reason || "",
             customerNotes: customerNotesArray,
             yardNotes: yardNotesArray,
             invoiceStatus: data.invoiceStatus || "",
@@ -236,11 +262,17 @@ const OrderDetails = () => {
   }, [formData.make, formData.model]);
 
   // Handle mileage selection
-  const handleMileageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleMileageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedMiles = e.target.value;
     setSelectedMileage(selectedMiles);
 
-    // Find the selected variant and update the SKU in form data
+    // Update form data with the entered mileage
+    setFormData((prev) => ({
+      ...prev,
+      milesPromised: selectedMiles,
+    }));
+
+    // Find the selected variant and update the SKU and price if it matches a predefined option
     if (selectedSubpart) {
       const variant = selectedSubpart.variants.find(
         (v) => v.miles === selectedMiles
@@ -896,6 +928,21 @@ const OrderDetails = () => {
       if (!formData.variantSku) {
         alert("Please select a valid specification and mileage");
         return;
+      }
+
+      // Auto-process uploaded picture if it exists and hasn't been processed yet
+      if (uploadedPicture && !formData.pictureUrl) {
+        const base64Image = await convertToBase64(uploadedPicture);
+        setFormData(prev => ({
+          ...prev,
+          pictureUrl: base64Image,
+          pictureStatus: 'SENT'
+        }));
+        
+        addCustomerNote(
+          `Picture Uploaded – ${uploadedPicture.name} sent to customer (auto-processed during order creation).`,
+          "By Agent"
+        );
       }
 
       // Create cart items array with the selected part
@@ -2163,23 +2210,25 @@ const OrderDetails = () => {
                       Miles Promised
                     </label>
                     <div className="relative">
-                      <select
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none disabled:opacity-50"
+                      <input
+                        type="text"
+                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none pr-10"
                         value={formData.milesPromised}
                         onChange={handleMileageChange}
-                        disabled={!selectedSubpart}
-                      >
-                        <option value="">Select Miles</option>
+                        placeholder="Enter miles or select from dropdown"
+                        list="miles-suggestions"
+                      />
+                      <ChevronDown
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 pointer-events-none"
+                        size={16}
+                      />
+                      <datalist id="miles-suggestions">
                         {selectedSubpart?.variants.map((variant, idx) => (
                           <option key={idx} value={variant.miles}>
                             {variant.miles} miles
                           </option>
                         ))}
-                      </select>
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                        size={16}
-                      />
+                      </datalist>
                     </div>
                   </div>
 
