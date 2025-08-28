@@ -1176,10 +1176,15 @@ const OrderDetails = () => {
     })    
   };
 
-  const formatDay = (d: Date) =>
-    d.toLocaleDateString("en-US", { day: "2-digit", month: "short" });
-  const formatTime = (d: Date) =>
-    d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  const formatDay = (d: Date | string | number) => {
+    const date = d instanceof Date ? d : new Date(d);
+    return date.toLocaleDateString("en-US", { day: "2-digit", month: "short" });
+  };
+  
+  const formatTime = (d: Date | string | number) => {
+    const date = d instanceof Date ? d : new Date(d);
+    return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  };
 
   const handleManualAddCustomerNote = () => {
     if (!customerNoteInput.trim()) return;
