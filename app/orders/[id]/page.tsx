@@ -219,7 +219,7 @@ const OrderDetails = () => {
     billingAddress: "",
     cardHolderName: "",
     cardNumber: "",
-    
+
     cardDate: "",
     cardCvv: "",
     alternateCardHolderName: "",
@@ -381,6 +381,9 @@ const OrderDetails = () => {
   const [showOwnShipping, setShowOwnShipping] = useState(false);
   const [showYardShippingCost, setShowYardShippingCost] = useState(false);
   const [invoiceButtonState, setInvoiceButtonState] = useState(false);
+  const [productEntry, setProductEntry] = useState<{ count: number }[]>([
+    { count: 1 },
+  ]);
 
   const [message, setMessage] = useState<{
     type: "success" | "error";
@@ -873,7 +876,6 @@ const OrderDetails = () => {
       await handleUpdateOrder();
     } else {
       await handleCreateOrder();
-      
     }
   };
 
@@ -2286,218 +2288,6 @@ const OrderDetails = () => {
                     />
                   </div>
                 </div>
-
-                <div>
-                  <label className="block text-white/60 text-sm mb-2">
-                    Make *
-                  </label>
-                  <div className="relative">
-                    <select
-                      className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
-                        fieldErrors.make
-                          ? "border-red-500 focus:border-red-500"
-                          : "border-gray-600 focus:border-blue-500"
-                      }`}
-                      value={formData.make}
-                      onChange={(e) => {
-                        handleInputChange("make", e.target.value);
-                        handleInputChange("model", "");
-                        handleInputChange("year", "");
-                      }}
-                    >
-                      <option value="">Select make</option>
-                      {MAKES.map((make) => (
-                        <option key={make} value={make}>
-                          {make}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                      size={16}
-                    />
-                  </div>
-                  <p
-                    className={`text-red-400 text-xs mt-1 h-4 ${
-                      fieldErrors.make ? "" : "invisible"
-                    }`}
-                  >
-                    {fieldErrors.make || "placeholder"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Product Details Section - Before Send Invoice Button */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-6">
-                <div>
-                  <label className="block text-white/60 text-sm mb-2">
-                    Model *
-                  </label>
-                  <div className="relative">
-                    <select
-                      className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
-                        fieldErrors.model
-                          ? "border-red-500 focus:border-red-500"
-                          : "border-gray-600 focus:border-blue-500"
-                      }`}
-                      value={formData.model}
-                      onChange={(e) => {
-                        handleInputChange("model", e.target.value);
-                        handleInputChange("year", "");
-                      }}
-                      disabled={!formData.make}
-                    >
-                      <option value="">Select model</option>
-                      {(MODELS[formData.make] || []).map((model) => (
-                        <option key={model} value={model}>
-                          {model}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                      size={16}
-                    />
-                  </div>
-                  <p
-                    className={`text-red-400 text-xs mt-1 h-4 ${
-                      fieldErrors.model ? "" : "invisible"
-                    }`}
-                  >
-                    {fieldErrors.model || "placeholder"}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-white/60 text-sm mb-2">
-                    Year *
-                  </label>
-                  <div className="relative">
-                    <select
-                      className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
-                        fieldErrors.year
-                          ? "border-red-500 focus:border-red-500"
-                          : "border-gray-600 focus:border-blue-500"
-                      }`}
-                      value={formData.year}
-                      onChange={(e) =>
-                        handleInputChange("year", e.target.value)
-                      }
-                      disabled={!formData.model || availableYears.length === 0}
-                    >
-                      <option value="">Select year</option>
-                      {availableYears.map((year) => (
-                        <option key={year} value={year}>
-                          {year}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                      size={16}
-                    />
-                  </div>
-                  <p
-                    className={`text-red-400 text-xs mt-1 h-4 ${
-                      fieldErrors.year ? "" : "invisible"
-                    }`}
-                  >
-                    {fieldErrors.year || "placeholder"}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-white/60 text-sm mb-2">
-                    Parts *
-                  </label>
-                  <div className="relative">
-                    <select
-                      className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
-                        fieldErrors.parts
-                          ? "border-red-500 focus:border-red-500"
-                          : "border-gray-600 focus:border-blue-500"
-                      }`}
-                      value={formData.parts}
-                      onChange={(e) =>
-                        handleInputChange("parts", e.target.value)
-                      }
-                    >
-                      <option value="">Select parts</option>
-                      <option>Engine</option>
-                      <option>Transmission</option>
-                      {/* <option>Ford</option> */}
-                    </select>
-                    <ChevronDown
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                      size={16}
-                    />
-                  </div>
-                  <p
-                    className={`text-red-400 text-xs mt-1 h-4 ${
-                      fieldErrors.parts ? "" : "invisible"
-                    }`}
-                  >
-                    {fieldErrors.parts || "placeholder"}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-white/60 text-sm mb-2">
-                    Specification *
-                  </label>
-                  <div className="relative">
-                    <select
-                      className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
-                        fieldErrors.specification
-                          ? "border-red-500 focus:border-red-500"
-                          : "border-gray-600 focus:border-blue-500"
-                      }`}
-                      value={formData.specification}
-                      onChange={handleSpecificationChange}
-                      disabled={!productVariants.length}
-                    >
-                      <option value="">Select Specification</option>
-                      {productVariants.map((variant, idx) => (
-                        <option key={idx} value={variant.subPart.name}>
-                          {variant.subPart.name}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                      size={16}
-                    />
-                  </div>
-                  {fieldErrors.specification && (
-                    <p className="text-red-400 text-xs mt-1">
-                      {fieldErrors.specification}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-white/60 text-sm mb-2">
-                    Miles Promised
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none pr-10"
-                      value={formData.milesPromised}
-                      onChange={handleMileageChange}
-                      placeholder="Enter miles or select from dropdown"
-                      list="miles-suggestions"
-                    />
-                    <ChevronDown
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 pointer-events-none"
-                      size={16}
-                    />
-                    <datalist id="miles-suggestions">
-                      {selectedSubpart?.variants.map((variant, idx) => (
-                        <option key={idx} value={variant.miles}>
-                          {variant.miles} miles
-                        </option>
-                      ))}
-                    </datalist>
-                  </div>
-                </div>
-
                 <div>
                   <label className="block text-white/60 text-sm mb-2">
                     Sale Made By
@@ -2519,6 +2309,255 @@ const OrderDetails = () => {
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Product Details Section - Before Send Invoice Button */}
+              <div className="flex items-center justify-between my-4">
+                <h3 className="text-white text-lg font-semibold mb-2">
+                  Product Info
+                </h3>
+                <button
+                  onClick={() => {
+                    setProductEntry((prev) => [
+                      ...prev,
+                      { count: prev.length + 1 },
+                    ]);
+                  }}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  Add New Product
+                </button>
+              </div>
+              {productEntry.map((item) => (
+                <div
+                  key={item.count}
+                  className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 bg-[#0f1e35] rounded-lg p-4 shadow-lg  gap-6 my-2"
+                >
+                  {item.count >1 && (
+                    <button
+                      onClick={() => {
+                        setProductEntry((prev) =>
+                        [...prev.slice(0, item.count - 1), ...prev.slice(item.count)]
+                        );
+                      }}
+                      className="absolute right-0 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                      title="Remove payment"
+                      key={item.count}
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Make *
+                    </label>
+                    <div className="relative">
+                      <select
+                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
+                          fieldErrors.make
+                            ? "border-red-500 focus:border-red-500"
+                            : "border-gray-600 focus:border-blue-500"
+                        }`}
+                        value={formData.make}
+                        onChange={(e) => {
+                          handleInputChange("make", e.target.value);
+                          handleInputChange("model", "");
+                          handleInputChange("year", "");
+                        }}
+                      >
+                        <option value="">Select make</option>
+                        {MAKES.map((make) => (
+                          <option key={make} value={make}>
+                            {make}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                        size={16}
+                      />
+                    </div>
+                    <p
+                      className={`text-red-400 text-xs mt-1 h-4 ${
+                        fieldErrors.make ? "" : "invisible"
+                      }`}
+                    >
+                      {fieldErrors.make || "placeholder"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Model *
+                    </label>
+                    <div className="relative">
+                      <select
+                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
+                          fieldErrors.model
+                            ? "border-red-500 focus:border-red-500"
+                            : "border-gray-600 focus:border-blue-500"
+                        }`}
+                        value={formData.model}
+                        onChange={(e) => {
+                          handleInputChange("model", e.target.value);
+                          handleInputChange("year", "");
+                        }}
+                        disabled={!formData.make}
+                      >
+                        <option value="">Select model</option>
+                        {(MODELS[formData.make] || []).map((model) => (
+                          <option key={model} value={model}>
+                            {model}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                        size={16}
+                      />
+                    </div>
+                    <p
+                      className={`text-red-400 text-xs mt-1 h-4 ${
+                        fieldErrors.model ? "" : "invisible"
+                      }`}
+                    >
+                      {fieldErrors.model || "placeholder"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Year *
+                    </label>
+                    <div className="relative">
+                      <select
+                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
+                          fieldErrors.year
+                            ? "border-red-500 focus:border-red-500"
+                            : "border-gray-600 focus:border-blue-500"
+                        }`}
+                        value={formData.year}
+                        onChange={(e) =>
+                          handleInputChange("year", e.target.value)
+                        }
+                        disabled={
+                          !formData.model || availableYears.length === 0
+                        }
+                      >
+                        <option value="">Select year</option>
+                        {availableYears.map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                        size={16}
+                      />
+                    </div>
+                    <p
+                      className={`text-red-400 text-xs mt-1 h-4 ${
+                        fieldErrors.year ? "" : "invisible"
+                      }`}
+                    >
+                      {fieldErrors.year || "placeholder"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Parts *
+                    </label>
+                    <div className="relative">
+                      <select
+                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
+                          fieldErrors.parts
+                            ? "border-red-500 focus:border-red-500"
+                            : "border-gray-600 focus:border-blue-500"
+                        }`}
+                        value={formData.parts}
+                        onChange={(e) =>
+                          handleInputChange("parts", e.target.value)
+                        }
+                      >
+                        <option value="">Select parts</option>
+                        <option>Engine</option>
+                        <option>Transmission</option>
+                        {/* <option>Ford</option> */}
+                      </select>
+                      <ChevronDown
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                        size={16}
+                      />
+                    </div>
+                    <p
+                      className={`text-red-400 text-xs mt-1 h-4 ${
+                        fieldErrors.parts ? "" : "invisible"
+                      }`}
+                    >
+                      {fieldErrors.parts || "placeholder"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Specification *
+                    </label>
+                    <div className="relative">
+                      <select
+                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
+                          fieldErrors.specification
+                            ? "border-red-500 focus:border-red-500"
+                            : "border-gray-600 focus:border-blue-500"
+                        }`}
+                        value={formData.specification}
+                        onChange={handleSpecificationChange}
+                        disabled={!productVariants.length}
+                      >
+                        <option value="">Select Specification</option>
+                        {productVariants.map((variant, idx) => (
+                          <option key={idx} value={variant.subPart.name}>
+                            {variant.subPart.name}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                        size={16}
+                      />
+                    </div>
+                    {fieldErrors.specification && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {fieldErrors.specification}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Miles Promised
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none pr-10"
+                        value={formData.milesPromised}
+                        onChange={handleMileageChange}
+                        placeholder="Enter miles or select from dropdown"
+                        list="miles-suggestions"
+                      />
+                      <ChevronDown
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 pointer-events-none"
+                        size={16}
+                      />
+                      <datalist id="miles-suggestions">
+                        {selectedSubpart?.variants.map((variant, idx) => (
+                          <option key={idx} value={variant.miles}>
+                            {variant.miles} miles
+                          </option>
+                        ))}
+                      </datalist>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-6 mt-2">
                 <div>
                   <label className="block text-white/60 text-sm mb-2">
                     Total Selling Price
