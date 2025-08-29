@@ -145,8 +145,8 @@ const OrderDetails = () => {
             invoiceSentAt: data.invoiceSentAt
               ? new Date(data.invoiceSentAt).toISOString().split("T")[0]
               : "",
-            invoiceConfirmAt: data.invoiceConfirmAt
-              ? new Date(data.invoiceConfirmAt).toISOString().split("T")[0]
+            invoiceConfirmedAt: data.invoiceConfirmedAt
+              ? new Date(data.invoiceConfirmedAt).toISOString().split("T")[0]
               : "",
             ownShippingInfo: {
               productType: ownShipping.productType || "",
@@ -258,7 +258,7 @@ const OrderDetails = () => {
     yardNotes: "",
     invoiceStatus: "",
     invoiceSentAt: "",
-    invoiceConfirmAt: "",
+    invoiceConfirmedAt: "",
     vinNumber: "",
     notes: "",
     ownShippingInfo: {
@@ -903,7 +903,13 @@ const OrderDetails = () => {
         },
       ];
 
-      const result = await updateOrderFromAdmin(orderId, formData, cartItems);
+      // Ensure invoice fields are ISO strings or empty
+      const payload = {
+        ...formData,
+        invoiceSentAt: formData.invoiceSentAt ? new Date(formData.invoiceSentAt).toISOString() : null,
+        invoiceConfirmedAt: formData.invoiceConfirmedAt ? new Date(formData.invoiceConfirmedAt).toISOString() : null,
+      };
+      const result = await updateOrderFromAdmin(orderId, payload, cartItems);
 
       setMessage({
         type: "success",
@@ -983,6 +989,27 @@ const OrderDetails = () => {
         return;
       }
 
+      // // Ensure invoice fields are ISO strings or empty
+      // const payload = {
+      //   ...formData,
+      //   invoiceSentAt: formData.invoiceSentAt ? new Date(formData.invoiceSentAt).toISOString() : null,
+      //   invoiceConfirmedAt: formData.invoiceConfirmedAt ? new Date(formData.invoiceConfirmedAt).toISOString() : null,
+      // };
+
+      // // Create cart items array with the selected part
+      // const cartItems = [
+      //   {
+      //     id: formData.variantSku, // Use the actual SKU from the selected variant
+      //     name: `${formData.make} ${formData.model} ${formData.year} ${formData.parts}`,
+      //     price: parseFloat(formData.partPrice) || 0,
+      //     quantity: 1,
+      //     warranty: formData.warranty,
+      //     milesPromised: formData.milesPromised,
+      //     specification: formData.specification,
+      //   },
+      // ];
+      // const result = await createOrderFromAdmin(payload, cartItems);
+
       // Auto-process uploaded picture if it exists and hasn't been processed yet
       if (uploadedPicture && !formData.pictureUrl) {
         const base64Image = await convertToBase64(uploadedPicture);
@@ -1023,6 +1050,9 @@ const OrderDetails = () => {
         approvalCode: paymentEntry.approvalCode || "",
         charged: paymentEntry.charged || "No",
         merchantMethod: paymentEntry.merchantMethod || "",
+        invoiceSentAt: formData.invoiceSentAt ? new Date(formData.invoiceSentAt).toISOString() : null,
+        invoiceConfirmedAt: formData.invoiceConfirmedAt ? new Date(formData.invoiceConfirmedAt).toISOString() : null,
+        invoiceStatus: formData.invoiceStatus || "NOT_AVAILABLE",
       };
       const result = await createOrderFromAdmin(updatedFormData, cartItems);
 
@@ -2579,7 +2609,9 @@ const OrderDetails = () => {
                   </label> */}
                   <select
                     className="bg-[#0a1929] py-3 text-green-400 outline-none"
+                    value={formData.invoiceStatus}
                     onChange={(e) => {
+                      handleInputChange("invoiceStatus", e.target.value);
                       if (e.target.value == "no") {
                         setInvoiceButtonState(false);
                       } else if (e.target.value == "yes") {
@@ -2590,7 +2622,6 @@ const OrderDetails = () => {
                     }}
                   >
                     <option value="">Invoice Sent Status</option>
-
                     <option value="yes">Yes</option>
                     <option value="no">No</option>
                   </select>
@@ -2618,6 +2649,8 @@ const OrderDetails = () => {
                           <input
                             type="date"
                             className="text-white text-sm placeholder:text-white"
+                            value={formData.invoiceSentAt}
+                            onChange={e => handleInputChange("invoiceSentAt", e.target.value)}
                           />
                         </div>
                       </div>
@@ -2632,6 +2665,8 @@ const OrderDetails = () => {
                       <input
                         type="date"
                         className="text-white text-sm ml-2 placeholder:text-white"
+                        value={formData.invoiceConfirmedAt}
+                        onChange={e => handleInputChange("invoiceConfirmedAt", e.target.value)}
                       />
                     </div>
                   </div>

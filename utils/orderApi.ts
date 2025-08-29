@@ -78,7 +78,7 @@ const orderData = {
   customerInfo: {
     email: formData.email || 'no-email@example.com',
     phone: formData.mobile || '000-000-0000',
-    alternativePhone: formData. alternateMobile ,
+    alternativePhone: formData.alternateMobile,
     firstName: formData.customerName?.split(' ')[0] || 'Unknown',
     // lastName: formData.cardHolderName?.split(' ').slice(1).join(' ') || '',
     company: formData.company || null,
@@ -157,6 +157,12 @@ pictureUrl: item.pictureUrl || formData.pictureUrl || '',
   status: formData.status,
   vinNumber: formData.vinNumber,
   notes: formData.notes,
+
+  // invoice 
+  invoiceSentAt: formData.invoiceSentAt ? new Date(formData.invoiceSentAt).toISOString() : null,
+  invoiceStatus: formData.invoiceStatus,
+  invoiceConfirmedAt: formData.invoiceConfirmedAt ? new Date(formData.invoiceConfirmedAt).toISOString() : null,
+
   orderDate: formData.date ? new Date(formData.date).toISOString() : new Date().toISOString(),
   addressType: formData.shippingAddressType,
   ...(formData.yardName && {
