@@ -4,6 +4,18 @@ import path from "path";
 import fs from "fs";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
+// Utility function to load background image
+async function loadBackgroundImage(pdfDoc: PDFDocument) {
+  try {
+    const backgroundPath = path.join(process.cwd(), "public", "smtpHeader.jpg");
+    const backgroundBytes = fs.readFileSync(backgroundPath);
+    return await pdfDoc.embedJpg(backgroundBytes);
+  } catch (error) {
+    console.error("Error loading background image:", error);
+    return null;
+  }
+}
+
 // Utility function to load logo
 async function loadLogo(pdfDoc: PDFDocument) {
   try {
@@ -149,29 +161,42 @@ async function generateInvoicePDF(data: InvoiceData) {
   let y = height - 40;
 
   // ---------------- HEADER BAR (PAGE 1) ----------------
-  page.drawRectangle({
-    x: 0,
-    y: height - 100,
-    width,
-    height: 100,
-    color: rgb(0.07, 0.15, 0.3), // dark blue header
-  });
+  // Draw background image or fallback to solid color
+  const backgroundImage = await loadBackgroundImage(pdfDoc);
+
+  if (backgroundImage) {
+    page.drawImage(backgroundImage, {
+      x: 0,
+      y: height - 100,
+      width: width,
+      height: 100,
+    });
+  } else {
+    // Fallback to solid color if image loading fails
+    page.drawRectangle({
+      x: 0,
+      y: height - 100,
+      width,
+      height: 100,
+      color: rgb(0.07, 0.15, 0.3), // dark blue header
+    });
+  }
 
   // ---------------- LOGO (PAGE 1) ----------------
   try {
     const logoImage = await loadLogo(pdfDoc);
     if (logoImage) {
-      const logoDims = logoImage.scale(0.25);
+      const logoDims = logoImage.scale(0.5);
       page.drawImage(logoImage, {
         x: 30,
-        y: height - 90,
+        y: height - 40,
         width: logoDims.width,
         height: logoDims.height,
       });
     } else {
       page.drawText("PARTS CENTRAL", {
         x: 40,
-        y: height - 70,
+        y: height - 40,
         size: 18,
         font: bold,
         color: rgb(1, 1, 1),
@@ -181,7 +206,7 @@ async function generateInvoicePDF(data: InvoiceData) {
     console.error("Error loading logo:", error);
     page.drawText("PARTS CENTRAL", {
       x: 40,
-      y: height - 70,
+      y: height - 40,
       size: 18,
       font: bold,
       color: rgb(1, 1, 1),
@@ -189,35 +214,35 @@ async function generateInvoicePDF(data: InvoiceData) {
   }
 
   // ---------------- CONTACT INFO (PAGE 1) ----------------
-  page.drawText("70 Interstate Dr, Suite E Extension, WV 25701, USA", {
-    x: 200,
+  page.drawText("76 Imperial Dr Suite E Evanston, WY 82930, USA", {
+    x: 30,
     y: height - 60,
     size: 9,
     font: times,
     color: rgb(1, 1, 1),
   });
   page.drawText("https://partscentral.us", {
-    x: 200,
+    x: 30,
     y: height - 75,
     size: 9,
     font: times,
     color: rgb(1, 1, 1),
   });
-  page.drawText("(555) 555-2540", {
-    x: 200,
-    y: height - 90,
+  page.drawText("(888) 338-2540", {
+    x: 30,
+    y: height - 85,
     size: 9,
     font: times,
     color: rgb(1, 1, 1),
   });
-
+  y = height - 120;
   // ---------------- INVOICE INFO (PAGE 1) ----------------
   page.drawText(`Invoice : PC #${data.orderId}`, {
     x: width - 200,
-    y: height - 60,
+    y: y - 10,
     size: 11,
     font: bold,
-    color: rgb(1, 1, 1),
+    color: rgb(0, 0, 0),
   });
 
   const currentDate = new Date().toLocaleDateString("en-US", {
@@ -225,20 +250,20 @@ async function generateInvoicePDF(data: InvoiceData) {
     month: "short",
     day: "numeric",
   });
-
+  y = height - 130;
   page.drawText(`Date : ${currentDate}`, {
     x: width - 200,
-    y: height - 75,
+    y: y - 10,
     size: 11,
     font: times,
-    color: rgb(1, 1, 1),
+    color: rgb(0, 0, 0),
   });
 
   // ---------------- ORDER BY ----------------
   y = height - 130;
   page.drawText("Order By:", {
     x: 40,
-    y,
+    y: y - 20,
     size: 12,
     font: bold,
     color: rgb(0, 0, 0),
@@ -247,7 +272,7 @@ async function generateInvoicePDF(data: InvoiceData) {
 
   page.drawText(data.customerInfo.name || "", {
     x: 40,
-    y,
+    y: y - 20,
     size: 11,
     font: times,
   });
@@ -256,7 +281,7 @@ async function generateInvoicePDF(data: InvoiceData) {
   if (data.customerInfo.email) {
     page.drawText(`Email: ${data.customerInfo.email}`, {
       x: 40,
-      y,
+      y: y - 20,
       size: 11,
       font: times,
     });
@@ -266,7 +291,7 @@ async function generateInvoicePDF(data: InvoiceData) {
   if (data.customerInfo.mobile) {
     page.drawText(`Mobile: ${data.customerInfo.mobile}`, {
       x: 40,
-      y,
+      y: y - 20,
       size: 11,
       font: times,
     });
@@ -277,7 +302,7 @@ async function generateInvoicePDF(data: InvoiceData) {
   y = height - 130;
   page.drawText("Bill To:", {
     x: 300,
-    y,
+    y: y - 20,
     size: 12,
     font: bold,
   });
@@ -285,7 +310,7 @@ async function generateInvoicePDF(data: InvoiceData) {
 
   page.drawText(data.customerInfo.name || "", {
     x: 300,
-    y,
+    y: y - 20,
     size: 11,
     font: times,
   });
@@ -294,7 +319,7 @@ async function generateInvoicePDF(data: InvoiceData) {
   if (data.customerInfo.billingAddress) {
     page.drawText(data.customerInfo.billingAddress, {
       x: 300,
-      y,
+      y: y - 20,
       size: 11,
       font: times,
     });
@@ -356,8 +381,23 @@ async function generateInvoicePDF(data: InvoiceData) {
 
   // ---------------- TOTAL ----------------
   y -= 20;
+  page.drawRectangle({
+    x: 430,
+    y,
+    width: width - 30,
+    height: 20,
+    color: rgb(0.9, 0.9, 0.95),
+  });
   page.drawText(`TOTAL: $${data.customerInfo.totalSellingPrice || "0.00"}`, {
     x: 450,
+    y,
+    size: 14,
+    font: bold,
+    color: rgb(0, 0, 0.8),
+  });
+  // y -= 20;
+  page.drawText(`Notes:`, {
+    x: 50,
     y,
     size: 14,
     font: bold,
@@ -386,7 +426,7 @@ async function generateInvoicePDF(data: InvoiceData) {
   );
 
   // Payment details section
-  y -= 60;
+  y -= 150;
   page.drawText("PAYMENT DETAILS :", {
     x: 40,
     y,
@@ -415,43 +455,85 @@ async function generateInvoicePDF(data: InvoiceData) {
       }
     );
   }
+  // shipping details section
+  page.drawText("Shipping DETAILS :", {
+    x: 450,
+    y: y + 15,
+    size: 11,
+    font: bold,
+  });
+
+  // y -= 15;
+  // if (data.shippingInfo.shippingAddress) {
+  //   page.drawText(`Name: ${data.shippingInfo.shippingAddress}`, {
+  //     x: 450,
+  //     y,
+  //     size: 10,
+  //     font: times,
+  //   });
+  // }
+
+  // if (data.shippingInfo.shippingAddress) {
+  //   page.drawText(
+  //     `Shipping Address: ${data.shippingInfo.shippingAddress.slice(-4)}`,
+  //     {
+  //       x: 450,
+  //       y: y - 15,
+  //       size: 10,
+  //       font: times,
+  //     }
+  //   );
+  // }
 
   page.drawText("Authorize Signature", {
     x: 450,
-    y: y - 50,
+    y: y - 200,
     size: 11,
-    font: times,
+    font: bold,
+    color: rgb(0, 0, 0.8),
   });
 
   // --- PAGE 2: Full Disclaimer & Policies ---
   const page2 = pdfDoc.addPage([600, 800]);
-  const { height: h2, width: w2 } = page2.getSize();
-  let y2 = h2 - 40;
+  const { height: page2Height } = page2.getSize();
+  let y2 = page2Height - 40;
 
   // ---------------- HEADER BAR (PAGE 2) ----------------
-  page2.drawRectangle({
-    x: 0,
-    y: h2 - 100,
-    width: w2,
-    height: 100,
-    color: rgb(0.07, 0.15, 0.3), // dark blue header
-  });
+  const backgroundImage2 = await loadBackgroundImage(pdfDoc);
+
+  if (backgroundImage2) {
+    page2.drawImage(backgroundImage2, {
+      x: 0,
+      y: page2Height - 100,
+      width: width,
+      height: 100,
+    });
+  } else {
+    // Fallback to solid color if image loading fails
+    page2.drawRectangle({
+      x: 0,
+      y: page2Height - 100,
+      width,
+      height: 100,
+      color: rgb(0.07, 0.15, 0.3), // dark blue header
+    });
+  }
 
   // ---------------- LOGO (PAGE 2) ----------------
   try {
     const logoImage = await loadLogo(pdfDoc);
     if (logoImage) {
-      const logoDims = logoImage.scale(0.25);
+      const logoDims = logoImage.scale(0.5);
       page2.drawImage(logoImage, {
         x: 30,
-        y: h2 - 90,
+        y: page2Height - 40,
         width: logoDims.width,
         height: logoDims.height,
       });
     } else {
       page2.drawText("PARTS CENTRAL", {
         x: 40,
-        y: h2 - 70,
+        y: page2Height - 40,
         size: 18,
         font: bold,
         color: rgb(1, 1, 1),
@@ -461,7 +543,7 @@ async function generateInvoicePDF(data: InvoiceData) {
     console.error("Error loading logo:", error);
     page2.drawText("PARTS CENTRAL", {
       x: 40,
-      y: h2 - 70,
+      y: page2Height - 40,
       size: 18,
       font: bold,
       color: rgb(1, 1, 1),
@@ -469,43 +551,24 @@ async function generateInvoicePDF(data: InvoiceData) {
   }
 
   // ---------------- CONTACT INFO (PAGE 2) ----------------
-  page2.drawText("70 Interstate Dr, Suite E Extension, WV 25701, USA", {
-    x: 200,
-    y: h2 - 60,
+  page2.drawText("76 Imperial Dr Suite E Evanston, WY 82930, USA", {
+    x: 30,
+    y: page2Height - 60,
     size: 9,
     font: times,
     color: rgb(1, 1, 1),
   });
-
   page2.drawText("https://partscentral.us", {
-    x: 200,
-    y: h2 - 75,
+    x: 30,
+    y: page2Height - 75,
     size: 9,
     font: times,
     color: rgb(1, 1, 1),
   });
-
-  page2.drawText("(555) 555-2540", {
-    x: 200,
-    y: h2 - 90,
+  page2.drawText("(888) 338-2540", {
+    x: 30,
+    y: page2Height - 85,
     size: 9,
-    font: times,
-    color: rgb(1, 1, 1),
-  });
-
-  // ---------------- INVOICE INFO (PAGE 2) ----------------
-  page2.drawText(`Invoice : PC #${data.orderId}`, {
-    x: w2 - 200,
-    y: h2 - 60,
-    size: 11,
-    font: bold,
-    color: rgb(1, 1, 1),
-  });
-
-  page2.drawText(`Date : ${currentDate}`, {
-    x: w2 - 200,
-    y: h2 - 75,
-    size: 11,
     font: times,
     color: rgb(1, 1, 1),
   });
@@ -533,7 +596,7 @@ async function generateInvoicePDF(data: InvoiceData) {
     }
   );
 
-  y2 -= 60;
+  y2 -= 80;
 
   // Disclaimer Transmission
   page2.drawText("Disclaimer Transmission:", {
@@ -642,43 +705,6 @@ async function generateInvoicePDF(data: InvoiceData) {
       maxWidth: 520,
     }
   );
-
-  // ---------------- FOOTER (PAGE 2) ----------------
-  const footerY = 50;
-  page2.drawText("PAYMENT DETAILS :", {
-    x: 40,
-    y: footerY,
-    size: 11,
-    font: bold,
-  });
-
-  if (data.paymentInfo.cardHolderName) {
-    page2.drawText(`Name: ${data.paymentInfo.cardHolderName}`, {
-      x: 40,
-      y: footerY - 15,
-      size: 10,
-      font: times,
-    });
-  }
-
-  if (data.paymentInfo.cardNumber) {
-    page2.drawText(
-      `Method: **** **** **** ${data.paymentInfo.cardNumber.slice(-4)}`,
-      {
-        x: 40,
-        y: footerY - 30,
-        size: 10,
-        font: times,
-      }
-    );
-  }
-
-  page2.drawText("Authorize Signature", {
-    x: 450,
-    y: footerY - 50,
-    size: 11,
-    font: times,
-  });
 
   // Serialize the PDFDocument to bytes (a Uint8Array)
   const pdfBytes = await pdfDoc.save();
