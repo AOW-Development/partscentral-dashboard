@@ -5,6 +5,92 @@ import Sidebar from "@/app/components/Sidebar";
 import { useParams } from "next/navigation";
 import { ChevronDown, X, Plus, Minus, Calendar } from "lucide-react";
 import Image from "next/image";
+// --- Strong types for cart mapping ---
+export type ProductFormData = {
+  variantSku: string;
+  make: string;
+  model: string;
+  year: string;
+  parts: string;
+  partPrice: string | number;
+  quantity?: number;
+  milesPromised?: string | number;
+  specification?: string;
+  pictureUrl?: string;
+  pictureStatus?: string;
+  productVariants?: GroupedVariant[];
+  selectedSubpart?: GroupedVariant | null;
+  selectedMileage?: string;
+};
+export type OrderFormData = {
+  products: ProductFormData[];
+  customerName: string;
+  id: string;
+  date: string;
+  source: string;
+  status: string;
+  email: string;
+  mobile: string;
+  alternateMobile: string;
+  partPrice: string | number;
+  taxesPrice: string | number;
+  handlingPrice: string | number;
+  processingPrice: string | number;
+  corePrice: string | number;
+  shippingAddressType: string;
+  company: string;
+  shippingAddress: string;
+  billingAddress: string;
+  cardHolderName: string;
+  cardNumber: string;
+  cardDate: string;
+  cardCvv: string;
+  alternateCardHolderName: string;
+  alternateCardNumber: string;
+  alternateCardDate: string;
+  alternateCardCvv: string;
+  warranty: string;
+  totalSellingPrice: string | number;
+  totalPrice: string | number;
+  merchantMethod: string;
+  approvalCode: string;
+  entity: string;
+  charged: string;
+  saleMadeBy: string;
+  yardName: string;
+  yardMobile: string;
+  yardAddress: string;
+  yardEmail: string;
+  yardPrice: string | number;
+  yardWarranty: string;
+  yardMiles: string | number;
+  yardShipping: string;
+  yardCost: string | number;
+  pictureStatus: string;
+  pictureUrl: string;
+  carrierName: string;
+  trackingNumber: string;
+  customerNotes: any;
+  yardNotes: any;
+  invoiceStatus: string;
+  invoiceSentAt: string;
+  invoiceConfirmedAt: string;
+  vinNumber: string;
+  notes: string;
+  ownShippingInfo: {
+    productType: string;
+    packageType: string;
+    weight: string;
+    dimensions: string;
+    pickUpDate: string;
+    carrier: string;
+    price: string;
+    variance: string;
+    bolNumber: string;
+  };
+};
+// --- End strong types for cart mapping ---
+
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { URL } from "@/utils/imageUrl";
@@ -20,13 +106,12 @@ interface CartItem {
   name: string;
   price: number;
   quantity: number;
-  warranty?: string;
+  // warranty?: string;
   milesPromised?: string;
   specification?: string;
 }
 
 const OrderDetails = () => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const params = useParams();
   const orderId = params.id as string;
   const [showAlternateMobileNumber, setShowAlternateMobileNumber] =
@@ -38,6 +123,25 @@ const OrderDetails = () => {
         .then((data) => {
           const payment = data.payments?.[0] || {};
           const billing = data.billingSnapshot || {};
+
+          // Map backend cartItems to UI cartItems array with strong typing
+          if (Array.isArray(data.items) && data.items.length > 0) {
+            const products = data.items.map((item: any): ProductFormData => ({
+              variantSku: item.sku || item.id,
+              make: item.makeName || '',
+              model: item.modelName || '',
+              year: item.yearName || '',
+              parts: item.partName || '',
+              partPrice: item.unitPrice,
+              quantity: item.quantity,
+              // warranty: item.metadata?.warranty,
+              milesPromised: item.metadata?.milesPromised,
+              specification: item.specification,
+              pictureUrl: item.pictureUrl || '',
+              pictureStatus: item.pictureStatus || 'PENDING',
+            }));
+            setFormData((prev) => ({ ...prev, products }));
+          }
           const shipping = data.shippingSnapshot || {};
           const yard = data.yardInfo || {};
           const ownShipping = yard.yardOwnShippingInfo || {};
@@ -106,16 +210,16 @@ const OrderDetails = () => {
 
             // Product info (from first item if available)
             warranty: data.items?.[0]?.metadata?.warranty || "",
-            milesPromised:
-              data.milesPromised ||
-              data.items?.[0]?.metadata?.milesPromised ||
-              "",
-            make: data.items?.[0]?.makeName || "",
-            model: data.items?.[0]?.modelName || "",
-            year: data.year || data.items?.[0]?.yearName || "",
-            parts: data.items?.[0]?.partName || "",
-            specification: data.items?.[0]?.specification || "",
-            variantSku: data.items?.[0]?.sku || "",
+            // milesPromised:
+            //   data.milesPromised ||
+            //   data.items?.[0]?.metadata?.milesPromised ||
+            //   "",
+            // make: data.items?.[0]?.makeName || "",
+            // model: data.items?.[0]?.modelName || "",
+            // year: data.year || data.items?.[0]?.yearName || "",
+            // parts: data.items?.[0]?.partName || "",
+            // specification: data.items?.[0]?.specification || "",
+            // variantSku: data.items?.[0]?.sku || "",
             pictureUrl: data.items?.[0]?.pictureUrl || "",
             pictureStatus: data.items?.[0]?.pictureStatus || "",
 
@@ -160,7 +264,7 @@ const OrderDetails = () => {
               bolNumber: ownShipping.bolNumber || "",
             },
           });
-          setCartItems(data.items || []);
+          
           if (data.customerNotes && typeof data.customerNotes === "string") {
             try {
               const parsedCustomerNotes = JSON.parse(data.customerNotes);
@@ -190,16 +294,30 @@ const OrderDetails = () => {
         });
     }
   }, [orderId, setCartItems]); // State for product variants
-  const [productVariants, setProductVariants] = useState<GroupedVariant[]>([]);
-  const [selectedSubpart, setSelectedSubpart] = useState<GroupedVariant | null>(
-    null
-  );
-  const [selectedMileage, setSelectedMileage] = useState("");
+  
   const [isLoadingVariants, setIsLoadingVariants] = useState(false);
   const [variantError, setVariantError] = useState("");
   const [cardEntry, setCardEntry] = useState(false);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<OrderFormData>({
+    products: [
+      {
+        variantSku: "",
+        make: "",
+        model: "",
+        year: "",
+        parts: "",
+        partPrice: "",
+        quantity: 1,
+        milesPromised: "",
+        specification: "",
+        pictureUrl: "",
+        pictureStatus: "",
+        productVariants: [],
+        selectedSubpart: null,
+        selectedMileage: "",
+      },
+    ],
     customerName: "",
     id: "",
     date: "",
@@ -219,21 +337,12 @@ const OrderDetails = () => {
     billingAddress: "",
     cardHolderName: "",
     cardNumber: "",
-
     cardDate: "",
     cardCvv: "",
     alternateCardHolderName: "",
     alternateCardNumber: "",
     alternateCardDate: "",
     alternateCardCvv: "",
-    warranty: "",
-    milesPromised: "",
-    make: "",
-    model: "",
-    year: "",
-    parts: "",
-    specification: "",
-    variantSku: "", // store the selected variant SKU
     totalSellingPrice: "",
     totalPrice: "",
     merchantMethod: "",
@@ -261,6 +370,7 @@ const OrderDetails = () => {
     invoiceConfirmedAt: "",
     vinNumber: "",
     notes: "",
+    warranty: "",
     ownShippingInfo: {
       productType: "",
       packageType: "",
@@ -273,102 +383,130 @@ const OrderDetails = () => {
       bolNumber: "",
     },
   });
-  const [availableYears, setAvailableYears] = useState<string[]>([]);
 
-  // Fetch years when make and model are selected
-  useEffect(() => {
-    if (formData.make && formData.model) {
-      fetchYears(formData.make, formData.model).then(setAvailableYears);
-    } else {
-      setAvailableYears([]);
-    }
-  }, [formData.make, formData.model]);
+  const handleProductInputChange = (
+    index: number,
+    field: keyof ProductFormData,
+    value: any
+  ) => {
+    setFormData((prev) => {
+      const updatedProducts = [...prev.products];
+      updatedProducts[index] = {
+        ...updatedProducts[index],
+        [field]: value,
+      };
+      return { ...prev, products: updatedProducts };
+    });
+  };
 
-  // Handle mileage selection
-  const handleMileageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedMiles = e.target.value;
-    setSelectedMileage(selectedMiles);
-
-    // Update form data with the entered mileage
+  const addProduct = () => {
     setFormData((prev) => ({
       ...prev,
-      milesPromised: selectedMiles,
+      products: [
+        ...prev.products,
+        {
+          variantSku: "",
+          make: "",
+          model: "",
+          year: "",
+          parts: "",
+          partPrice: "",
+          quantity: 1,
+          milesPromised: "",
+          specification: "",
+          pictureUrl: "",
+          pictureStatus: "PENDING",
+          productVariants: [],
+          selectedSubpart: null,
+          selectedMileage: "",
+        },
+      ],
     }));
+  };
 
-    // Find the selected variant and update the SKU and price if it matches a predefined option
-    if (selectedSubpart) {
-      const variant = selectedSubpart.variants.find(
+  const removeProduct = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      products: prev.products.filter((_, i) => i !== index),
+    }));
+  };
+  const [availableYears, setAvailableYears] = useState<{ [index: number]: string[] }>({});
+
+  // Fetch years for each product's make/model
+  useEffect(() => {
+    formData.products.forEach((product, index) => {
+      if (product.make && product.model) {
+        fetchYears(product.make, product.model).then((years) => {
+          setAvailableYears((prev) => ({ ...prev, [index]: years }));
+        });
+      } else {
+        setAvailableYears((prev) => ({ ...prev, [index]: [] }));
+      }
+    });
+  }, [formData.products.map(p => `${p.make}-${p.model}`).join(",")]);
+
+  // Handle mileage selection
+  const handleMileageChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const selectedMiles = e.target.value;
+    const product = formData.products[index];
+    handleProductInputChange(index, "milesPromised", selectedMiles);
+
+    if (product.selectedSubpart) {
+      const variant = product.selectedSubpart.variants.find(
         (v) => v.miles === selectedMiles
       );
       if (variant) {
-        setFormData((prev) => ({
-          ...prev,
-          milesPromised: selectedMiles,
-          variantSku: variant.sku,
-          partPrice:
-            variant.discountedPrice?.toString() ||
-            variant.actualprice.toString(),
-        }));
+        handleProductInputChange(index, "variantSku", variant.sku);
+        handleProductInputChange(index, "partPrice", variant.discountedPrice?.toString() || variant.actualprice.toString());
       }
     }
   };
 
   // Handle specification selection
   const handleSpecificationChange = (
-    e: React.ChangeEvent<HTMLSelectElement>
+    e: React.ChangeEvent<HTMLSelectElement>,
+    index: number
   ) => {
     const selectedSpec = e.target.value;
-    setFormData((prev) => ({
-      ...prev,
-      specification: selectedSpec,
-      variantSku: "",
-      milesPromised: "",
-    }));
-
-    // Find and set the selected subpart
+    const product = formData.products[index];
     const subpart =
-      productVariants.find((v) => v.subPart.name === selectedSpec) || null;
-    setSelectedSubpart(subpart);
-    setSelectedMileage("");
+      product.productVariants?.find((v) => v.subPart.name === selectedSpec) || null;
+
+    handleProductInputChange(index, "specification", selectedSpec);
+    handleProductInputChange(index, "selectedSubpart", subpart);
+    handleProductInputChange(index, "variantSku", "");
+    handleProductInputChange(index, "milesPromised", "");
   };
 
-  // Fetch product variants when make, model, year, and part are selected
-  useEffect(() => {
-    const fetchVariants = async () => {
-      if (formData.make && formData.model && formData.year && formData.parts) {
-        setIsLoadingVariants(true);
-        setVariantError("");
-        try {
-          const data = await getProductVariants({
-            make: formData.make,
-            model: formData.model,
-            year: formData.year,
-            part: formData.parts,
-          });
-          setProductVariants(data.groupedVariants || []);
-          // Reset selections when variants change
-          setSelectedSubpart(null);
-          setSelectedMileage("");
-          setFormData((prev) => ({
-            ...prev,
-            specification: "",
-            variantSku: "",
-            milesPromised: "",
-          }));
-        } catch (error) {
-          console.error("Error fetching product variants:", error);
-          setVariantError("Failed to load product variants. Please try again.");
-          setProductVariants([]);
-        } finally {
-          setIsLoadingVariants(false);
-        }
-      } else {
-        setProductVariants([]);
+  const fetchProductVariants = async (index: number) => {
+    const product = formData.products[index];
+    if (product.make && product.model && product.year && product.parts) {
+      setIsLoadingVariants(true);
+      setVariantError("");
+      try {
+        const data = await getProductVariants({
+          make: product.make,
+          model: product.model,
+          year: product.year,
+          part: product.parts,
+        });
+        handleProductInputChange(index, "productVariants", data.groupedVariants || []);
+        handleProductInputChange(index, "selectedSubpart", null);
+        handleProductInputChange(index, "selectedMileage", "");
+        handleProductInputChange(index, "specification", "");
+        handleProductInputChange(index, "variantSku", "");
+        handleProductInputChange(index, "milesPromised", "");
+      } catch (error) {
+        console.error("Error fetching product variants:", error);
+        setVariantError("Failed to load product variants. Please try again.");
+        handleProductInputChange(index, "productVariants", []);
+      } finally {
+        setIsLoadingVariants(false);
       }
-    };
-
-    fetchVariants();
-  }, [formData.make, formData.model, formData.year, formData.parts]);
+    } else {
+      handleProductInputChange(index, "productVariants", []);
+    }
+  };
   const [lastLogged, setLastLogged] = useState({
     trackingNumber: "",
     yardCost: "",
@@ -791,16 +929,25 @@ const OrderDetails = () => {
           cardDate: formData.cardDate,
           cardCvv: formData.cardCvv,
           warranty: formData.warranty,
-          milesPromised: formData.milesPromised,
+          // milesPromised: formData.milesPromised,
         },
-        productInfo: {
-          make: formData.make,
-          model: formData.model,
-          year: formData.year,
-          parts: formData.parts,
-          specification: formData.specification,
-          saleMadeBy: formData.saleMadeBy,
-        },
+        // productInfo: {
+        //   make: formData.make,
+        //   model: formData.model,
+        //   year: formData.year,
+        //   parts: formData.parts,
+        //   specification: formData.specification,
+        //   saleMadeBy: formData.saleMadeBy,
+        // },
+        productInfo: formData.products.map(product => ({
+          make: product.make,
+          model: product.model,
+          year: product.year,
+          parts: product.parts,
+          specification: product.specification,
+          // warranty: product.warranty,
+          milesPromised: product.milesPromised,
+        })),
         yardInfo: {
           name: formData.yardName,
           mobile: formData.yardMobile,
@@ -888,22 +1035,17 @@ const OrderDetails = () => {
     setMessage(null);
 
     try {
-      if (!formData.variantSku) {
-        alert("Please select a valid specification and mileage");
-        return;
-      }
-
-      const cartItems = [
-        {
-          id: formData.variantSku, // Use the actual SKU from the selected variant
-          name: `${formData.make} ${formData.model} ${formData.year} ${formData.parts}`,
-          price: parseFloat(formData.partPrice) || 0,
-          quantity: 1,
-          warranty: formData.warranty,
-          milesPromised: formData.milesPromised,
-          specification: formData.specification,
-        },
-      ];
+      const cartItems = formData.products.map(item => ({
+        id: item.variantSku,
+        name: `${item.make} ${item.model} ${item.year} ${item.parts}`,
+        price: parseFloat(String(item.partPrice)) || 0,
+        quantity: item.quantity || 1,
+        // warranty: item.warranty,
+        milesPromised: item.milesPromised,
+        specification: item.specification,
+        pictureUrl: item.pictureUrl || '',
+        pictureStatus: item.pictureStatus || 'PENDING',
+      })).filter(item => !!item.id); // Ensure SKU is present
 
       // Ensure invoice fields are ISO strings or empty
       const payload = {
@@ -933,51 +1075,6 @@ const OrderDetails = () => {
   };
 
   const handleCreateOrder = async () => {
-    // if (!validateAllFields()) {
-    //   return;
-    // }
-
-    //   setIsLoading(true);
-    //   setMessage(null);
-
-    //   try {
-    //     if (!formData.variantSku) {
-    //       alert('Please select a valid specification and mileage');
-    //       return;
-    //     }
-
-    //     // Create cart items array with the selected part
-    //     const cartItems = [
-    //       {
-    //         id: formData.variantSku, // Use the actual SKU from the selected variant
-    //         name: `${formData.make} ${formData.model} ${formData.year} ${formData.parts}`,
-    //         price: parseFloat(formData.partPrice) || 0,
-    //         quantity: 1,
-    //         warranty: formData.warranty,
-    //         milesPromised: formData.milesPromised,
-    //         specification: formData.specification,
-    //       },
-    //     ];
-    //     const result = await createOrderFromAdmin(formData, cartItems);
-
-    //     setMessage({
-    //       type: "success",
-    //       text: "Order created successfully!",
-    //     });
-    //     setIsProcessing(false);
-    //     console.log("Order created:", result);
-    //   } catch (error) {
-    //     setMessage({
-    //       type: "error",
-    //       text:
-    //         error instanceof Error
-    //           ? error.message
-    //           : "Failed to create order. Please try again.",
-    //     });
-    //   } finally {
-    //     setIsLoading(false);
-    //   }
-    // };
     if (!validateAllFields()) {
       return;
     }
@@ -986,32 +1083,6 @@ const OrderDetails = () => {
     setMessage(null);
 
     try {
-      if (!formData.variantSku) {
-        alert("Please select a valid specification and mileage");
-        return;
-      }
-
-      // // Ensure invoice fields are ISO strings or empty
-      // const payload = {
-      //   ...formData,
-      //   invoiceSentAt: formData.invoiceSentAt ? new Date(formData.invoiceSentAt).toISOString() : null,
-      //   invoiceConfirmedAt: formData.invoiceConfirmedAt ? new Date(formData.invoiceConfirmedAt).toISOString() : null,
-      // };
-
-      // // Create cart items array with the selected part
-      // const cartItems = [
-      //   {
-      //     id: formData.variantSku, // Use the actual SKU from the selected variant
-      //     name: `${formData.make} ${formData.model} ${formData.year} ${formData.parts}`,
-      //     price: parseFloat(formData.partPrice) || 0,
-      //     quantity: 1,
-      //     warranty: formData.warranty,
-      //     milesPromised: formData.milesPromised,
-      //     specification: formData.specification,
-      //   },
-      // ];
-      // const result = await createOrderFromAdmin(payload, cartItems);
-
       // Auto-process uploaded picture if it exists and hasn't been processed yet
       if (uploadedPicture && !formData.pictureUrl) {
         const base64Image = await convertToBase64(uploadedPicture);
@@ -1027,20 +1098,18 @@ const OrderDetails = () => {
         );
       }
 
-      // Create cart items array with the selected part
-      const cartItems = [
-        {
-          id: formData.variantSku, // Use the actual SKU from the selected variant
-          name: `${formData.make} ${formData.model} ${formData.year} ${formData.parts}`,
-          price: parseFloat(formData.partPrice) || 0,
-          quantity: 1,
-          warranty: formData.warranty,
-          milesPromised: formData.milesPromised,
-          specification: formData.specification,
-          pictureUrl: formData.pictureUrl || "",
-          pictureStatus: formData.pictureStatus || "PENDING",
-        },
-      ];
+      const cartItems = formData.products.map(item => ({
+        id: item.variantSku,
+        name: `${item.make} ${item.model} ${item.year} ${item.parts}`,
+        price: parseFloat(String(item.partPrice)) || 0,
+        quantity: item.quantity || 1,
+        // warranty: item.warranty,
+        milesPromised: item.milesPromised,
+        specification: item.specification,
+        pictureUrl: item.pictureUrl || '',
+        pictureStatus: item.pictureStatus || 'PENDING',
+      })).filter(item => !!item.id); // Ensure SKU is present
+
       // Get the first payment entry (or use default values if none exists)
       const paymentEntry = paymentEntries[0] || {};
 
@@ -2347,32 +2416,22 @@ const OrderDetails = () => {
                   Product Info
                 </h3>
                 <button
-                  onClick={() => {
-                    setProductEntry((prev) => [
-                      ...prev,
-                      { count: prev.length + 1 },
-                    ]);
-                  }}
+                  onClick={addProduct}
                   className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
                 >
                   Add New Product
                 </button>
               </div>
-              {productEntry.map((item) => (
+              {formData.products.map((product, index) => (
                 <div
-                  key={item.count}
+                  key={index}
                   className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 bg-[#0f1e35] rounded-lg p-4 shadow-lg  gap-6 my-2"
                 >
-                  {item.count >1 && (
+                  {formData.products.length > 1 && (
                     <button
-                      onClick={() => {
-                        setProductEntry((prev) =>
-                        [...prev.slice(0, item.count - 1), ...prev.slice(item.count)]
-                        );
-                      }}
+                      onClick={() => removeProduct(index)}
                       className="absolute right-0 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                      title="Remove payment"
-                      key={item.count}
+                      title="Remove product"
                     >
                       <X size={16} />
                     </button>
@@ -2388,11 +2447,10 @@ const OrderDetails = () => {
                             ? "border-red-500 focus:border-red-500"
                             : "border-gray-600 focus:border-blue-500"
                         }`}
-                        value={formData.make}
+                        value={product.make}
                         onChange={(e) => {
-                          handleInputChange("make", e.target.value);
-                          handleInputChange("model", "");
-                          handleInputChange("year", "");
+                          handleProductInputChange(index, "make", e.target.value);
+                          fetchProductVariants(index);
                         }}
                       >
                         <option value="">Select make</option>
@@ -2426,15 +2484,15 @@ const OrderDetails = () => {
                             ? "border-red-500 focus:border-red-500"
                             : "border-gray-600 focus:border-blue-500"
                         }`}
-                        value={formData.model}
+                        value={product.model}
                         onChange={(e) => {
-                          handleInputChange("model", e.target.value);
-                          handleInputChange("year", "");
+                          handleProductInputChange(index, "model", e.target.value);
+                          fetchProductVariants(index);
                         }}
-                        disabled={!formData.make}
+                        disabled={!product.make}
                       >
                         <option value="">Select model</option>
-                        {(MODELS[formData.make] || []).map((model) => (
+                        {(MODELS[product.make] || []).map((model) => (
                           <option key={model} value={model}>
                             {model}
                           </option>
@@ -2464,20 +2522,24 @@ const OrderDetails = () => {
                             ? "border-red-500 focus:border-red-500"
                             : "border-gray-600 focus:border-blue-500"
                         }`}
-                        value={formData.year}
-                        onChange={(e) =>
-                          handleInputChange("year", e.target.value)
-                        }
+                        value={product.year}
+                        onChange={(e) => {
+                          handleProductInputChange(index, "year", e.target.value);
+                          fetchProductVariants(index);
+                        }}
                         disabled={
-                          !formData.model || availableYears.length === 0
+                          !product.model || availableYears[index]?.length === 0
                         }
                       >
                         <option value="">Select year</option>
-                        {availableYears.map((year) => (
+                        {/* {availableYears.map((year) => (
                           <option key={year} value={year}>
                             {year}
                           </option>
-                        ))}
+                        ))} */}
+                         {availableYears[index]?.map((year) => (
+    <option key={year} value={year}>{year}</option>
+  ))}
                       </select>
                       <ChevronDown
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
@@ -2503,10 +2565,11 @@ const OrderDetails = () => {
                             ? "border-red-500 focus:border-red-500"
                             : "border-gray-600 focus:border-blue-500"
                         }`}
-                        value={formData.parts}
-                        onChange={(e) =>
-                          handleInputChange("parts", e.target.value)
-                        }
+                        value={product.parts}
+                        onChange={(e) => {
+                          handleProductInputChange(index, "parts", e.target.value);
+                          fetchProductVariants(index);
+                        }}
                       >
                         <option value="">Select parts</option>
                         <option>Engine</option>
@@ -2537,12 +2600,12 @@ const OrderDetails = () => {
                             ? "border-red-500 focus:border-red-500"
                             : "border-gray-600 focus:border-blue-500"
                         }`}
-                        value={formData.specification}
-                        onChange={handleSpecificationChange}
-                        disabled={!productVariants.length}
+                        value={product.specification}
+                        onChange={(e) => handleSpecificationChange(e, index)}
+                        disabled={!product.productVariants?.length}
                       >
                         <option value="">Select Specification</option>
-                        {productVariants.map((variant, idx) => (
+                        {product.productVariants?.map((variant, idx) => (
                           <option key={idx} value={variant.subPart.name}>
                             {variant.subPart.name}
                           </option>
@@ -2567,17 +2630,17 @@ const OrderDetails = () => {
                       <input
                         type="text"
                         className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none pr-10"
-                        value={formData.milesPromised}
-                        onChange={handleMileageChange}
+                        value={product.milesPromised}
+                        onChange={(e) => handleMileageChange(e, index)}
                         placeholder="Enter miles or select from dropdown"
-                        list="miles-suggestions"
+                        list={`miles-suggestions-${index}`}
                       />
                       <ChevronDown
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 pointer-events-none"
                         size={16}
                       />
-                      <datalist id="miles-suggestions">
-                        {selectedSubpart?.variants.map((variant, idx) => (
+                      <datalist id={`miles-suggestions-${index}`}>
+                        {product.selectedSubpart?.variants.map((variant, idx) => (
                           <option key={idx} value={variant.miles}>
                             {variant.miles} miles
                           </option>
