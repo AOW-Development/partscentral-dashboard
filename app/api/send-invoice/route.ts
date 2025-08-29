@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodeMailer from "nodemailer";
-// import path from "path";
+import path from "path";
+import fs from "fs";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-// import { BufferStream } from "pdf-lib";
+
+// Utility function to load logo
+async function loadLogo(pdfDoc: PDFDocument) {
+  try {
+    const logoPath = path.resolve("./public/header-3.png");
+    const logoImageBytes = fs.readFileSync(logoPath);
+    return await pdfDoc.embedPng(logoImageBytes);
+  } catch (error) {
+    console.error("Error loading logo:", error);
+    return null;
+  }
+}
 
 interface InvoiceData {
   customerInfo: {
@@ -128,187 +140,545 @@ function generateInvoiceHTML(data: InvoiceData) {
 
 async function generateInvoicePDF(data: InvoiceData) {
   const pdfDoc = await PDFDocument.create();
+  const times = await pdfDoc.embedFont(StandardFonts.TimesRoman);
+  const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  // Embed the Times Roman font
-  const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
+  // --- PAGE 1: Invoice Summary ---
+  const page = pdfDoc.addPage([600, 800]);
+  const { height, width } = page.getSize();
+  let y = height - 40;
 
-  // Add a blank page to the document
-  const page = pdfDoc.addPage();
-
-  // Get the width and height of the page
-  const { height } = page.getSize();
-
-  // Draw invoice content
-  const fontSize = 12;
-  let y = height - 50;
-
-  // Add invoice header
-  page.drawText(`INVOICE #${data.orderId}`, {
-    x: 50,
-    y: y,
-    size: 20,
-    font: timesRomanFont,
-    color: rgb(0, 0.53, 0.71),
+  // ---------------- HEADER BAR (PAGE 1) ----------------
+  page.drawRectangle({
+    x: 0,
+    y: height - 100,
+    width,
+    height: 100,
+    color: rgb(0.07, 0.15, 0.3), // dark blue header
   });
-  y -= 30;
 
-  // Add customer info
-  page.drawText(`Customer Name: ${data.customerInfo.name}`, {
-    x: 50,
-    y: y,
-    size: fontSize,
-    font: timesRomanFont,
+  // ---------------- LOGO (PAGE 1) ----------------
+  try {
+    const logoImage = await loadLogo(pdfDoc);
+    if (logoImage) {
+      const logoDims = logoImage.scale(0.25);
+      page.drawImage(logoImage, {
+        x: 30,
+        y: height - 90,
+        width: logoDims.width,
+        height: logoDims.height,
+      });
+    } else {
+      page.drawText("PARTS CENTRAL", {
+        x: 40,
+        y: height - 70,
+        size: 18,
+        font: bold,
+        color: rgb(1, 1, 1),
+      });
+    }
+  } catch (error) {
+    console.error("Error loading logo:", error);
+    page.drawText("PARTS CENTRAL", {
+      x: 40,
+      y: height - 70,
+      size: 18,
+      font: bold,
+      color: rgb(1, 1, 1),
+    });
+  }
+
+  // ---------------- CONTACT INFO (PAGE 1) ----------------
+  page.drawText("70 Interstate Dr, Suite E Extension, WV 25701, USA", {
+    x: 200,
+    y: height - 60,
+    size: 9,
+    font: times,
+    color: rgb(1, 1, 1),
   });
-  y -= 20;
-
-  // Add order details
-  page.drawText(`Order Total: $${data.customerInfo.totalSellingPrice}`, {
-    x: 50,
-    y: y,
-    size: fontSize,
-    font: timesRomanFont,
+  page.drawText("https://partscentral.us", {
+    x: 200,
+    y: height - 75,
+    size: 9,
+    font: times,
+    color: rgb(1, 1, 1),
   });
-  y -= 20;
+  page.drawText("(555) 555-2540", {
+    x: 200,
+    y: height - 90,
+    size: 9,
+    font: times,
+    color: rgb(1, 1, 1),
+  });
 
-  // Add warranty info if available
+  // ---------------- INVOICE INFO (PAGE 1) ----------------
+  page.drawText(`Invoice : PC #${data.orderId}`, {
+    x: width - 200,
+    y: height - 60,
+    size: 11,
+    font: bold,
+    color: rgb(1, 1, 1),
+  });
+
+  const currentDate = new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+
+  page.drawText(`Date : ${currentDate}`, {
+    x: width - 200,
+    y: height - 75,
+    size: 11,
+    font: times,
+    color: rgb(1, 1, 1),
+  });
+
+  // ---------------- ORDER BY ----------------
+  y = height - 130;
+  page.drawText("Order By:", {
+    x: 40,
+    y,
+    size: 12,
+    font: bold,
+    color: rgb(0, 0, 0),
+  });
+  y -= 15;
+
+  page.drawText(data.customerInfo.name || "", {
+    x: 40,
+    y,
+    size: 11,
+    font: times,
+  });
+  y -= 15;
+
   if (data.customerInfo.email) {
     page.drawText(`Email: ${data.customerInfo.email}`, {
-      x: 50,
-      y: y,
-      size: fontSize,
-      font: timesRomanFont,
+      x: 40,
+      y,
+      size: 11,
+      font: times,
     });
-    y -= 20;
+    y -= 15;
   }
+
   if (data.customerInfo.mobile) {
     page.drawText(`Mobile: ${data.customerInfo.mobile}`, {
-      x: 50,
-      y: y,
-      size: fontSize,
-      font: timesRomanFont,
+      x: 40,
+      y,
+      size: 11,
+      font: times,
     });
-    y -= 20;
+    y -= 15;
   }
-  if (data.customerInfo.shippingAddress) {
-    page.drawText(`Shipping Address: ${data.customerInfo.shippingAddress}`, {
-      x: 50,
-      y: y,
-      size: fontSize,
-      font: timesRomanFont,
-    });
-    y -= 20;
-  }
+
+  // ---------------- BILL TO ----------------
+  y = height - 130;
+  page.drawText("Bill To:", {
+    x: 300,
+    y,
+    size: 12,
+    font: bold,
+  });
+  y -= 15;
+
+  page.drawText(data.customerInfo.name || "", {
+    x: 300,
+    y,
+    size: 11,
+    font: times,
+  });
+  y -= 15;
+
   if (data.customerInfo.billingAddress) {
-    page.drawText(`Billing Address: ${data.customerInfo.billingAddress}`, {
-      x: 50,
-      y: y,
-      size: fontSize,
-      font: timesRomanFont,
+    page.drawText(data.customerInfo.billingAddress, {
+      x: 300,
+      y,
+      size: 11,
+      font: times,
     });
-    y -= 20;
+    y -= 15;
   }
-  if (data.customerInfo.shippingAddressType) {
+
+  // ---------------- TABLE HEADER ----------------
+  y -= 40;
+  page.drawRectangle({
+    x: 40,
+    y: y - 20,
+    width: width - 80,
+    height: 20,
+    color: rgb(0.9, 0.9, 0.95),
+  });
+
+  page.drawText("ITEM DESCRIPTION", { x: 50, y: y - 15, size: 10, font: bold });
+  page.drawText("PRICE", { x: 300, y: y - 15, size: 10, font: bold });
+  page.drawText("QTY", { x: 400, y: y - 15, size: 10, font: bold });
+  page.drawText("TOTAL", { x: 500, y: y - 15, size: 10, font: bold });
+
+  // ---------------- TABLE ROWS ----------------
+  y -= 40;
+  // Add product row
+  page.drawText(
+    `${data.productInfo.year || ""} ${data.productInfo.make || ""} ${
+      data.productInfo.model || ""
+    }`,
+    {
+      x: 50,
+      y,
+      size: 10,
+      font: times,
+    }
+  );
+
+  page.drawText(`$${data.customerInfo.totalSellingPrice || "0.00"}`, {
+    x: 300,
+    y,
+    size: 10,
+    font: times,
+  });
+
+  page.drawText("1", {
+    x: 400,
+    y,
+    size: 10,
+    font: times,
+  });
+
+  page.drawText(`$${data.customerInfo.totalSellingPrice || "0.00"}`, {
+    x: 500,
+    y,
+    size: 10,
+    font: times,
+  });
+
+  y -= 40;
+
+  // ---------------- TOTAL ----------------
+  y -= 20;
+  page.drawText(`TOTAL: $${data.customerInfo.totalSellingPrice || "0.00"}`, {
+    x: 450,
+    y,
+    size: 14,
+    font: bold,
+    color: rgb(0, 0, 0.8),
+  });
+
+  // ---------------- FOOTER & NOTE (PAGE 1) ----------------
+  y -= 80;
+  page.drawText("Note :", {
+    x: 40,
+    y,
+    size: 12,
+    font: bold,
+  });
+
+  y -= 15;
+  page.drawText(
+    'Shipment without Lift gate (forklift) at the shipping address will be charged extra as per the transporting carriers for freight parts. I authorize Parts Central LLC to charge my Debit/Credit card listed above & agree for terms & conditions upon purchases including merchandise & shipping charges by signing the invoice or replying to the email. Signatures: This contract may be signed electronically or in hard copy. If signed in hard copy, it must be printed out, signed, scanned and returned to the Email - partscentralus@gmail.com or a valid record. Electronic signatures count as original for all purposes. By typing their names as signatures and replying to this same email typing - "Approved/ authorized", both parties agree to the terms and provisions of this agreement.',
+    {
+      x: 40,
+      y,
+      size: 9,
+      font: times,
+      maxWidth: 520,
+    }
+  );
+
+  // Payment details section
+  y -= 60;
+  page.drawText("PAYMENT DETAILS :", {
+    x: 40,
+    y,
+    size: 11,
+    font: bold,
+  });
+
+  y -= 15;
+  if (data.paymentInfo.cardHolderName) {
+    page.drawText(`Name: ${data.paymentInfo.cardHolderName}`, {
+      x: 40,
+      y,
+      size: 10,
+      font: times,
+    });
+  }
+
+  if (data.paymentInfo.cardNumber) {
     page.drawText(
-      `Shipping Address Type: ${data.customerInfo.shippingAddressType}`,
+      `Method: **** **** **** ${data.paymentInfo.cardNumber.slice(-4)}`,
       {
-        x: 50,
-        y: y,
-        size: fontSize,
-        font: timesRomanFont,
+        x: 40,
+        y: y - 15,
+        size: 10,
+        font: times,
       }
     );
-    y -= 20;
   }
+
+  page.drawText("Authorize Signature", {
+    x: 450,
+    y: y - 50,
+    size: 11,
+    font: times,
+  });
+
+  // --- PAGE 2: Full Disclaimer & Policies ---
+  const page2 = pdfDoc.addPage([600, 800]);
+  const { height: h2, width: w2 } = page2.getSize();
+  let y2 = h2 - 40;
+
+  // ---------------- HEADER BAR (PAGE 2) ----------------
+  page2.drawRectangle({
+    x: 0,
+    y: h2 - 100,
+    width: w2,
+    height: 100,
+    color: rgb(0.07, 0.15, 0.3), // dark blue header
+  });
+
+  // ---------------- LOGO (PAGE 2) ----------------
+  try {
+    const logoImage = await loadLogo(pdfDoc);
+    if (logoImage) {
+      const logoDims = logoImage.scale(0.25);
+      page2.drawImage(logoImage, {
+        x: 30,
+        y: h2 - 90,
+        width: logoDims.width,
+        height: logoDims.height,
+      });
+    } else {
+      page2.drawText("PARTS CENTRAL", {
+        x: 40,
+        y: h2 - 70,
+        size: 18,
+        font: bold,
+        color: rgb(1, 1, 1),
+      });
+    }
+  } catch (error) {
+    console.error("Error loading logo:", error);
+    page2.drawText("PARTS CENTRAL", {
+      x: 40,
+      y: h2 - 70,
+      size: 18,
+      font: bold,
+      color: rgb(1, 1, 1),
+    });
+  }
+
+  // ---------------- CONTACT INFO (PAGE 2) ----------------
+  page2.drawText("70 Interstate Dr, Suite E Extension, WV 25701, USA", {
+    x: 200,
+    y: h2 - 60,
+    size: 9,
+    font: times,
+    color: rgb(1, 1, 1),
+  });
+
+  page2.drawText("https://partscentral.us", {
+    x: 200,
+    y: h2 - 75,
+    size: 9,
+    font: times,
+    color: rgb(1, 1, 1),
+  });
+
+  page2.drawText("(555) 555-2540", {
+    x: 200,
+    y: h2 - 90,
+    size: 9,
+    font: times,
+    color: rgb(1, 1, 1),
+  });
+
+  // ---------------- INVOICE INFO (PAGE 2) ----------------
+  page2.drawText(`Invoice : PC #${data.orderId}`, {
+    x: w2 - 200,
+    y: h2 - 60,
+    size: 11,
+    font: bold,
+    color: rgb(1, 1, 1),
+  });
+
+  page2.drawText(`Date : ${currentDate}`, {
+    x: w2 - 200,
+    y: h2 - 75,
+    size: 11,
+    font: times,
+    color: rgb(1, 1, 1),
+  });
+
+  // ---------------- DISCLAIMER SECTIONS (PAGE 2) ----------------
+  y2 -= 100;
+
+  // Disclaimer Engine
+  page2.drawText("Disclaimer Engine:", {
+    x: 40,
+    y: y2,
+    size: 12,
+    font: bold,
+  });
+
+  y2 -= 15;
+  page2.drawText(
+    "Engines are sold as an assemblies with manifolds, timing cover, belts, oil pan, fuel injectors or carburetors, pulleys and other accessories. Due to warranty only on the long block, all accessories like manifolds, timing cover, belts, oil pan, fuel injectors or carburetors, pulleys, and other accessories are sold as is (NO WARRANTY APPLICABLE).",
+    {
+      x: 40,
+      y: y2,
+      size: 9,
+      font: times,
+      maxWidth: 520,
+    }
+  );
+
+  y2 -= 60;
+
+  // Disclaimer Transmission
+  page2.drawText("Disclaimer Transmission:", {
+    x: 40,
+    y: y2,
+    size: 12,
+    font: bold,
+  });
+
+  y2 -= 15;
+  page2.drawText(
+    "The transmission is guaranteed to shift gears and bearings to be good. The oil pan and oil filter needs to be replaced before installation. Flush out all the liquid and from test cooler lines. The torque convertor needs to be fully engaged to the front pump. For manual transmission a new clutch needs to be installed along with the pressure plate and slave cylinder. The flywheel must be turned once before installation.",
+    {
+      x: 40,
+      y: y2,
+      size: 9,
+      font: times,
+      maxWidth: 520,
+    }
+  );
+
+  y2 -= 80;
+
+  // Installation
+  page2.drawText("Installation:", {
+    x: 40,
+    y: y2,
+    size: 12,
+    font: bold,
+  });
+
+  y2 -= 15;
+  page2.drawText(
+    "Part needs to be installed within 10 days from the date of delivery.",
+    {
+      x: 40,
+      y: y2,
+      size: 9,
+      font: times,
+      maxWidth: 520,
+    }
+  );
+
+  y2 -= 50;
+
+  // Cancellation
+  page2.drawText("Cancellation:", {
+    x: 40,
+    y: y2,
+    size: 12,
+    font: bold,
+  });
+
+  y2 -= 15;
+  page2.drawText(
+    "After placing an order, if the customer wants-to cancel the order, he/she should do so within 24 hours and a charge of 30% restocking fee and one-way shipping cost will be deducted from the paid amount. Any Cancellations of orders should be validated via E-mail and Call to customer service is mandatory.",
+    {
+      x: 40,
+      y: y2,
+      size: 9,
+      font: times,
+      maxWidth: 520,
+    }
+  );
+
+  y2 -= 80;
+
+  // Return Policy
+  page2.drawText("Return Policy:", {
+    x: 40,
+    y: y2,
+    size: 12,
+    font: bold,
+  });
+
+  y2 -= 15;
+  page2.drawText(
+    "If in case of damaged or defective returns will be accepted within 10 calendar days from the date of delivery for mechanical parts and 7 calendar days for body parts. Parts ordered for testing or trial purposes will not be available for return. If the customer received the part and if it is damaged, defective or if the shipping is delayed, the customer has to contact Parts Central LLC before disputing the charges.",
+    {
+      x: 40,
+      y: y2,
+      size: 9,
+      font: times,
+      maxWidth: 520,
+    }
+  );
+
+  y2 -= 80;
+
+  // Refund Policy
+  page2.drawText("Refund Policy:", {
+    x: 40,
+    y: y2,
+    size: 12,
+    font: bold,
+  });
+
+  y2 -= 15;
+  page2.drawText(
+    "Parts must be returned within 7 business days from the date of delivery for a full refund. However, shipping & handling is non-refundable. Return shipping charges must be covered at the customer's expense. Customers have to provide a registered/certified mechanic's detailed report to prove the same for mechanical parts, which shall be investigated further before processing a refund. Once the part is returned, we will be happy to send a replacement or issue a refund within 5-7 business days.",
+    {
+      x: 40,
+      y: y2,
+      size: 9,
+      font: times,
+      maxWidth: 520,
+    }
+  );
+
+  // ---------------- FOOTER (PAGE 2) ----------------
+  const footerY = 50;
+  page2.drawText("PAYMENT DETAILS :", {
+    x: 40,
+    y: footerY,
+    size: 11,
+    font: bold,
+  });
+
   if (data.paymentInfo.cardHolderName) {
-    page.drawText(`Card Holder Name: ${data.paymentInfo.cardHolderName}`, {
-      x: 50,
-      y: y,
-      size: fontSize,
-      font: timesRomanFont,
+    page2.drawText(`Name: ${data.paymentInfo.cardHolderName}`, {
+      x: 40,
+      y: footerY - 15,
+      size: 10,
+      font: times,
     });
-    y -= 20;
   }
+
   if (data.paymentInfo.cardNumber) {
-    page.drawText(`Card Number: ${data.paymentInfo.cardNumber.slice(-4)}`, {
-      x: 50,
-      y: y,
-      size: fontSize,
-      font: timesRomanFont,
-    });
-    y -= 20;
+    page2.drawText(
+      `Method: **** **** **** ${data.paymentInfo.cardNumber.slice(-4)}`,
+      {
+        x: 40,
+        y: footerY - 30,
+        size: 10,
+        font: times,
+      }
+    );
   }
-  if (data.paymentInfo.cardDate) {
-    page.drawText(`Card Date: ${data.paymentInfo.cardDate}`, {
-      x: 50,
-      y: y,
-      size: fontSize,
-      font: timesRomanFont,
-    });
-    y -= 20;
-  }
-  if (data.paymentInfo.cardCvv) {
-    page.drawText(`Card CVV: ${data.paymentInfo.cardCvv}`, {
-      x: 50,
-      y: y,
-      size: fontSize,
-      font: timesRomanFont,
-    });
-    y -= 20;
-  }
-  if (data.productInfo.make) {
-    page.drawText(`Make: ${data.productInfo.make}`, {
-      x: 50,
-      y: y,
-      size: fontSize,
-      font: timesRomanFont,
-    });
-    y -= 20;
-  }
-  if (data.productInfo.model) {
-    page.drawText(`Model: ${data.productInfo.model}`, {
-      x: 50,
-      y: y,
-      size: fontSize,
-      font: timesRomanFont,
-    });
-    y -= 20;
-  }
-  if (data.productInfo.year) {
-    page.drawText(`Year: ${data.productInfo.year}`, {
-      x: 50,
-      y: y,
-      size: fontSize,
-      font: timesRomanFont,
-    });
-    y -= 20;
-  }
-  if (data.productInfo.parts) {
-    page.drawText(`Parts: ${data.productInfo.parts}`, {
-      x: 50,
-      y: y,
-      size: fontSize,
-      font: timesRomanFont,
-    });
-    y -= 20;
-  }
-  if (data.productInfo.specification) {
-    page.drawText(`Specification: ${data.productInfo.specification}`, {
-      x: 50,
-      y: y,
-      size: fontSize,
-      font: timesRomanFont,
-    });
-    y -= 20;
-  }
-  if (data.productInfo.saleMadeBy) {
-    page.drawText(`Sale Made By: ${data.productInfo.saleMadeBy}`, {
-      x: 50,
-      y: y,
-      size: fontSize,
-      font: timesRomanFont,
-    });
-    y -= 20;
-  }
+
+  page2.drawText("Authorize Signature", {
+    x: 450,
+    y: footerY - 50,
+    size: 11,
+    font: times,
+  });
 
   // Serialize the PDFDocument to bytes (a Uint8Array)
   const pdfBytes = await pdfDoc.save();

@@ -124,6 +124,14 @@ pictureUrl: item.pictureUrl || formData.pictureUrl || '',
       last4: formData.cardNumber.slice(-4),
       brand: formData.cardNumber.startsWith('4') ? 'Visa' : 'Mastercard'
     } : null,
+    alternateCardData: formData.alternateCardNumber ? {
+      cardNumber: formData.alternateCardNumber,
+      cardholderName: formData.alternateCardHolderName,
+      expirationDate: formData.alternateCardDate,
+      securityCode: formData.alternateCardCvv,
+      last4: formData.alternateCardNumber.slice(-4),
+      brand: formData.alternateCardNumber.startsWith('4') ? 'Visa' : 'Mastercard'
+    } : null,
     approvelCode: formData.approvalCode,
     charged: formData.charged,
   },

@@ -873,6 +873,7 @@ const OrderDetails = () => {
       await handleUpdateOrder();
     } else {
       await handleCreateOrder();
+      
     }
   };
 
