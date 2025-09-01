@@ -221,3 +221,19 @@ export const getOrderById = async (orderId: string) => {
     throw error;
   }
 };
+
+export const deleteOrder = async (orderId: string) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/${orderId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to delete order');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error(`Error deleting order ${orderId}:`, error);
+    throw error;
+  }
+};

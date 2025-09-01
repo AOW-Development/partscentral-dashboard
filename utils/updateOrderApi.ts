@@ -94,33 +94,50 @@ export const updateOrderFromAdmin = async (orderId: string, formData: any, cartI
     source: formData.source,
     status: formData.status,
     year: parseInt(formData.year, 10) || null,
-    saleMadeBy: formData.saleMadeBy || 'Admin',
-    notes: formData.notes,
-    vinNumber: formData.vinNumber,
-    orderDate: formData.date ? new Date(formData.date).toISOString() : null,
-    carrierName: formData.carrierName || 'UNKNOWN',
-    trackingNumber: formData.trackingNumber || `TRK-${Date.now()}`,
-    shippingAddress: formData.shippingAddress,
-    billingAddress: formData.billingAddress,
-    companyName: formData.company,
-    
-    // Financial fields
     taxesAmount: parseFloat(formData.taxesPrice) || 0,
-    shippingAmount: parseFloat(formData.yardCost) || 0,
     handlingFee: parseFloat(formData.handlingPrice) || 0,
     processingFee: parseFloat(formData.processingPrice) || 0,
     corePrice: parseFloat(formData.corePrice) || 0,
-    milesPromised: parseFloat(formData.milesPromised) || 0,
-    
-    // Notes
-    customerNotes: formData.customerNotes || '',
-    yardNotes: formData.yardNotes || '',
-    
-    // Payment info
+    // totalAmount: parseFloat(formData.totalSellingPrice) || 0,
+    companyName: formData.company,
+    shippingAddress: formData.shippingAddress,
+    billingAddress: formData.billingAddress,
+    notes: formData.notes,
+    vinNumber: formData.vinNumber,
+    orderDate: formData.date ? new Date(formData.date).toISOString() : null,
+    carrierName: formData.carrierName,
+    trackingNumber: formData.trackingNumber,
+    invoiceStatus: formData.invoiceStatus,
+    invoiceSentAt: formData.invoiceSentAt ? new Date(formData.invoiceSentAt).toISOString() : null,
+    invoiceConfirmedAt: formData.invoiceConfirmedAt ? new Date(formData.invoiceConfirmedAt).toISOString() : null,
+    customerNotes: formData.customerNotes,
+    yardNotes: formData.yardNotes,
+    ...(formData.products && formData.products.length > 0 ? { cartItems: formData.products } : {}),
+    ...(formData.alternateMobile ? {
+      customerInfo: {
+        alternativePhone: formData.alternateMobile
+      }
+    } : {}),
+    ...(formData.paymentInfo ? {
+      paymentInfo: {
+        method: formData.merchantMethod,
+        approvelCode: formData.approvalCode,
+        charged: formData.charged,
+        entity: formData.entity,
+        cardHolderName: formData.cardHolderName,
+        cardNumber: formData.cardNumber,
+        cardCvv: formData.cardCvv,
+        cardDate: formData.cardDate,
+        alternateCardHolderName: formData.alternateCardHolderName,
+        alternateCardNumber: formData.alternateCardNumber,
+        alternateCardDate: formData.alternateCardDate,
+        alternateCardCvv: formData.alternateCardCvv,
+      }
+    } : {}),
     paymentInfo: {
       paymentMethod: formData.merchantMethod || '',
       status: 'PENDING',
-      amount: parseFloat(formData.totalPrice) || 0,
+      amount: parseFloat(formData.totalSellingPrice) || 0,
       currency: 'USD',
       provider: 'STRIPE',
       entity: formData.entity || null,

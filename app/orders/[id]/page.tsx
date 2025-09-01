@@ -127,18 +127,21 @@ const OrderDetails = () => {
           // Map backend cartItems to UI cartItems array with strong typing
           if (Array.isArray(data.items) && data.items.length > 0) {
             const products = data.items.map((item: any): ProductFormData => ({
-              variantSku: item.sku || item.id,
+              variantSku: item.sku || item.id || '',
               make: item.makeName || '',
               model: item.modelName || '',
               year: item.yearName || '',
               parts: item.partName || '',
-              partPrice: item.unitPrice,
-              quantity: item.quantity,
-              // warranty: item.metadata?.warranty,
-              milesPromised: item.metadata?.milesPromised,
-              specification: item.specification,
+              partPrice: item.unitPrice || item.lineTotal || 0,
+              quantity: item.quantity || 1,
+              milesPromised: item.metadata?.milesPromised || '',
+              specification: item.specification || '',
               pictureUrl: item.pictureUrl || '',
               pictureStatus: item.pictureStatus || 'PENDING',
+              // Initialize empty arrays for variants data
+              productVariants: [],
+              selectedSubpart: null,
+              selectedMileage: '',
             }));
             setFormData((prev) => ({ ...prev, products }));
           }
@@ -176,6 +179,7 @@ const OrderDetails = () => {
             customerName: data.customer?.full_name || "",
             email: billing.email || "",
             mobile: billing.phone || "",
+            alternateMobile: data.customer?.alternativePhone || "",
 
             // Pricing
             partPrice: data.subtotal || "",
@@ -202,6 +206,16 @@ const OrderDetails = () => {
                 })
               : "",
             cardCvv: payment.cardCvv || "",
+            // Alternate card info
+            alternateCardHolderName: payment.alternateCardHolderName || "",
+            alternateCardNumber: payment.alternateCardNumber || "",
+            alternateCardDate: payment.alternateCardExpiry
+              ? new Date(payment.alternateCardExpiry).toLocaleDateString("en-US", {
+                  month: "2-digit",
+                  year: "2-digit",
+                })
+              : "",
+            alternateCardCvv: payment.alternateCardCvv || "",
             merchantMethod: payment.method || "",
             approvalCode:
               payment.approvelCode || payment.providerPaymentId || "",
@@ -2572,9 +2586,8 @@ const OrderDetails = () => {
                         }}
                       >
                         <option value="">Select parts</option>
-                        <option>Engine</option>
-                        <option>Transmission</option>
-                        {/* <option>Ford</option> */}
+                        <option >Engine</option>
+                        <option >Transmission</option>
                       </select>
                       <ChevronDown
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
@@ -2605,11 +2618,15 @@ const OrderDetails = () => {
                         disabled={!product.productVariants?.length}
                       >
                         <option value="">Select Specification</option>
-                        {product.productVariants?.map((variant, idx) => (
+                        {(() => {
+                          console.log(' Rendering specs for product:', product);
+                          console.log(' ProductVariants:', product.productVariants);
+                          return product.productVariants?.map((variant, idx) => (
                           <option key={idx} value={variant.subPart.name}>
                             {variant.subPart.name}
                           </option>
-                        ))}
+                          ));
+                        })()}
                       </select>
                       <ChevronDown
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"

@@ -12,6 +12,7 @@ import CalendarMain from "../components/Calendar";
 
 // import { getSocket } from "../utils/socket";
 import { getSocket } from "../../utils/socket";
+import { deleteOrder } from "../../utils/orderApi";
 // import Calendar from "react-calendar";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
@@ -267,6 +268,24 @@ export default function Orders() {
     }
   };
 
+  // Handle delete order
+  const handleDeleteOrder = async (orderId: string) => {
+    if (!confirm('Are you sure you want to delete this order? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await deleteOrder(orderId);
+      // Remove the order from the local state
+      setOrders(prevOrders => prevOrders.filter(order => order.id !== orderId));
+      setOpenActionMenu(null);
+      alert('Order deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      alert('Failed to delete order. Please try again.');
+    }
+  };
+
   return (
     <ProtectRoute>
       <div className="min-h-screen bg-main text-white font-exo">
@@ -501,7 +520,7 @@ export default function Orders() {
                               </button>
                               <button
                                 className="text-red-600 text-base px-2 py-1 text-left rounded hover:bg-red-100"
-                                onClick={() => setOpenActionMenu(null)}
+                                onClick={() => handleDeleteOrder(order.id)}
                                 type="button"
                               >
                                 Remove Order
