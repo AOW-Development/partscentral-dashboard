@@ -5,6 +5,11 @@ import Sidebar from "@/app/components/Sidebar";
 import { useParams } from "next/navigation";
 import { ChevronDown, X, Plus, Minus, Calendar } from "lucide-react";
 import Image from "next/image";
+declare global {
+  interface Window {
+    _lastVariantKeys?: { [index: number]: string };
+  }
+}
 // --- Strong types for cart mapping ---
 export type ProductFormData = {
   variantSku: string;
@@ -124,27 +129,6 @@ const OrderDetails = () => {
           const payment = data.payments?.[0] || {};
           const billing = data.billingSnapshot || {};
 
-          // Map backend cartItems to UI cartItems array with strong typing
-          if (Array.isArray(data.items) && data.items.length > 0) {
-            const products = data.items.map((item: any): ProductFormData => ({
-              variantSku: item.sku || item.id || '',
-              make: item.makeName || '',
-              model: item.modelName || '',
-              year: item.yearName || '',
-              parts: item.partName || '',
-              partPrice: item.unitPrice || item.lineTotal || 0,
-              quantity: item.quantity || 1,
-              milesPromised: item.metadata?.milesPromised || '',
-              specification: item.specification || '',
-              pictureUrl: item.pictureUrl || '',
-              pictureStatus: item.pictureStatus || 'PENDING',
-              // Initialize empty arrays for variants data
-              productVariants: [],
-              selectedSubpart: null,
-              selectedMileage: '',
-            }));
-            setFormData((prev) => ({ ...prev, products }));
-          }
           const shipping = data.shippingSnapshot || {};
           const yard = data.yardInfo || {};
           const ownShipping = yard.yardOwnShippingInfo || {};
@@ -165,8 +149,29 @@ const OrderDetails = () => {
           setCustomerNotes(customerNotesArray);
           setYardNotes(yardNotesArray);
 
+          // Map backend cartItems to UI cartItems array with strong typing
+          const products = (Array.isArray(data.items) && data.items.length > 0)
+            ? data.items.map((item: any): ProductFormData => ({
+                variantSku: String(item.sku || item.id || ''),
+                make: String(item.makeName || ''),
+                model: String(item.modelName || ''),
+                year: String(item.yearName || ''),
+                parts: String(item.partName || ''),
+                partPrice: String(item.unitPrice || item.lineTotal || ''),
+                quantity: typeof item.quantity === 'number' ? item.quantity : (parseInt(item.quantity) || 1),
+                milesPromised: typeof item.milesPromised === 'string' || typeof item.milesPromised === 'number' ? String(item.milesPromised) : '',
+                specification: String(item.specification || ''),
+                pictureUrl: String(item.pictureUrl || ''),
+                pictureStatus: String(item.pictureStatus || 'PENDING'),
+                productVariants: [],
+                selectedSubpart: null,
+                selectedMileage: '',
+              }))
+            : formData.products; // Keep existing products if data.items is empty
+
           setFormData({
             ...formData,
+            products, // Set the products here
             // Basic order info
             id: data.orderNumber || "",
             date: data.orderDate
@@ -221,19 +226,9 @@ const OrderDetails = () => {
               payment.approvelCode || payment.providerPaymentId || "",
             entity: payment.entity || "",
             charged: payment.status === "SUCCEEDED" ? "Yes" : "No",
-
+          
             // Product info (from first item if available)
             warranty: data.items?.[0]?.metadata?.warranty || "",
-            // milesPromised:
-            //   data.milesPromised ||
-            //   data.items?.[0]?.metadata?.milesPromised ||
-            //   "",
-            // make: data.items?.[0]?.makeName || "",
-            // model: data.items?.[0]?.modelName || "",
-            // year: data.year || data.items?.[0]?.yearName || "",
-            // parts: data.items?.[0]?.partName || "",
-            // specification: data.items?.[0]?.specification || "",
-            // variantSku: data.items?.[0]?.sku || "",
             pictureUrl: data.items?.[0]?.pictureUrl || "",
             pictureStatus: data.items?.[0]?.pictureStatus || "",
 
@@ -256,7 +251,6 @@ const OrderDetails = () => {
             yardMiles: yard.yardMiles || "",
             yardShipping: yard.yardShippingType || "",
             yardCost: yard.yardShippingCost || "",
-            // reason: yard.reason || "",
             customerNotes: customerNotesArray,
             yardNotes: yardNotesArray,
             invoiceStatus: data.invoiceStatus || "",
@@ -307,9 +301,10 @@ const OrderDetails = () => {
           console.error("Failed to fetch order details", err);
         });
     }
-  }, [orderId, setCartItems]); // State for product variants
+  }, [orderId]); // State for product variants
   
-  const [isLoadingVariants, setIsLoadingVariants] = useState(false);
+  // Per-product loading state for variants
+ const [isLoadingVariants, setIsLoadingVariants] = useState<{[index: number]: boolean}>({});
   const [variantError, setVariantError] = useState("");
   const [cardEntry, setCardEntry] = useState(false);
 
@@ -495,7 +490,7 @@ const OrderDetails = () => {
   const fetchProductVariants = async (index: number) => {
     const product = formData.products[index];
     if (product.make && product.model && product.year && product.parts) {
-      setIsLoadingVariants(true);
+      setIsLoadingVariants((prev) => ({ ...prev, [index]: true }));
       setVariantError("");
       try {
         const data = await getProductVariants({
@@ -505,23 +500,46 @@ const OrderDetails = () => {
           part: product.parts,
         });
         handleProductInputChange(index, "productVariants", data.groupedVariants || []);
-        handleProductInputChange(index, "selectedSubpart", null);
-        handleProductInputChange(index, "selectedMileage", "");
-        handleProductInputChange(index, "specification", "");
-        handleProductInputChange(index, "variantSku", "");
-        handleProductInputChange(index, "milesPromised", "");
       } catch (error) {
         console.error("Error fetching product variants:", error);
         setVariantError("Failed to load product variants. Please try again.");
         handleProductInputChange(index, "productVariants", []);
       } finally {
-        setIsLoadingVariants(false);
+        setIsLoadingVariants((prev) => ({ ...prev, [index]: false }));
       }
     } else {
       handleProductInputChange(index, "productVariants", []);
     }
   };
-  const [lastLogged, setLastLogged] = useState({
+
+// useEffect to reactively fetch variants and reset dependent fields
+useEffect(() => {
+  formData.products.forEach((product, index) => {
+    const { make, model, year, parts } = product;
+    // Compose a unique key for these fields
+    const key = `${make}-${model}-${year}-${parts}`;
+    // Track the last used key per product
+    if (!window._lastVariantKeys) window._lastVariantKeys = {};
+    if ( window._lastVariantKeys[index] && window._lastVariantKeys[index] !== key) {
+      // Reset dependent fields immediately
+      handleProductInputChange(index, "specification", "");
+      handleProductInputChange(index, "selectedSubpart", null);
+      handleProductInputChange(index, "selectedMileage", "");
+      handleProductInputChange(index, "variantSku", "");
+      handleProductInputChange(index, "milesPromised", "");
+      handleProductInputChange(index, "productVariants", []);
+      // Only fetch if all fields are present
+      if (make && model && year && parts) {
+        fetchProductVariants(index);
+      }
+      window._lastVariantKeys[index] = key;
+    }
+  });
+  console.log("Loaded products:", formData.products);
+  // eslint-disable-next-line
+}, [formData.products.map(p => `${p.make}-${p.model}-${p.year}-${p.parts}`).join(",")]);
+  
+const [lastLogged, setLastLogged] = useState({
     trackingNumber: "",
     yardCost: "",
     carrierName: "",
@@ -1044,10 +1062,8 @@ const OrderDetails = () => {
     if (!validateAllFields()) {
       return;
     }
-
     setIsLoading(true);
     setMessage(null);
-
     try {
       const cartItems = formData.products.map(item => ({
         id: item.variantSku,
@@ -1066,9 +1082,19 @@ const OrderDetails = () => {
         ...formData,
         invoiceSentAt: formData.invoiceSentAt ? new Date(formData.invoiceSentAt).toISOString() : null,
         invoiceConfirmedAt: formData.invoiceConfirmedAt ? new Date(formData.invoiceConfirmedAt).toISOString() : null,
+        paymentInfo: {
+          paymentMethod: formData.merchantMethod || '',
+          amount: parseFloat(formData.totalPrice as string) || 0,
+          approvelCode: formData.approvalCode,
+          charged: formData.charged,
+          entity: formData.entity,
+        },
+        ownShippingInfo: formData.ownShippingInfo && {
+          ...formData.ownShippingInfo,
+          variance: formData.ownShippingInfo.variance || '',
+        },
       };
       const result = await updateOrderFromAdmin(orderId, payload, cartItems);
-
       setMessage({
         type: "success",
         text: "Order updated successfully!",
@@ -1087,6 +1113,7 @@ const OrderDetails = () => {
       setIsLoading(false);
     }
   };
+
 
   const handleCreateOrder = async () => {
     if (!validateAllFields()) {
@@ -2581,8 +2608,8 @@ const OrderDetails = () => {
                         }`}
                         value={product.parts}
                         onChange={(e) => {
+                          // Only update state, let useEffect handle fetch/reset
                           handleProductInputChange(index, "parts", e.target.value);
-                          fetchProductVariants(index);
                         }}
                       >
                         <option value="">Select parts</option>
