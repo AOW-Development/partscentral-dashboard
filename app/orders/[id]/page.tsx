@@ -150,24 +150,34 @@ const OrderDetails = () => {
           setYardNotes(yardNotesArray);
 
           // Map backend cartItems to UI cartItems array with strong typing
-          const products = (Array.isArray(data.items) && data.items.length > 0)
-            ? data.items.map((item: any): ProductFormData => ({
-                variantSku: String(item.sku || item.id || ''),
-                make: String(item.makeName || ''),
-                model: String(item.modelName || ''),
-                year: String(item.yearName || ''),
-                parts: String(item.partName || ''),
-                partPrice: String(item.unitPrice || item.lineTotal || ''),
-                quantity: typeof item.quantity === 'number' ? item.quantity : (parseInt(item.quantity) || 1),
-                milesPromised: typeof item.milesPromised === 'string' || typeof item.milesPromised === 'number' ? String(item.milesPromised) : '',
-                specification: String(item.specification || ''),
-                pictureUrl: String(item.pictureUrl || ''),
-                pictureStatus: String(item.pictureStatus || 'PENDING'),
-                productVariants: [],
-                selectedSubpart: null,
-                selectedMileage: '',
-              }))
-            : formData.products; // Keep existing products if data.items is empty
+          const products =
+            Array.isArray(data.items) && data.items.length > 0
+              ? data.items.map(
+                  (item: any): ProductFormData => ({
+                    variantSku: String(item.sku || item.id || ""),
+                    make: String(item.makeName || ""),
+                    model: String(item.modelName || ""),
+                    year: String(item.yearName || ""),
+                    parts: String(item.partName || ""),
+                    partPrice: String(item.unitPrice || item.lineTotal || ""),
+                    quantity:
+                      typeof item.quantity === "number"
+                        ? item.quantity
+                        : parseInt(item.quantity) || 1,
+                    milesPromised:
+                      typeof item.milesPromised === "string" ||
+                      typeof item.milesPromised === "number"
+                        ? String(item.milesPromised)
+                        : "",
+                    specification: String(item.specification || ""),
+                    pictureUrl: String(item.pictureUrl || ""),
+                    pictureStatus: String(item.pictureStatus || "PENDING"),
+                    productVariants: [],
+                    selectedSubpart: null,
+                    selectedMileage: "",
+                  })
+                )
+              : formData.products; // Keep existing products if data.items is empty
 
           setFormData({
             ...formData,
@@ -215,10 +225,13 @@ const OrderDetails = () => {
             alternateCardHolderName: payment.alternateCardHolderName || "",
             alternateCardNumber: payment.alternateCardNumber || "",
             alternateCardDate: payment.alternateCardExpiry
-              ? new Date(payment.alternateCardExpiry).toLocaleDateString("en-US", {
-                  month: "2-digit",
-                  year: "2-digit",
-                })
+              ? new Date(payment.alternateCardExpiry).toLocaleDateString(
+                  "en-US",
+                  {
+                    month: "2-digit",
+                    year: "2-digit",
+                  }
+                )
               : "",
             alternateCardCvv: payment.alternateCardCvv || "",
             merchantMethod: payment.method || "",
@@ -226,7 +239,7 @@ const OrderDetails = () => {
               payment.approvelCode || payment.providerPaymentId || "",
             entity: payment.entity || "",
             charged: payment.status === "SUCCEEDED" ? "Yes" : "No",
-          
+
             // Product info (from first item if available)
             warranty: data.items?.[0]?.metadata?.warranty || "",
             pictureUrl: data.items?.[0]?.pictureUrl || "",
@@ -272,7 +285,7 @@ const OrderDetails = () => {
               bolNumber: ownShipping.bolNumber || "",
             },
           });
-          
+
           if (data.customerNotes && typeof data.customerNotes === "string") {
             try {
               const parsedCustomerNotes = JSON.parse(data.customerNotes);
@@ -302,9 +315,11 @@ const OrderDetails = () => {
         });
     }
   }, [orderId]); // State for product variants
-  
+
   // Per-product loading state for variants
- const [isLoadingVariants, setIsLoadingVariants] = useState<{[index: number]: boolean}>({});
+  const [isLoadingVariants, setIsLoadingVariants] = useState<{
+    [index: number]: boolean;
+  }>({});
   const [variantError, setVariantError] = useState("");
   const [cardEntry, setCardEntry] = useState(false);
 
@@ -439,7 +454,9 @@ const OrderDetails = () => {
       products: prev.products.filter((_, i) => i !== index),
     }));
   };
-  const [availableYears, setAvailableYears] = useState<{ [index: number]: string[] }>({});
+  const [availableYears, setAvailableYears] = useState<{
+    [index: number]: string[];
+  }>({});
 
   // Fetch years for each product's make/model
   useEffect(() => {
@@ -452,10 +469,13 @@ const OrderDetails = () => {
         setAvailableYears((prev) => ({ ...prev, [index]: [] }));
       }
     });
-  }, [formData.products.map(p => `${p.make}-${p.model}`).join(",")]);
+  }, [formData.products.map((p) => `${p.make}-${p.model}`).join(",")]);
 
   // Handle mileage selection
-  const handleMileageChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+  const handleMileageChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
     const selectedMiles = e.target.value;
     const product = formData.products[index];
     handleProductInputChange(index, "milesPromised", selectedMiles);
@@ -466,7 +486,11 @@ const OrderDetails = () => {
       );
       if (variant) {
         handleProductInputChange(index, "variantSku", variant.sku);
-        handleProductInputChange(index, "partPrice", variant.discountedPrice?.toString() || variant.actualprice.toString());
+        handleProductInputChange(
+          index,
+          "partPrice",
+          variant.discountedPrice?.toString() || variant.actualprice.toString()
+        );
       }
     }
   };
@@ -479,7 +503,8 @@ const OrderDetails = () => {
     const selectedSpec = e.target.value;
     const product = formData.products[index];
     const subpart =
-      product.productVariants?.find((v) => v.subPart.name === selectedSpec) || null;
+      product.productVariants?.find((v) => v.subPart.name === selectedSpec) ||
+      null;
 
     handleProductInputChange(index, "specification", selectedSpec);
     handleProductInputChange(index, "selectedSubpart", subpart);
@@ -499,7 +524,11 @@ const OrderDetails = () => {
           year: product.year,
           part: product.parts,
         });
-        handleProductInputChange(index, "productVariants", data.groupedVariants || []);
+        handleProductInputChange(
+          index,
+          "productVariants",
+          data.groupedVariants || []
+        );
       } catch (error) {
         console.error("Error fetching product variants:", error);
         setVariantError("Failed to load product variants. Please try again.");
@@ -512,34 +541,41 @@ const OrderDetails = () => {
     }
   };
 
-// useEffect to reactively fetch variants and reset dependent fields
-useEffect(() => {
-  formData.products.forEach((product, index) => {
-    const { make, model, year, parts } = product;
-    // Compose a unique key for these fields
-    const key = `${make}-${model}-${year}-${parts}`;
-    // Track the last used key per product
-    if (!window._lastVariantKeys) window._lastVariantKeys = {};
-    if ( window._lastVariantKeys[index] && window._lastVariantKeys[index] !== key) {
-      // Reset dependent fields immediately
-      handleProductInputChange(index, "specification", "");
-      handleProductInputChange(index, "selectedSubpart", null);
-      handleProductInputChange(index, "selectedMileage", "");
-      handleProductInputChange(index, "variantSku", "");
-      handleProductInputChange(index, "milesPromised", "");
-      handleProductInputChange(index, "productVariants", []);
-      // Only fetch if all fields are present
-      if (make && model && year && parts) {
-        fetchProductVariants(index);
+  // useEffect to reactively fetch variants and reset dependent fields
+  useEffect(() => {
+    formData.products.forEach((product, index) => {
+      const { make, model, year, parts } = product;
+      // Compose a unique key for these fields
+      const key = `${make}-${model}-${year}-${parts}`;
+      // Track the last used key per product
+      if (!window._lastVariantKeys) window._lastVariantKeys = {};
+      if (
+        window._lastVariantKeys[index] &&
+        window._lastVariantKeys[index] !== key
+      ) {
+        // Reset dependent fields immediately
+        handleProductInputChange(index, "specification", "");
+        handleProductInputChange(index, "selectedSubpart", null);
+        handleProductInputChange(index, "selectedMileage", "");
+        handleProductInputChange(index, "variantSku", "");
+        handleProductInputChange(index, "milesPromised", "");
+        handleProductInputChange(index, "productVariants", []);
+        // Only fetch if all fields are present
+        if (make && model && year && parts) {
+          fetchProductVariants(index);
+        }
+        window._lastVariantKeys[index] = key;
       }
-      window._lastVariantKeys[index] = key;
-    }
-  });
-  console.log("Loaded products:", formData.products);
-  // eslint-disable-next-line
-}, [formData.products.map(p => `${p.make}-${p.model}-${p.year}-${p.parts}`).join(",")]);
-  
-const [lastLogged, setLastLogged] = useState({
+    });
+    console.log("Loaded products:", formData.products);
+    // eslint-disable-next-line
+  }, [
+    formData.products
+      .map((p) => `${p.make}-${p.model}-${p.year}-${p.parts}`)
+      .join(","),
+  ]);
+
+  const [lastLogged, setLastLogged] = useState({
     trackingNumber: "",
     yardCost: "",
     carrierName: "",
@@ -971,7 +1007,7 @@ const [lastLogged, setLastLogged] = useState({
         //   specification: formData.specification,
         //   saleMadeBy: formData.saleMadeBy,
         // },
-        productInfo: formData.products.map(product => ({
+        productInfo: formData.products.map((product) => ({
           make: product.make,
           model: product.model,
           year: product.year,
@@ -1065,25 +1101,31 @@ const [lastLogged, setLastLogged] = useState({
     setIsLoading(true);
     setMessage(null);
     try {
-      const cartItems = formData.products.map(item => ({
-        id: item.variantSku,
-        name: `${item.make} ${item.model} ${item.year} ${item.parts}`,
-        price: parseFloat(String(item.partPrice)) || 0,
-        quantity: item.quantity || 1,
-        // warranty: item.warranty,
-        milesPromised: item.milesPromised,
-        specification: item.specification,
-        pictureUrl: item.pictureUrl || '',
-        pictureStatus: item.pictureStatus || 'PENDING',
-      })).filter(item => !!item.id); // Ensure SKU is present
+      const cartItems = formData.products
+        .map((item) => ({
+          id: item.variantSku,
+          name: `${item.make} ${item.model} ${item.year} ${item.parts}`,
+          price: parseFloat(String(item.partPrice)) || 0,
+          quantity: item.quantity || 1,
+          // warranty: item.warranty,
+          milesPromised: item.milesPromised,
+          specification: item.specification,
+          pictureUrl: item.pictureUrl || "",
+          pictureStatus: item.pictureStatus || "PENDING",
+        }))
+        .filter((item) => !!item.id); // Ensure SKU is present
 
       // Ensure invoice fields are ISO strings or empty
       const payload = {
         ...formData,
-        invoiceSentAt: formData.invoiceSentAt ? new Date(formData.invoiceSentAt).toISOString() : null,
-        invoiceConfirmedAt: formData.invoiceConfirmedAt ? new Date(formData.invoiceConfirmedAt).toISOString() : null,
+        invoiceSentAt: formData.invoiceSentAt
+          ? new Date(formData.invoiceSentAt).toISOString()
+          : null,
+        invoiceConfirmedAt: formData.invoiceConfirmedAt
+          ? new Date(formData.invoiceConfirmedAt).toISOString()
+          : null,
         paymentInfo: {
-          paymentMethod: formData.merchantMethod || '',
+          paymentMethod: formData.merchantMethod || "",
           amount: parseFloat(formData.totalPrice as string) || 0,
           approvelCode: formData.approvalCode,
           charged: formData.charged,
@@ -1091,7 +1133,7 @@ const [lastLogged, setLastLogged] = useState({
         },
         ownShippingInfo: formData.ownShippingInfo && {
           ...formData.ownShippingInfo,
-          variance: formData.ownShippingInfo.variance || '',
+          variance: formData.ownShippingInfo.variance || "",
         },
       };
       const result = await updateOrderFromAdmin(orderId, payload, cartItems);
@@ -1113,7 +1155,6 @@ const [lastLogged, setLastLogged] = useState({
       setIsLoading(false);
     }
   };
-
 
   const handleCreateOrder = async () => {
     if (!validateAllFields()) {
@@ -1139,17 +1180,19 @@ const [lastLogged, setLastLogged] = useState({
         );
       }
 
-      const cartItems = formData.products.map(item => ({
-        id: item.variantSku,
-        name: `${item.make} ${item.model} ${item.year} ${item.parts}`,
-        price: parseFloat(String(item.partPrice)) || 0,
-        quantity: item.quantity || 1,
-        // warranty: item.warranty,
-        milesPromised: item.milesPromised,
-        specification: item.specification,
-        pictureUrl: item.pictureUrl || '',
-        pictureStatus: item.pictureStatus || 'PENDING',
-      })).filter(item => !!item.id); // Ensure SKU is present
+      const cartItems = formData.products
+        .map((item) => ({
+          id: item.variantSku,
+          name: `${item.make} ${item.model} ${item.year} ${item.parts}`,
+          price: parseFloat(String(item.partPrice)) || 0,
+          quantity: item.quantity || 1,
+          // warranty: item.warranty,
+          milesPromised: item.milesPromised,
+          specification: item.specification,
+          pictureUrl: item.pictureUrl || "",
+          pictureStatus: item.pictureStatus || "PENDING",
+        }))
+        .filter((item) => !!item.id); // Ensure SKU is present
 
       // Get the first payment entry (or use default values if none exists)
       const paymentEntry = paymentEntries[0] || {};
@@ -1162,8 +1205,12 @@ const [lastLogged, setLastLogged] = useState({
         approvalCode: paymentEntry.approvalCode || "",
         charged: paymentEntry.charged || "No",
         merchantMethod: paymentEntry.merchantMethod || "",
-        invoiceSentAt: formData.invoiceSentAt ? new Date(formData.invoiceSentAt).toISOString() : null,
-        invoiceConfirmedAt: formData.invoiceConfirmedAt ? new Date(formData.invoiceConfirmedAt).toISOString() : null,
+        invoiceSentAt: formData.invoiceSentAt
+          ? new Date(formData.invoiceSentAt).toISOString()
+          : null,
+        invoiceConfirmedAt: formData.invoiceConfirmedAt
+          ? new Date(formData.invoiceConfirmedAt).toISOString()
+          : null,
         invoiceStatus: formData.invoiceStatus || "NOT_AVAILABLE",
       };
       const result = await createOrderFromAdmin(updatedFormData, cartItems);
@@ -2490,7 +2537,11 @@ const [lastLogged, setLastLogged] = useState({
                         }`}
                         value={product.make}
                         onChange={(e) => {
-                          handleProductInputChange(index, "make", e.target.value);
+                          handleProductInputChange(
+                            index,
+                            "make",
+                            e.target.value
+                          );
                           fetchProductVariants(index);
                         }}
                       >
@@ -2527,7 +2578,11 @@ const [lastLogged, setLastLogged] = useState({
                         }`}
                         value={product.model}
                         onChange={(e) => {
-                          handleProductInputChange(index, "model", e.target.value);
+                          handleProductInputChange(
+                            index,
+                            "model",
+                            e.target.value
+                          );
                           fetchProductVariants(index);
                         }}
                         disabled={!product.make}
@@ -2565,7 +2620,11 @@ const [lastLogged, setLastLogged] = useState({
                         }`}
                         value={product.year}
                         onChange={(e) => {
-                          handleProductInputChange(index, "year", e.target.value);
+                          handleProductInputChange(
+                            index,
+                            "year",
+                            e.target.value
+                          );
                           fetchProductVariants(index);
                         }}
                         disabled={
@@ -2578,9 +2637,11 @@ const [lastLogged, setLastLogged] = useState({
                             {year}
                           </option>
                         ))} */}
-                         {availableYears[index]?.map((year) => (
-    <option key={year} value={year}>{year}</option>
-  ))}
+                        {availableYears[index]?.map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
                       </select>
                       <ChevronDown
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
@@ -2609,12 +2670,16 @@ const [lastLogged, setLastLogged] = useState({
                         value={product.parts}
                         onChange={(e) => {
                           // Only update state, let useEffect handle fetch/reset
-                          handleProductInputChange(index, "parts", e.target.value);
+                          handleProductInputChange(
+                            index,
+                            "parts",
+                            e.target.value
+                          );
                         }}
                       >
                         <option value="">Select parts</option>
-                        <option >Engine</option>
-                        <option >Transmission</option>
+                        <option>Engine</option>
+                        <option>Transmission</option>
                       </select>
                       <ChevronDown
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
@@ -2646,13 +2711,18 @@ const [lastLogged, setLastLogged] = useState({
                       >
                         <option value="">Select Specification</option>
                         {(() => {
-                          console.log(' Rendering specs for product:', product);
-                          console.log(' ProductVariants:', product.productVariants);
-                          return product.productVariants?.map((variant, idx) => (
-                          <option key={idx} value={variant.subPart.name}>
-                            {variant.subPart.name}
-                          </option>
-                          ));
+                          console.log(" Rendering specs for product:", product);
+                          console.log(
+                            " ProductVariants:",
+                            product.productVariants
+                          );
+                          return product.productVariants?.map(
+                            (variant, idx) => (
+                              <option key={idx} value={variant.subPart.name}>
+                                {variant.subPart.name}
+                              </option>
+                            )
+                          );
                         })()}
                       </select>
                       <ChevronDown
@@ -2684,11 +2754,13 @@ const [lastLogged, setLastLogged] = useState({
                         size={16}
                       />
                       <datalist id={`miles-suggestions-${index}`}>
-                        {product.selectedSubpart?.variants.map((variant, idx) => (
-                          <option key={idx} value={variant.miles}>
-                            {variant.miles} miles
-                          </option>
-                        ))}
+                        {product.selectedSubpart?.variants.map(
+                          (variant, idx) => (
+                            <option key={idx} value={variant.miles}>
+                              {variant.miles} miles
+                            </option>
+                          )
+                        )}
                       </datalist>
                     </div>
                   </div>
@@ -2796,7 +2868,9 @@ const [lastLogged, setLastLogged] = useState({
                             type="date"
                             className="text-white text-sm placeholder:text-white"
                             value={formData.invoiceSentAt}
-                            onChange={e => handleInputChange("invoiceSentAt", e.target.value)}
+                            onChange={(e) =>
+                              handleInputChange("invoiceSentAt", e.target.value)
+                            }
                           />
                         </div>
                       </div>
@@ -2812,7 +2886,12 @@ const [lastLogged, setLastLogged] = useState({
                         type="date"
                         className="text-white text-sm ml-2 placeholder:text-white"
                         value={formData.invoiceConfirmedAt}
-                        onChange={e => handleInputChange("invoiceConfirmedAt", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "invoiceConfirmedAt",
+                            e.target.value
+                          )
+                        }
                       />
                     </div>
                   </div>

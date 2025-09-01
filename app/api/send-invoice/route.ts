@@ -40,15 +40,18 @@ interface InvoiceData {
     totalSellingPrice: number;
     warranty: string;
     milesPromised: number;
+    vinNumber: string;
   };
-  productInfo: {
-    make: string;
-    model: string;
-    year: string;
-    parts: string;
-    specification: string;
-    saleMadeBy: string;
-  };
+  productInfo: [
+    {
+      make: string;
+      model: string;
+      year: string;
+      parts: string;
+      specification: string;
+      saleMadeBy: string;
+    }
+  ];
   paymentInfo: {
     cardHolderName: string;
     cardNumber: string;
@@ -79,6 +82,7 @@ interface InvoiceData {
 export async function POST(request: NextRequest) {
   try {
     const invoiceData = await request.json();
+    console.log("invoiceData is:", invoiceData);
 
     // Validate required data
     if (!invoiceData.customerInfo?.email) {
@@ -214,23 +218,44 @@ async function generateInvoicePDF(data: InvoiceData) {
   }
 
   // ---------------- CONTACT INFO (PAGE 1) ----------------
-  page.drawText("76 Imperial Dr Suite E Evanston, WY 82930, USA", {
+  page.drawText("Location:", {
     x: 30,
+    y: height - 60,
+    size: 9,
+    font: bold,
+    color: rgb(1, 1, 1),
+  });
+  page.drawText("76 Imperial Dr Suite E Evanston, WY 82930, USA", {
+    x: 80,
     y: height - 60,
     size: 9,
     font: times,
     color: rgb(1, 1, 1),
   });
-  page.drawText("https://partscentral.us", {
+  page.drawText("Website:", {
     x: 30,
+    y: height - 75,
+    size: 9,
+    font: bold,
+    color: rgb(1, 1, 1),
+  });
+  page.drawText("https://partscentral.us", {
+    x: 80,
     y: height - 75,
     size: 9,
     font: times,
     color: rgb(1, 1, 1),
   });
-  page.drawText("(888) 338-2540", {
+  page.drawText("Phone:", {
     x: 30,
-    y: height - 85,
+    y: height - 90,
+    size: 9,
+    font: bold,
+    color: rgb(1, 1, 1),
+  });
+  page.drawText("(888) 338-2540", {
+    x: 70,
+    y: height - 90,
     size: 9,
     font: times,
     color: rgb(1, 1, 1),
@@ -242,7 +267,7 @@ async function generateInvoicePDF(data: InvoiceData) {
     y: y - 10,
     size: 11,
     font: bold,
-    color: rgb(0, 0, 0),
+    color: rgb(0, 0, 0.8),
   });
 
   const currentDate = new Date().toLocaleDateString("en-US", {
@@ -253,10 +278,10 @@ async function generateInvoicePDF(data: InvoiceData) {
   y = height - 130;
   page.drawText(`Date : ${currentDate}`, {
     x: width - 200,
-    y: y - 10,
+    y: y - 15,
     size: 11,
     font: times,
-    color: rgb(0, 0, 0),
+    color: rgb(0, 0, 0.8),
   });
 
   // ---------------- ORDER BY ----------------
@@ -266,7 +291,7 @@ async function generateInvoicePDF(data: InvoiceData) {
     y: y - 20,
     size: 12,
     font: bold,
-    color: rgb(0, 0, 0),
+    color: rgb(0, 0, 0.8),
   });
   y -= 15;
 
@@ -275,6 +300,7 @@ async function generateInvoicePDF(data: InvoiceData) {
     y: y - 20,
     size: 11,
     font: times,
+    color: rgb(0, 0, 0.8),
   });
   y -= 15;
 
@@ -284,6 +310,7 @@ async function generateInvoicePDF(data: InvoiceData) {
       y: y - 20,
       size: 11,
       font: times,
+      color: rgb(0, 0, 0.8),
     });
     y -= 15;
   }
@@ -294,6 +321,7 @@ async function generateInvoicePDF(data: InvoiceData) {
       y: y - 20,
       size: 11,
       font: times,
+      color: rgb(0, 0, 0.8),
     });
     y -= 15;
   }
@@ -305,6 +333,7 @@ async function generateInvoicePDF(data: InvoiceData) {
     y: y - 20,
     size: 12,
     font: bold,
+    color: rgb(0, 0, 0.8),
   });
   y -= 15;
 
@@ -313,6 +342,7 @@ async function generateInvoicePDF(data: InvoiceData) {
     y: y - 20,
     size: 11,
     font: times,
+    color: rgb(0, 0, 0.8),
   });
   y -= 15;
 
@@ -322,6 +352,7 @@ async function generateInvoicePDF(data: InvoiceData) {
       y: y - 20,
       size: 11,
       font: times,
+      color: rgb(0, 0, 0.8),
     });
     y -= 15;
   }
@@ -344,17 +375,22 @@ async function generateInvoicePDF(data: InvoiceData) {
   // ---------------- TABLE ROWS ----------------
   y -= 40;
   // Add product row
-  page.drawText(
-    `${data.productInfo.year || ""} ${data.productInfo.make || ""} ${
-      data.productInfo.model || ""
-    }`,
-    {
-      x: 50,
-      y,
-      size: 10,
-      font: times,
+  if (data.productInfo) {
+    for (const product of data.productInfo) {
+      const productDescription = `${product.year || ""} ${product.make || ""} ${
+        product.model || ""
+      } ${product.parts || ""}`;
+
+      page.drawText(productDescription, {
+        x: 50,
+        y: y + 5,
+        size: 10,
+        font: times,
+      });
+
+      y -= 15;
     }
-  );
+  }
 
   page.drawText(`$${data.customerInfo.totalSellingPrice || "0.00"}`, {
     x: 300,
@@ -404,6 +440,14 @@ async function generateInvoicePDF(data: InvoiceData) {
     color: rgb(0, 0, 0.8),
   });
 
+  page.drawText(`VIN number:${data.customerInfo.vinNumber||""}`, {
+    x: 100,
+    y,
+    size: 14,
+    font: times,
+    color: rgb(0, 0, 0.8),
+  });
+
   // ---------------- FOOTER & NOTE (PAGE 1) ----------------
   y -= 80;
   page.drawText("Note :", {
@@ -411,6 +455,7 @@ async function generateInvoicePDF(data: InvoiceData) {
     y,
     size: 12,
     font: bold,
+    color: rgb(0, 0, 0.8),
   });
 
   y -= 15;
@@ -422,6 +467,7 @@ async function generateInvoicePDF(data: InvoiceData) {
       size: 9,
       font: times,
       maxWidth: 520,
+      color: rgb(0, 0, 0.8),
     }
   );
 
@@ -432,6 +478,7 @@ async function generateInvoicePDF(data: InvoiceData) {
     y,
     size: 11,
     font: bold,
+    color: rgb(0, 0, 0.8),
   });
 
   y -= 15;
@@ -441,6 +488,7 @@ async function generateInvoicePDF(data: InvoiceData) {
       y,
       size: 10,
       font: times,
+      color: rgb(0, 0, 0.8),
     });
   }
 
@@ -452,42 +500,60 @@ async function generateInvoicePDF(data: InvoiceData) {
         y: y - 15,
         size: 10,
         font: times,
+        color: rgb(0, 0, 0.8),
       }
     );
   }
   // shipping details section
   page.drawText("Shipping DETAILS :", {
-    x: 450,
+    x: 300,
     y: y + 15,
     size: 11,
     font: bold,
+    color: rgb(0, 0, 0.8),
   });
 
-  // y -= 15;
-  // if (data.shippingInfo.shippingAddress) {
-  //   page.drawText(`Name: ${data.shippingInfo.shippingAddress}`, {
-  //     x: 450,
-  //     y,
-  //     size: 10,
-  //     font: times,
-  //   });
-  // }
+  page.drawText(`(${data.customerInfo.shippingAddressType})`, {
+    x: 410,
+    y: y + 15,
+    size: 10,
+    font: times,
+    color: rgb(0, 0, 0.8),
+  });
 
-  // if (data.shippingInfo.shippingAddress) {
-  //   page.drawText(
-  //     `Shipping Address: ${data.shippingInfo.shippingAddress.slice(-4)}`,
-  //     {
-  //       x: 450,
-  //       y: y - 15,
-  //       size: 10,
-  //       font: times,
-  //     }
-  //   );
-  // }
+  y -= 15;
+  if (data.customerInfo.company) {
+    page.drawText(`company name: ${data.customerInfo.company}`, {
+      x: 410,
+      y: y + 10,
+      size: 10,
+      font: times,
+      color: rgb(0, 0, 0.8),
+    });
+  }
+  if (data.customerInfo.shippingAddress) {
+    page.drawText(` ${data.customerInfo.shippingAddress}`, {
+      x: 410,
+      y: y - 5,
+      size: 10,
+      font: times,
+      color: rgb(0, 0, 0.8),
+    });
+  }
+
+  if (data.customerInfo.shippingAddressType == "Terminal") {
+    page.drawText("Shipping to nearest terminal", {
+      x: 410,
+      y: y - 15,
+      size: 10,
+      font: times,
+      color: rgb(0, 0, 0.8),
+    });
+  }
 
   page.drawText("Authorize Signature", {
     x: 450,
-    y: y - 200,
+    y: y - 150,
     size: 11,
     font: bold,
     color: rgb(0, 0, 0.8),
@@ -551,23 +617,47 @@ async function generateInvoicePDF(data: InvoiceData) {
   }
 
   // ---------------- CONTACT INFO (PAGE 2) ----------------
-  page2.drawText("76 Imperial Dr Suite E Evanston, WY 82930, USA", {
+
+  page2.drawText("Location:", {
     x: 30,
+    y: page2Height - 60,
+    size: 9,
+    font: bold,
+    color: rgb(1, 1, 1),
+  });
+  page2.drawText("76 Imperial Dr Suite E Evanston, WY 82930, USA", {
+    x: 80,
     y: page2Height - 60,
     size: 9,
     font: times,
     color: rgb(1, 1, 1),
   });
-  page2.drawText("https://partscentral.us", {
+
+  page2.drawText("Website:", {
     x: 30,
+    y: page2Height - 75,
+    size: 9,
+    font: bold,
+    color: rgb(1, 1, 1),
+  });
+  page2.drawText("https://partscentral.us", {
+    x: 80,
     y: page2Height - 75,
     size: 9,
     font: times,
     color: rgb(1, 1, 1),
   });
-  page2.drawText("(888) 338-2540", {
+
+  page2.drawText("Phone:", {
     x: 30,
-    y: page2Height - 85,
+    y: page2Height - 90,
+    size: 9,
+    font: bold,
+    color: rgb(1, 1, 1),
+  });
+  page2.drawText("(888) 338-2540", {
+    x: 80,
+    y: page2Height - 90,
     size: 9,
     font: times,
     color: rgb(1, 1, 1),
@@ -582,6 +672,7 @@ async function generateInvoicePDF(data: InvoiceData) {
     y: y2,
     size: 12,
     font: bold,
+    color: rgb(1, 0, 0),
   });
 
   y2 -= 15;
@@ -604,6 +695,7 @@ async function generateInvoicePDF(data: InvoiceData) {
     y: y2,
     size: 12,
     font: bold,
+    color: rgb(1, 0, 0),
   });
 
   y2 -= 15;
@@ -626,6 +718,7 @@ async function generateInvoicePDF(data: InvoiceData) {
     y: y2,
     size: 12,
     font: bold,
+    color: rgb(1, 0, 0),
   });
 
   y2 -= 15;
@@ -648,6 +741,7 @@ async function generateInvoicePDF(data: InvoiceData) {
     y: y2,
     size: 12,
     font: bold,
+    color: rgb(1, 0, 0),
   });
 
   y2 -= 15;
@@ -670,6 +764,7 @@ async function generateInvoicePDF(data: InvoiceData) {
     y: y2,
     size: 12,
     font: bold,
+    color: rgb(1, 0, 0),
   });
 
   y2 -= 15;
@@ -692,6 +787,7 @@ async function generateInvoicePDF(data: InvoiceData) {
     y: y2,
     size: 12,
     font: bold,
+    color: rgb(1, 0, 0),
   });
 
   y2 -= 15;
@@ -728,12 +824,27 @@ async function sendInvoiceEmail(
       service: "gmail", // or your email service
       auth: {
         user: "leadspartscentral.us@gmail.com",
+        // user: "support@partscentral.us",
+        // pass: "Autoparts@2025!$",
         pass: "ftzc nrta ufnx sudz",
       },
     });
+    // const transporter = nodeMailer.createTransport({
+    //   host: "smtp.office365.com",
+    //   port: 587,
+    //   secure: false, // use STARTTLS
+    //   auth: {
+    //     user: "support@partscentral.us", // full email
+    //     pass: "Autoparts@2025!$",
+    //   },
+    //   tls: {
+    //     ciphers: "SSLv3",
+    //   },
+    // });
 
     const mailOptions = {
       from: "leadspartscentral.us@gmail.com",
+      // from:"support@partscentral.us",
       to: toEmail,
       subject: `Invoice - Order ${orderId}`,
       html: htmlContent,

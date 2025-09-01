@@ -21,7 +21,7 @@ export function middleware(req: NextRequest) {
 
   // Block access for unauthorized IPs
   console.log("IP blocked: ", clientIp);
-  return NextResponse.redirect(new URL("/no-access", req.url));
+  return NextResponse.redirect(new URL("/dashboard/no-access", req.url));
 }
 
 export const config = {
