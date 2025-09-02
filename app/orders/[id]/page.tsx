@@ -323,6 +323,8 @@ const OrderDetails = () => {
   const [variantError, setVariantError] = useState("");
   const [cardEntry, setCardEntry] = useState(false);
 
+  const [statusPopUp, setStatusPopUp] = useState(false);
+
   const [formData, setFormData] = useState<OrderFormData>({
     products: [
       {
@@ -979,17 +981,20 @@ const OrderDetails = () => {
     try {
       // Prepare invoice data
       const invoiceData = {
-        orderId: "PC#022705", // You can get this from URL params
+        orderId: formData.id, // You can get this from URL params
         customerInfo: {
           name: formData.customerName,
           email: formData.email,
           mobile: formData.mobile,
+          alternateMobile: formData.alternateMobile,
           partPrice: formData.partPrice,
           shippingAddress: formData.shippingAddress,
           billingAddress: formData.billingAddress,
           shippingAddressType: formData.shippingAddressType,
           company: formData.company,
           totalSellingPrice: formData.totalSellingPrice,
+          vinNumber: formData.vinNumber,
+          notes: formData.notes,
         },
         paymentInfo: {
           cardHolderName: formData.cardHolderName,
@@ -1041,7 +1046,7 @@ const OrderDetails = () => {
           trackingNumber: formData.trackingNumber,
         },
       };
-      console.log(invoiceData);
+      console.log("invoiceData issssss:", invoiceData);
 
       // API call to send invoice
       const response = await fetch(`${URL}api/send-invoice`, {
@@ -1085,7 +1090,126 @@ const OrderDetails = () => {
       setIsLoading(false);
     }
   };
+  const handleSendPO = async () => {
+    if (!validateAllFields()) {
+      return;
+    }
 
+    setIsLoading(true);
+    setMessage(null);
+    setInvoiceData(true);
+    TIME = new Date();
+
+    try {
+      // Prepare invoice data
+      const invoiceData = {
+        orderId: formData.id, // You can get this from URL params
+        customerInfo: {
+          name: formData.customerName,
+          email: formData.email,
+          mobile: formData.mobile,
+          alternateMobile: formData.alternateMobile,
+          partPrice: formData.partPrice,
+          shippingAddress: formData.shippingAddress,
+          billingAddress: formData.billingAddress,
+          shippingAddressType: formData.shippingAddressType,
+          company: formData.company,
+          totalSellingPrice: formData.totalSellingPrice,
+          vinNumber: formData.vinNumber,
+          notes: formData.notes,
+        },
+        paymentInfo: {
+          cardHolderName: formData.cardHolderName,
+          cardNumber: formData.cardNumber,
+          cardDate: formData.cardDate,
+          cardCvv: formData.cardCvv,
+          warranty: formData.warranty,
+          // milesPromised: formData.milesPromised,
+        },
+        // productInfo: {
+        //   make: formData.make,
+        //   model: formData.model,
+        //   year: formData.year,
+        //   parts: formData.parts,
+        //   specification: formData.specification,
+        //   saleMadeBy: formData.saleMadeBy,
+        // },
+        productInfo: formData.products.map((product) => ({
+          make: product.make,
+          model: product.model,
+          year: product.year,
+          parts: product.parts,
+          specification: product.specification,
+          // warranty: product.warranty,
+          milesPromised: product.milesPromised,
+        })),
+        yardInfo: {
+          name: formData.yardName,
+          mobile: formData.yardMobile,
+          address: formData.yardAddress,
+          email: formData.yardEmail,
+          price: formData.yardPrice,
+          warranty: formData.yardWarranty,
+          miles: formData.yardMiles,
+          shipping: formData.yardShipping,
+        },
+        // previousYards: {
+        //   name: formData.yardName,
+        //   mobile: formData.yardMobile,
+        //   address: formData.yardAddress,
+        //   email: formData.yardEmail,
+        //   price: formData.yardPrice,
+        //   warranty: formData.yardWarranty,
+        //   miles: formData.yardMiles,
+        //   shipping: formData.yardShipping,
+        // },
+        additionalInfo: {
+          pictureStatus: formData.pictureStatus,
+          trackingNumber: formData.trackingNumber,
+        },
+      };
+      // API call to send invoice
+      const response = await fetch(`${URL}api/send-po`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(invoiceData),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setMessage({
+          type: "success",
+          text: "PO sent successfully! Check the email for the PO.",
+        });
+        // Update invoice status
+        setIsProcessing(false);
+        // Notes
+        addCustomerNote(
+          "PO Generated – PO prepared for the order.",
+          "By BillingAutomation"
+        );
+        addCustomerNote(
+          "PO Sent – PO emailed to customer.",
+          "By BillingAutomation"
+        );
+      } else {
+        throw new Error(result.message || "Failed to send PO");
+      }
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Failed to send PO. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const handleSave = async () => {
     if (orderId && orderId !== "create" && orderId !== "new") {
       await handleUpdateOrder();
@@ -1445,9 +1569,9 @@ const OrderDetails = () => {
   };
 
   // Yard/PO/Tracking helpers
-  const handleSendPO = () => {
-    addYardNote("PO Sent – Purchase Order emailed to yard.", "Added By System");
-  };
+  // const handleSendPO = () => {
+  //   addYardNote("PO Sent – Purchase Order emailed to yard.", "Added By System");
+  // };
 
   const handleCreateBOL = () => {
     addYardNote(
@@ -3056,11 +3180,20 @@ const OrderDetails = () => {
                 </div>
               </div>
               {/* Yard Info Section */}
-              <div className=" p-2 mt-6">
-                <div className="flex justify-between items-center mb-4">
+              <div className=" relative p-2 mt-6">
+                <div className="relative flex justify-between items-center mb-4">
                   <h3 className="text-white text-lg font-semibold">
                     Yard Info
                   </h3>
+
+                  <button
+                    className="absolute right-0 top-20 hover:bg-red-600 bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                    onClick={() => {
+                      setStatusPopUp(!statusPopUp);
+                    }}
+                  >
+                    <Minus size={18} />
+                  </button>
                   <button
                     className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
                     onClick={() => setShowPreviousYard((prev) => !prev)}
@@ -3092,7 +3225,8 @@ const OrderDetails = () => {
                         </select>
                       )}
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                    <div className=" grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-white/60 text-xs mb-1">
                           Yard Name
@@ -3381,7 +3515,7 @@ const OrderDetails = () => {
                   onClick={handleSendPO}
                   className="bg-[#006BA9] hover:bg-[#006BA9]/90 cursor-pointer mt-8 w-40 h-10 px-2 py-1 text-white  rounded-lg font-medium transition-colors"
                 >
-                  Send PO
+                  {isLoading ? "Sending PO..." : "Send PO"}
                 </button>
                 {/* PO Status & Approval/Sales */}
                 <div>
@@ -3836,6 +3970,34 @@ const OrderDetails = () => {
           </main>
         </div>
       </div>
+      {statusPopUp && (
+        <div className="fixed right-0 top-20 w-full h-full z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black opacity-50" />
+          <div className="z-50 bg-[#222c3a] w-[300px] h-[200px] rounded-lg p-4 flex flex-col justify-center items-center gap-2">
+            <p className="text-white">
+              Are you sure you want to remove this yard?if yes then enter the
+              reason
+            </p>
+            <input
+              className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+              type="text"
+              placeholder="Enter reason"
+            />
+            <button
+              className="bg-[#006BA9] hover:bg-[#006BA9]/90 text-white px-4 py-2 rounded-lg transition-colors cursor-pointer"
+              onClick={() => setStatusPopUp(false)}
+            >
+              Submit
+            </button>
+            <button
+              className="bg-[#006BA9] hover:bg-[#006BA9]/90 text-white px-4 py-2 rounded-lg transition-colors cursor-pointer"
+              onClick={() => setStatusPopUp(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </ProtectRoute>
   );
 };

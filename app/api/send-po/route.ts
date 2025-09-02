@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodeMailer from "nodemailer";
-// import path from "path";
-// import fs from "fs";
+import path from "path";
+import fs from "fs";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 // Utility function to load background image
@@ -27,6 +27,28 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 //     return null;
 //   }
 // }
+async function loadBackgroundImage(pdfDoc: PDFDocument) {
+  try {
+    const backgroundPath = path.join(process.cwd(), "public", "smtpHeader.jpg");
+    const backgroundBytes = fs.readFileSync(backgroundPath);
+    return await pdfDoc.embedJpg(backgroundBytes);
+  } catch (error) {
+    console.error("Error loading background image:", error);
+    return null;
+  }
+}
+
+// Utility function to load logo
+async function loadLogo(pdfDoc: PDFDocument) {
+  try {
+    const logoPath = path.resolve("./public/header-3.png");
+    const logoImageBytes = fs.readFileSync(logoPath);
+    return await pdfDoc.embedPng(logoImageBytes);
+  } catch (error) {
+    console.error("Error loading logo:", error);
+    return null;
+  }
+}
 
 interface InvoiceData {
   customerInfo: {
@@ -168,356 +190,161 @@ async function generatePOPDF(data: InvoiceData) {
   const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
   // Create a new page
-  let page = pdfDoc.addPage([612, 792]); // Standard letter size (8.5 x 11 inches)
+  const page = pdfDoc.addPage([600, 800]); // Standard letter size (8.5 x 11 inches)
   const { width, height } = page.getSize();
 
   // Set margins
   const margin = 40;
   let y = height - margin;
 
-  // --- Header Section ---
-  // Company Info (Left)
-  page.drawText("PARTS CENTRAL LLC", {
-    x: margin,
-    y: y,
-    size: 16,
-    font: bold,
-    color: rgb(0, 0, 0.8),
-  });
+  const backgroundImage = await loadBackgroundImage(pdfDoc);
 
-  // PO Number and Date (Right)
-  const poNumber = `PO #${data.orderId || "0000"}`;
-  const poNumberWidth = bold.widthOfTextAtSize(poNumber, 14);
-  page.drawText(poNumber, {
-    x: width - margin - poNumberWidth,
-    y: y,
-    size: 14,
-    font: bold,
-    color: rgb(0, 0, 0.8),
-  });
+  if (backgroundImage) {
+    page.drawImage(backgroundImage, {
+      x: 0,
+      y: height - 100,
+      width: width,
+      height: 180,
+    });
+  } else {
+    // Fallback to solid color if image loading fails
+    page.drawRectangle({
+      x: 0,
+      y: height - 100,
+      width,
+      height: 180,
+      color: rgb(0.07, 0.15, 0.3), // dark blue header
+    });
+  }
 
-  y -= 20;
-  page.drawText("76 Imperial Dr Suite E", {
-    x: margin,
-    y: y,
-    size: 10,
+  // ---------------- LOGO (PAGE 1) ----------------
+  try {
+    const logoImage = await loadLogo(pdfDoc);
+    if (logoImage) {
+      const logoDims = logoImage.scale(0.5);
+      page.drawImage(logoImage, {
+        x: 30,
+        y: height - 40,
+        width: logoDims.width,
+        height: logoDims.height,
+      });
+    } else {
+      page.drawText("PARTS CENTRAL", {
+        x: 40,
+        y: height - 40,
+        size: 18,
+        font: bold,
+        color: rgb(1, 1, 1),
+      });
+    }
+  } catch (error) {
+    console.error("Error loading logo:", error);
+    page.drawText("PARTS CENTRAL", {
+      x: 40,
+      y: height - 40,
+      size: 18,
+      font: bold,
+      color: rgb(1, 1, 1),
+    });
+  }
+
+  // ---------------- CONTACT INFO (PAGE 1) ----------------
+  page.drawText("Location:", {
+    x: 30,
+    y: height - 50,
+    size: 9,
+    font: bold,
+    color: rgb(1, 1, 1),
+  });
+  page.drawText("76 Imperial Dr Suite E Evanston, WY 82930, USA", {
+    x: 80,
+    y: height - 50,
+    size: 9,
     font: times,
-    color: rgb(0, 0, 0.6),
+    color: rgb(1, 1, 1),
+  });
+  page.drawText("Website:", {
+    x: 30,
+    y: height - 65,
+    size: 9,
+    font: bold,
+    color: rgb(1, 1, 1),
+  });
+  page.drawText("https://partscentral.us", {
+    x: 80,
+    y: height - 65,
+    size: 9,
+    font: times,
+    color: rgb(1, 1, 1),
+  });
+  page.drawText("Phone:", {
+    x: 30,
+    y: height - 80,
+    size: 9,
+    font: bold,
+    color: rgb(1, 1, 1),
+  });
+  page.drawText("(888) 338-2540", {
+    x: 70,
+    y: height - 80,
+    size: 9,
+    font: times,
+    color: rgb(1, 1, 1),
+  });
+  page.drawText("Email:", {
+    x: 30,
+    y: height - 90,
+    size: 9,
+    font: bold,
+    color: rgb(1, 1, 1),
+  });
+  page.drawText("purchase@partscentral.us", {
+    x: 70,
+    y: height - 90,
+    size: 9,
+    font: times,
+    color: rgb(1, 1, 1),
+  });
+  page.drawText("Sales Tax ID:", {
+    x: 30,
+    y: height - 100,
+    size: 9,
+    font: bold,
+    color: rgb(1, 1, 1),
+  });
+  page.drawText("271-4444-3598", {
+    x: 80,
+    y: height - 100,
+    size: 9,
+    font: times,
+    color: rgb(1, 1, 1),
   });
 
-  // PO Date (Right)
-  const poDate = `Date: ${new Date().toLocaleDateString("en-US", {
+  y = height - 120;
+
+  page.drawText(`Purchase Order : ${data.orderId}`, {
+    x: width - 200,
+    y: y - 10,
+    size: 11,
+    font: bold,
+    color: rgb(0, 0, 0.8),
+  });
+
+  const currentDate = new Date().toLocaleDateString("en-US", {
+    year: "numeric",
     month: "short",
     day: "numeric",
-    year: "numeric",
-  })}`;
-  const poDateWidth = times.widthOfTextAtSize(poDate, 10);
-  page.drawText(poDate, {
-    x: width - margin - poDateWidth,
-    y: y,
-    size: 10,
+  });
+  y = height - 130;
+  page.drawText(`Date : ${currentDate}`, {
+    x: width - 200,
+    y: y - 15,
+    size: 11,
     font: times,
-    color: rgb(0, 0, 0.6),
-  });
-
-  y -= 15;
-  page.drawText("Evanston, WY 82930", {
-    x: margin,
-    y: y,
-    size: 10,
-    font: times,
-    color: rgb(0, 0, 0.6),
-  });
-
-  y -= 15;
-  page.drawText("(888) 338-2540", {
-    x: margin,
-    y: y,
-    size: 10,
-    font: times,
-    color: rgb(0, 0, 0.6),
-  });
-
-  y -= 30;
-
-  // --- Vendor Information Section ---
-  page.drawText("VENDOR", {
-    x: margin,
-    y: y,
-    size: 12,
-    font: bold,
     color: rgb(0, 0, 0.8),
   });
 
-  y -= 20;
-  const vendorName = data.customerInfo.company || "N/A";
-  page.drawText(vendorName, {
-    x: margin,
-    y: y,
-    size: 10,
-    font: times,
-    color: rgb(0, 0, 0.6),
-  });
-
-  y -= 15;
-  if (data.customerInfo.billingAddress) {
-    const addressLines = data.customerInfo.billingAddress.split("\n");
-    for (const line of addressLines) {
-      page.drawText(line, {
-        x: margin,
-        y: y,
-        size: 10,
-        font: times,
-        color: rgb(0, 0, 0.6),
-      });
-      y -= 15;
-    }
-  }
-  const addressLines = data.customerInfo.shippingAddress.split("\n");
-  // Shipping Information (Right side)
-  const shipY = y + addressLines?.length * 15 + 15;
-  page.drawText("SHIP TO", {
-    x: width / 2 + 20,
-    y: shipY,
-    size: 12,
-    font: bold,
-    color: rgb(0, 0, 0.8),
-  });
-
-  let shipInfoY = shipY - 20;
-  const shippingAddress =
-    data.customerInfo.shippingAddress || data.customerInfo.billingAddress || "";
-  const shippingLines = shippingAddress.split("\n");
-
-  // Shipping Address Type (e.g., "RESIDENTIAL")
-  if (data.customerInfo.shippingAddressType) {
-    page.drawText(`(${data.customerInfo.shippingAddressType.toUpperCase()})`, {
-      x: width / 2 + 20,
-      y: shipInfoY,
-      size: 10,
-      font: bold,
-      color: rgb(0, 0, 0.8),
-    });
-    shipInfoY -= 15;
-  }
-
-  // Shipping Address Lines
-  for (const line of shippingLines) {
-    if (line.trim()) {
-      page.drawText(line, {
-        x: width / 2 + 20,
-        y: shipInfoY,
-        size: 10,
-        font: times,
-        color: rgb(0, 0, 0.6),
-      });
-      shipInfoY -= 15;
-    }
-  }
-
-  // Adjust y position after vendor/shipping sections
-  y = Math.min(y, shipInfoY) - 30;
-
-  // --- PO Items Table ---
-  // Table Header
-  page.drawLine({
-    start: { x: margin, y: y },
-    end: { x: width - margin, y: y },
-    thickness: 1,
-    color: rgb(0, 0, 0.8),
-  });
-
-  y -= 5;
-
-  // Column Headers
-  page.drawText("QTY", {
-    x: margin,
-    y: y - 12,
-    size: 10,
-    font: bold,
-    color: rgb(0, 0, 0.8),
-  });
-
-  page.drawText("PART NUMBER", {
-    x: margin + 60,
-    y: y - 12,
-    size: 10,
-    font: bold,
-    color: rgb(0, 0, 0.8),
-  });
-
-  page.drawText("DESCRIPTION", {
-    x: margin + 200,
-    y: y - 12,
-    size: 10,
-    font: bold,
-    color: rgb(0, 0, 0.8),
-  });
-
-  page.drawText("PRICE", {
-    x: width - margin - 100,
-    y: y - 12,
-    size: 10,
-    font: bold,
-    color: rgb(0, 0, 0.8),
-  });
-
-  page.drawText("TOTAL", {
-    x: width - margin - 50,
-    y: y - 12,
-    size: 10,
-    font: bold,
-    color: rgb(0, 0, 0.8),
-  });
-
-  y -= 20;
-
-  // Table Rows
-  if (data.productInfo && data.productInfo.length > 0) {
-    for (const item of data.productInfo) {
-      // Draw item row
-      page.drawText("1", {
-        x: margin + 5,
-        y: y - 15,
-        size: 10,
-        font: times,
-        color: rgb(0, 0, 0.6),
-      });
-
-      // Part Number (using orderId or a placeholder)
-      page.drawText(`PC-${data.orderId || "0000"}`, {
-        x: margin + 60,
-        y: y - 15,
-        size: 10,
-        font: times,
-        color: rgb(0, 0, 0.6),
-      });
-
-      // Description
-      const description = `${item.year || ""} ${item.make || ""} ${
-        item.model || ""
-      } ${item.parts || ""}`.trim();
-      page.drawText(description, {
-        x: margin + 200,
-        y: y - 15,
-        size: 10,
-        font: times,
-        color: rgb(0, 0, 0.6),
-        maxWidth: 200,
-      });
-
-      // Unit Price
-      const unitPrice = data.customerInfo.totalSellingPrice;
-      page.drawText(`$${unitPrice}`, {
-        x: width - margin - 100,
-        y: y - 15,
-        size: 10,
-        font: times,
-        color: rgb(0, 0, 0.6),
-      });
-
-      // Line Total
-      const lineTotal = data.customerInfo.totalSellingPrice;
-      page.drawText(`$${lineTotal}`, {
-        x: width - margin - 50,
-        y: y - 15,
-        size: 10,
-        font: times,
-        color: rgb(0, 0, 0.6),
-      });
-
-      y -= 25;
-
-      // Add a subtle separator line between items
-      if (y > margin + 100) {
-        // Make sure we don't draw outside margins
-        page.drawLine({
-          start: { x: margin, y: y + 5 },
-          end: { x: width - margin, y: y + 5 },
-          thickness: 0.5,
-          color: rgb(0.8, 0.8, 0.8),
-        });
-      }
-
-      y -= 10;
-
-      // Check if we need a new page
-      if (y < margin + 100) {
-        page = pdfDoc.addPage([612, 792]);
-        y = height - margin;
-      }
-    }
-  }
-
-  // Total Section
-  y -= 20;
-  page.drawLine({
-    start: { x: width - 150, y: y },
-    end: { x: width - margin, y: y },
-    thickness: 1,
-    color: rgb(0, 0, 0.8),
-  });
-
-  y -= 20;
-  page.drawText("SUBTOTAL", {
-    x: width - 150,
-    y: y,
-    size: 10,
-    font: bold,
-    color: rgb(0, 0, 0.8),
-  });
-
-  const subtotal = data.customerInfo.totalSellingPrice || "0.00";
-  page.drawText(`$${subtotal}`, {
-    x: width - margin - 50,
-    y: y,
-    size: 10,
-    font: times,
-    color: rgb(0, 0, 0.6),
-  });
-
-  y -= 15;
-  page.drawText("SHIPPING", {
-    x: width - 150,
-    y: y,
-    size: 10,
-    font: bold,
-    color: rgb(0, 0, 0.8),
-  });
-
-  const shippingCost = "0.00"; // This would come from your data
-  page.drawText(`$${shippingCost}`, {
-    x: width - margin - 50,
-    y: y,
-    size: 10,
-    font: times,
-    color: rgb(0, 0, 0.6),
-  });
-
-  y -= 20;
-  page.drawLine({
-    start: { x: width - 150, y: y },
-    end: { x: width - margin, y: y },
-    thickness: 1,
-    color: rgb(0, 0, 0.8),
-  });
-
-  y -= 20;
-  page.drawText("TOTAL", {
-    x: width - 150,
-    y: y,
-    size: 12,
-    font: bold,
-    color: rgb(0, 0, 0.8),
-  });
-
-  page.drawText(`$${subtotal}`, {
-    x: width - margin - 50,
-    y: y,
-    size: 12,
-    font: bold,
-    color: rgb(0, 0, 0.8),
-  });
+  y = height - 130;
 
   // Footer Notes
   y -= 40;
@@ -540,6 +367,24 @@ async function generatePOPDF(data: InvoiceData) {
       color: rgb(0, 0, 0.6),
     }
   );
+
+  if (backgroundImage) {
+    page.drawImage(backgroundImage, {
+      x: 0,
+      y: 0,
+      width: width,
+      height: 100,
+    });
+  } else {
+    // Fallback to solid color if image loading fails
+    page.drawRectangle({
+      x: 0,
+      y: 0,
+      width,
+      height: 100,
+      color: rgb(0.07, 0.15, 0.3), // dark blue header
+    });
+  }
 
   // Serialize the PDFDocument to bytes (a Uint8Array)
   const pdfBytes = await pdfDoc.save();
@@ -1204,30 +1049,30 @@ async function sendPOEmail(
 
     // Option 1: Using Nodemailer
 
-    const transporter = nodeMailer.createTransport({
-      service: "gmail", // or your email service
-      auth: {
-        user: "leadspartscentral.us@gmail.com",
-        // user: "support@partscentral.us",
-        // pass: "Autoparts@2025!$",
-        pass: "ftzc nrta ufnx sudz",
-      },
-    });
     // const transporter = nodeMailer.createTransport({
-    //   host: "smtp.office365.com",
-    //   port: 587,
-    //   secure: false, // use STARTTLS
+    //   service: "gmail", // or your email service
     //   auth: {
-    //     user: "support@partscentral.us", // full email
-    //     pass: "Autoparts@2025!$",
-    //   },
-    //   tls: {
-    //     ciphers: "SSLv3",
+    //     user: "leadspartscentral.us@gmail.com",
+    //     // user: "support@partscentral.us",
+    //     // pass: "Autoparts@2025!$",
+    //     pass: "ftzc nrta ufnx sudz",
     //   },
     // });
+    const transporter = nodeMailer.createTransport({
+      host: "smtp.office365.com",
+      port: 587,
+      secure: false, // use STARTTLS
+      auth: {
+        user: "purchase@partscentral.us", // full email
+        pass: "mzgccnzjevbdgdpl",
+      },
+      tls: {
+        ciphers: "SSLv3",
+      },
+    });
 
     const mailOptions = {
-      from: "leadspartscentral.us@gmail.com",
+      from: "purchase@partscentral.us",
       // from:"support@partscentral.us",
       to: toEmail,
       subject: `Purchase Order For ${orderId}`,

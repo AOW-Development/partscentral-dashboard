@@ -33,6 +33,7 @@ interface InvoiceData {
     name: string;
     email: string;
     mobile: string;
+    alternateMobile: string;
     shippingAddress: string;
     billingAddress: string;
     shippingAddressType: string;
@@ -41,6 +42,7 @@ interface InvoiceData {
     warranty: string;
     milesPromised: number;
     vinNumber: string;
+    notes: string;
   };
   productInfo: [
     {
@@ -262,7 +264,7 @@ async function generateInvoicePDF(data: InvoiceData) {
   });
   y = height - 120;
   // ---------------- INVOICE INFO (PAGE 1) ----------------
-  page.drawText(`Invoice : PC #${data.orderId}`, {
+  page.drawText(`Invoice : ${data.orderId}`, {
     x: width - 200,
     y: y - 10,
     size: 11,
@@ -325,6 +327,16 @@ async function generateInvoicePDF(data: InvoiceData) {
     });
     y -= 15;
   }
+  if (data.customerInfo.alternateMobile) {
+    page.drawText(`Alternate Mobile: ${data.customerInfo.alternateMobile}`, {
+      x: 40,
+      y: y - 20,
+      size: 11,
+      font: times,
+      color: rgb(0, 0, 0.8),
+    });
+    y -= 15;
+  }
 
   // ---------------- BILL TO ----------------
   y = height - 130;
@@ -358,7 +370,7 @@ async function generateInvoicePDF(data: InvoiceData) {
   }
 
   // ---------------- TABLE HEADER ----------------
-  y -= 40;
+  y -= 50;
   page.drawRectangle({
     x: 40,
     y: y - 20,
@@ -431,7 +443,7 @@ async function generateInvoicePDF(data: InvoiceData) {
     font: bold,
     color: rgb(0, 0, 0.8),
   });
-  // y -= 20;
+
   page.drawText(`Notes:`, {
     x: 50,
     y,
@@ -440,8 +452,16 @@ async function generateInvoicePDF(data: InvoiceData) {
     color: rgb(0, 0, 0.8),
   });
 
-  page.drawText(`VIN number:${data.customerInfo.vinNumber||""}`, {
+  page.drawText(`${data.customerInfo.notes || ""}`, {
     x: 100,
+    y,
+    size: 14,
+    font: times,
+    color: rgb(0, 0, 0.8),
+  });
+  y -= 20;
+  page.drawText(`VIN number:${data.customerInfo.vinNumber || ""}`, {
+    x: 50,
     y,
     size: 14,
     font: times,
@@ -450,7 +470,7 @@ async function generateInvoicePDF(data: InvoiceData) {
 
   // ---------------- FOOTER & NOTE (PAGE 1) ----------------
   y -= 80;
-  page.drawText("Note :", {
+  page.drawText("Shipping Disclaimer:", {
     x: 40,
     y,
     size: 12,
@@ -820,31 +840,31 @@ async function sendInvoiceEmail(
 
     // Option 1: Using Nodemailer
 
-    const transporter = nodeMailer.createTransport({
-      service: "gmail", // or your email service
-      auth: {
-        user: "leadspartscentral.us@gmail.com",
-        // user: "support@partscentral.us",
-        // pass: "Autoparts@2025!$",
-        pass: "ftzc nrta ufnx sudz",
-      },
-    });
     // const transporter = nodeMailer.createTransport({
-    //   host: "smtp.office365.com",
-    //   port: 587,
-    //   secure: false, // use STARTTLS
+    //   service: "gmail", // or your email service
     //   auth: {
-    //     user: "support@partscentral.us", // full email
-    //     pass: "Autoparts@2025!$",
-    //   },
-    //   tls: {
-    //     ciphers: "SSLv3",
+    //     user: "leadspartscentral.us@gmail.com",
+    //     // user: "support@partscentral.us",
+    //     // pass: "Autoparts@2025!$",
+    //     pass: "ftzc nrta ufnx sudz",
     //   },
     // });
+    const transporter = nodeMailer.createTransport({
+      host: "smtp.office365.com",
+      port: 587,
+      secure: false, // use STARTTLS
+      auth: {
+        user: "support@partscentral.us", // full email
+        pass: "hbcwjmyhqblyddvf",
+      },
+      tls: {
+        ciphers: "SSLv3",
+      },
+    });
 
     const mailOptions = {
-      from: "leadspartscentral.us@gmail.com",
-      // from:"support@partscentral.us",
+      // from: "leadspartscentral.us@gmail.com",
+      from: "support@partscentral.us",
       to: toEmail,
       subject: `Invoice - Order ${orderId}`,
       html: htmlContent,
