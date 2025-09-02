@@ -119,6 +119,8 @@ interface CartItem {
 const OrderDetails = () => {
   const params = useParams();
   const orderId = params.id as string;
+  const lastVariantKeys = useRef<{ [index: number]: string }>({});
+  const isInitialLoad = useRef(true);
   const [showAlternateMobileNumber, setShowAlternateMobileNumber] =
     useState(false);
 
@@ -178,7 +180,7 @@ const OrderDetails = () => {
                   })
                 )
               : formData.products; // Keep existing products if data.items is empty
-
+console.log("DEBUG 1: Products from server mapping:", products)
           setFormData({
             ...formData,
             products, // Set the products here
@@ -515,6 +517,7 @@ const OrderDetails = () => {
   };
 
   const fetchProductVariants = async (index: number) => {
+    
     const product = formData.products[index];
     if (product.make && product.model && product.year && product.parts) {
       setIsLoadingVariants((prev) => ({ ...prev, [index]: true }));
@@ -526,11 +529,26 @@ const OrderDetails = () => {
           year: product.year,
           part: product.parts,
         });
-        handleProductInputChange(
-          index,
-          "productVariants",
-          data.groupedVariants || []
-        );
+        const variants = data.groupedVariants || [];
+        console.log(`DEBUG fetchProductVariants for index ${index}:`);
+        console.log(`  - Product:`, product);
+        console.log(`  - Fetched variants:`, variants);
+        console.log(`  - Existing specification:`, product.specification);
+        console.log(`  - Existing milesPromised:`, product.milesPromised);
+        
+        handleProductInputChange(index, "productVariants", variants);
+        
+        // If there's an existing specification value, find and set the corresponding selectedSubpart
+        if (product.specification && variants.length > 0) {
+          console.log(`  - Looking for variant with subPart.name = "${product.specification}"`);
+          const matchingVariant = variants.find(
+            (variant: any) => variant.subPart.name === product.specification
+          );
+          if (matchingVariant) {
+            console.log(`Setting selectedSubpart for index ${index}:`, matchingVariant);
+            handleProductInputChange(index, "selectedSubpart", matchingVariant);
+          }
+        }
       } catch (error) {
         console.error("Error fetching product variants:", error);
         setVariantError("Failed to load product variants. Please try again.");
@@ -546,29 +564,40 @@ const OrderDetails = () => {
   // useEffect to reactively fetch variants and reset dependent fields
   useEffect(() => {
     formData.products.forEach((product, index) => {
+      console.log(`DEBUG 2: useEffect running for index ${index}`, product);
       const { make, model, year, parts } = product;
       // Compose a unique key for these fields
       const key = `${make}-${model}-${year}-${parts}`;
-      // Track the last used key per product
-      if (!window._lastVariantKeys) window._lastVariantKeys = {};
-      if (
-        window._lastVariantKeys[index] &&
-        window._lastVariantKeys[index] !== key
-      ) {
-        // Reset dependent fields immediately
-        handleProductInputChange(index, "specification", "");
-        handleProductInputChange(index, "selectedSubpart", null);
-        handleProductInputChange(index, "selectedMileage", "");
-        handleProductInputChange(index, "variantSku", "");
-        handleProductInputChange(index, "milesPromised", "");
+
+      if (lastVariantKeys.current[index] !== key) {
+        console.log(`DEBUG 4: Fields change detected for index ${index}, isInitialLoad: ${isInitialLoad.current}`);
+        
+        // Only reset dependent fields if this is NOT the initial load AND the key actually changed
+        // This prevents resetting fields when loading existing order data
+        if (lastVariantKeys.current[index] && !isInitialLoad.current) {
+          console.log(`DEBUG 5: Resetting fields for index ${index}`);
+          handleProductInputChange(index, "specification", "");
+          handleProductInputChange(index, "selectedSubpart", null);
+          handleProductInputChange(index, "selectedMileage", "");
+          handleProductInputChange(index, "variantSku", "");
+          handleProductInputChange(index, "milesPromised", "");
+        }
+        
+        // Always reset productVariants and fetch new ones if needed
         handleProductInputChange(index, "productVariants", []);
         // Only fetch if all fields are present
         if (make && model && year && parts) {
           fetchProductVariants(index);
         }
-        window._lastVariantKeys[index] = key;
+        lastVariantKeys.current[index] = key;
       }
     });
+    
+    // Mark initial load as complete after first run
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false;
+    }
+    
     console.log("Loaded products:", formData.products);
     // eslint-disable-next-line
   }, [
@@ -639,25 +668,27 @@ const OrderDetails = () => {
   const priceOptionsRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    setTotalPrice(
+    const newTotalPrice =
       Number(formData.partPrice) +
         Number(formData.handlingPrice) +
         Number(formData.corePrice) +
         Number(formData.taxesPrice) +
-        Number(formData.processingPrice)
-    );
-    setFormData((prev) => ({
-      ...prev,
-      totalSellingPrice: totalPrice.toString(),
-      totalPrice: totalPrice.toString(),
-    }));
+        Number(formData.processingPrice);
+
+    if (Number(formData.totalPrice) !== newTotalPrice) {
+      setFormData((prev) => ({
+        ...prev,
+        totalSellingPrice: newTotalPrice.toString(),
+        totalPrice: newTotalPrice.toString(),
+      }));
+    }
   }, [
-    totalPrice,
     formData.partPrice,
     formData.handlingPrice,
     formData.corePrice,
     formData.taxesPrice,
     formData.processingPrice,
+    formData.totalPrice,
   ]);
 
   // Close dropdown when clicking outside
