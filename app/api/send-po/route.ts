@@ -160,7 +160,7 @@ function generateInvoiceHTML(data: InvoiceData) {
       <h3 >Hello,${data.yardInfo.name}</h3>
       <p >Please Find the attached PO.
         Requesting pictures before you wrap up the part for shipping.</p>
-        <p>${data.productInfo
+        <p style="font-weight: bold;">${data.productInfo
           .map(
             (item) =>
               item.make +
@@ -1079,7 +1079,7 @@ async function sendPOEmail(
       html: htmlContent,
       attachments: [
         {
-        filename: `PO-PC#${orderId}.pdf`,
+          filename: `PO-PC#${orderId}.pdf`,
           content: Buffer.from(pdfContent.buffer),
           contentType: "application/pdf",
         },
