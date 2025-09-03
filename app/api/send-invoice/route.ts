@@ -256,7 +256,7 @@ async function generateInvoicePDF(data: InvoiceData) {
     color: rgb(1, 1, 1),
   });
   page.drawText("(888) 338-2540", {
-    x: 70,
+    x: 80,
     y: height - 90,
     size: 9,
     font: times,
@@ -401,33 +401,33 @@ async function generateInvoicePDF(data: InvoiceData) {
         font: times,
       });
 
-      y -= 15;
+      // y -= 15;
     }
   }
 
   page.drawText(`$${data.customerInfo.totalSellingPrice || "0.00"}`, {
     x: 200,
-    y,
+    y: y + 5,
     size: 10,
     font: times,
   });
 
   page.drawText("1", {
     x: 300,
-    y,
+    y: y + 5,
     size: 10,
     font: times,
   });
   page.drawText(data.paymentInfo.warranty || "", {
     x: 400,
-    y,
+    y: y + 5,
     size: 10,
     font: times,
   });
 
   page.drawText(`$${data.customerInfo.totalSellingPrice || "0.00"}`, {
     x: 500,
-    y,
+    y: y + 5,
     size: 10,
     font: times,
   });
@@ -439,13 +439,13 @@ async function generateInvoicePDF(data: InvoiceData) {
   page.drawRectangle({
     x: 430,
     y,
-    width: width - 30,
-    height: 20,
+    width: 150,
+    height: 30,
     color: rgb(0.9, 0.9, 0.95),
   });
   page.drawText(`TOTAL: $${data.customerInfo.totalSellingPrice || "0.00"}`, {
     x: 450,
-    y,
+    y: y + 10,
     size: 14,
     font: bold,
     color: rgb(0, 0, 0.8),
@@ -485,7 +485,7 @@ async function generateInvoicePDF(data: InvoiceData) {
     color: rgb(0, 0, 0.8),
   });
 
-  y -= 15;
+  y -= 20;
   page.drawText(
     'Shipment without Lift gate (forklift) at the shipping address will be charged extra as per the transporting carriers for freight parts. I authorize Parts Central LLC to charge my Debit/Credit card listed above & agree for terms & conditions upon purchases including merchandise & shipping charges by signing the invoice or replying to the email. Signatures: This contract may be signed electronically or in hard copy. If signed in hard copy, it must be printed out, signed, scanned and returned to the Email - partscentralus@gmail.com or a valid record. Electronic signatures count as original for all purposes. By typing their names as signatures and replying to this same email typing - "Approved/ authorized", both parties agree to the terms and provisions of this agreement.',
     {
