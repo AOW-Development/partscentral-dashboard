@@ -120,12 +120,13 @@ const OrderDetails = () => {
   const params = useParams();
   const orderId = params.id as string;
   const lastVariantKeys = useRef<{ [index: number]: string }>({});
-  const isInitialLoad = useRef(true);
+  const [loadingOrder, setLoadingOrder] = useState(true);
   const [showAlternateMobileNumber, setShowAlternateMobileNumber] =
     useState(false);
 
   useEffect(() => {
     if (orderId && orderId !== "create" && orderId !== "new") {
+      setLoadingOrder(true);
       getOrderById(orderId)
         .then((data) => {
           const payment = data.payments?.[0] || {};
@@ -180,7 +181,7 @@ const OrderDetails = () => {
                   })
                 )
               : formData.products; // Keep existing products if data.items is empty
-console.log("DEBUG 1: Products from server mapping:", products)
+                  console.log("DEBUG 1: Products from server mapping:", products)
           setFormData({
             ...formData,
             products, // Set the products here
@@ -314,7 +315,34 @@ console.log("DEBUG 1: Products from server mapping:", products)
         })
         .catch((err) => {
           console.error("Failed to fetch order details", err);
+        })
+        .finally(() => {
+          setLoadingOrder(false);
         });
+    } else {
+      // This is a new order, initialize with one empty product
+      setFormData((prev) => ({
+          ...prev,
+          products: [
+              {
+                  variantSku: "",
+                  make: "",
+                  model: "",
+                  year: "",
+                  parts: "",
+                  partPrice: "",
+                  quantity: 1,
+                  milesPromised: "",
+                  specification: "",
+                  pictureUrl: "",
+                  pictureStatus: "PENDING",
+                  productVariants: [],
+                  selectedSubpart: null,
+                  selectedMileage: "",
+              },
+          ],
+      }));
+      setLoadingOrder(false);
     }
   }, [orderId]); // State for product variants
 
@@ -328,24 +356,7 @@ console.log("DEBUG 1: Products from server mapping:", products)
   const [statusPopUp, setStatusPopUp] = useState(false);
 
   const [formData, setFormData] = useState<OrderFormData>({
-    products: [
-      {
-        variantSku: "",
-        make: "",
-        model: "",
-        year: "",
-        parts: "",
-        partPrice: "",
-        quantity: 1,
-        milesPromised: "",
-        specification: "",
-        pictureUrl: "",
-        pictureStatus: "",
-        productVariants: [],
-        selectedSubpart: null,
-        selectedMileage: "",
-      },
-    ],
+    products: [],
     customerName: "",
     id: "",
     date: "",
@@ -570,11 +581,13 @@ console.log("DEBUG 1: Products from server mapping:", products)
       const key = `${make}-${model}-${year}-${parts}`;
 
       if (lastVariantKeys.current[index] !== key) {
-        console.log(`DEBUG 4: Fields change detected for index ${index}, isInitialLoad: ${isInitialLoad.current}`);
-        
+        console.log(
+          `DEBUG 4: Fields change detected for index ${index}, loadingOrder: ${loadingOrder}`
+        );
+
         // Only reset dependent fields if this is NOT the initial load AND the key actually changed
         // This prevents resetting fields when loading existing order data
-        if (lastVariantKeys.current[index] && !isInitialLoad.current) {
+        if (lastVariantKeys.current[index] && !loadingOrder) {
           console.log(`DEBUG 5: Resetting fields for index ${index}`);
           handleProductInputChange(index, "specification", "");
           handleProductInputChange(index, "selectedSubpart", null);
@@ -582,7 +595,7 @@ console.log("DEBUG 1: Products from server mapping:", products)
           handleProductInputChange(index, "variantSku", "");
           handleProductInputChange(index, "milesPromised", "");
         }
-        
+
         // Always reset productVariants and fetch new ones if needed
         handleProductInputChange(index, "productVariants", []);
         // Only fetch if all fields are present
@@ -592,18 +605,14 @@ console.log("DEBUG 1: Products from server mapping:", products)
         lastVariantKeys.current[index] = key;
       }
     });
-    
-    // Mark initial load as complete after first run
-    if (isInitialLoad.current) {
-      isInitialLoad.current = false;
-    }
-    
+
     console.log("Loaded products:", formData.products);
     // eslint-disable-next-line
   }, [
     formData.products
       .map((p) => `${p.make}-${p.model}-${p.year}-${p.parts}`)
       .join(","),
+    loadingOrder,
   ]);
 
   const [lastLogged, setLastLogged] = useState({
