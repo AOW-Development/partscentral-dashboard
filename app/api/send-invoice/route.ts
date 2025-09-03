@@ -39,7 +39,6 @@ interface InvoiceData {
     shippingAddressType: string;
     company: string;
     totalSellingPrice: number;
-    warranty: string;
     milesPromised: number;
     vinNumber: string;
     notes: string;
@@ -51,6 +50,7 @@ interface InvoiceData {
       year: string;
       parts: string;
       specification: string;
+      warranty: string;
       saleMadeBy: string;
     }
   ];
@@ -264,7 +264,7 @@ async function generateInvoicePDF(data: InvoiceData) {
   });
   y = height - 120;
   // ---------------- INVOICE INFO (PAGE 1) ----------------
-  page.drawText(`Invoice : ${data.orderId}`, {
+  page.drawText(`Invoice : PC#${data.orderId}`, {
     x: width - 200,
     y: y - 10,
     size: 11,
@@ -380,8 +380,9 @@ async function generateInvoicePDF(data: InvoiceData) {
   });
 
   page.drawText("ITEM DESCRIPTION", { x: 50, y: y - 15, size: 10, font: bold });
-  page.drawText("PRICE", { x: 300, y: y - 15, size: 10, font: bold });
-  page.drawText("QTY", { x: 400, y: y - 15, size: 10, font: bold });
+  page.drawText("PRICE", { x: 200, y: y - 15, size: 10, font: bold });
+  page.drawText("QTY", { x: 300, y: y - 15, size: 10, font: bold });
+  page.drawText("WARRANTY", { x: 400, y: y - 15, size: 10, font: bold });
   page.drawText("TOTAL", { x: 500, y: y - 15, size: 10, font: bold });
 
   // ---------------- TABLE ROWS ----------------
@@ -405,13 +406,19 @@ async function generateInvoicePDF(data: InvoiceData) {
   }
 
   page.drawText(`$${data.customerInfo.totalSellingPrice || "0.00"}`, {
-    x: 300,
+    x: 200,
     y,
     size: 10,
     font: times,
   });
 
   page.drawText("1", {
+    x: 300,
+    y,
+    size: 10,
+    font: times,
+  });
+  page.drawText(data.paymentInfo.warranty || "", {
     x: 400,
     y,
     size: 10,
@@ -866,11 +873,11 @@ async function sendInvoiceEmail(
       // from: "leadspartscentral.us@gmail.com",
       from: "support@partscentral.us",
       to: toEmail,
-      subject: `Invoice - Order ${orderId}`,
+      subject: `Invoice for Order - PC#${orderId}`,
       html: htmlContent,
       attachments: [
         {
-          filename: `invoice-${orderId}.pdf`,
+          filename: `invoice-PC#${orderId}.pdf`,
           content: Buffer.from(pdfContent.buffer),
           contentType: "application/pdf",
         },

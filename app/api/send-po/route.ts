@@ -1075,11 +1075,11 @@ async function sendPOEmail(
       from: "purchase@partscentral.us",
       // from:"support@partscentral.us",
       to: toEmail,
-      subject: `Purchase Order For ${orderId}`,
+      subject: `Purchase Order For PC#${orderId}`,
       html: htmlContent,
       attachments: [
         {
-          filename: `po-${orderId}.pdf`,
+        filename: `PO-PC#${orderId}.pdf`,
           content: Buffer.from(pdfContent.buffer),
           contentType: "application/pdf",
         },
