@@ -527,9 +527,7 @@ const OrderDetails = () => {
     handleProductInputChange(index, "milesPromised", "");
   };
 
-  const fetchProductVariants = async (index: number) => {
-    
-    const product = formData.products[index];
+  const fetchProductVariants = async (product: ProductFormData, index: number) => {
     if (product.make && product.model && product.year && product.parts) {
       setIsLoadingVariants((prev) => ({ ...prev, [index]: true }));
       setVariantError("");
@@ -600,7 +598,7 @@ const OrderDetails = () => {
         handleProductInputChange(index, "productVariants", []);
         // Only fetch if all fields are present
         if (make && model && year && parts) {
-          fetchProductVariants(index);
+          fetchProductVariants(product, index);
         }
         lastVariantKeys.current[index] = key;
       }
@@ -2706,7 +2704,7 @@ const OrderDetails = () => {
                             "make",
                             e.target.value
                           );
-                          fetchProductVariants(index);
+                          fetchProductVariants(product, index);
                         }}
                       >
                         <option value="">Select make</option>
@@ -2747,7 +2745,7 @@ const OrderDetails = () => {
                             "model",
                             e.target.value
                           );
-                          fetchProductVariants(index);
+                          fetchProductVariants(product, index);
                         }}
                         disabled={!product.make}
                       >
@@ -2789,7 +2787,7 @@ const OrderDetails = () => {
                             "year",
                             e.target.value
                           );
-                          fetchProductVariants(index);
+                          fetchProductVariants(product, index);
                         }}
                         disabled={
                           !product.model || availableYears[index]?.length === 0
