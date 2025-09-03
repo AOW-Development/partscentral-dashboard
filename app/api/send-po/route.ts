@@ -5,28 +5,6 @@ import fs from "fs";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 // Utility function to load background image
-// async function loadBackgroundImage(pdfDoc: PDFDocument) {
-//   try {
-//     const backgroundPath = path.join(process.cwd(), "public", "smtpHeader.jpg");
-//     const backgroundBytes = fs.readFileSync(backgroundPath);
-//     return await pdfDoc.embedJpg(backgroundBytes);
-//   } catch (error) {
-//     console.error("Error loading background image:", error);
-//     return null;
-//   }
-// }
-
-// Utility function to load logo
-// async function loadLogo(pdfDoc: PDFDocument) {
-//   try {
-//     const logoPath = path.resolve("./public/header-3.png");
-//     const logoImageBytes = fs.readFileSync(logoPath);
-//     return await pdfDoc.embedPng(logoImageBytes);
-//   } catch (error) {
-//     console.error("Error loading logo:", error);
-//     return null;
-//   }
-// }
 async function loadBackgroundImage(pdfDoc: PDFDocument) {
   try {
     const backgroundPath = path.join(process.cwd(), "public", "smtpHeader.jpg");
@@ -60,6 +38,7 @@ interface InvoiceData {
     shippingAddressType: string;
     company: string;
     totalSellingPrice: number;
+    vinNumber: string;
     warranty: string;
     milesPromised: number;
   };
@@ -100,12 +79,12 @@ interface InvoiceData {
   merchantCity: string;
   merchantState: string;
 }
+
 export async function POST(request: NextRequest) {
   try {
     const invoiceData = await request.json();
     console.log("PO Data is:", invoiceData);
 
-    // Validate required data
     if (!invoiceData.yardInfo?.email) {
       return NextResponse.json(
         { error: "Yard email is required" },
@@ -113,11 +92,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate invoice HTML and PDF
     const invoiceHTML = generateInvoiceHTML(invoiceData);
     const pdfContent = await generatePOPDF(invoiceData);
 
-    // Send email with invoice and PDF attachment
     const emailResult = await sendPOEmail(
       invoiceData.yardInfo.email,
       invoiceHTML,
@@ -146,7 +123,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Generate invoice HTML
 function generateInvoiceHTML(data: InvoiceData) {
   return `
     <!DOCTYPE html>
@@ -189,12 +165,9 @@ async function generatePOPDF(data: InvoiceData) {
   const times = await pdfDoc.embedFont(StandardFonts.TimesRoman);
   const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  // Create a new page
-  const page = pdfDoc.addPage([600, 800]); // Standard letter size (8.5 x 11 inches)
+  const page = pdfDoc.addPage([612, 792]);
   const { width, height } = page.getSize();
-
-  // Set margins
-  const margin = 40;
+  const margin = 36;
   let y = height - margin;
 
   const backgroundImage = await loadBackgroundImage(pdfDoc);
@@ -207,31 +180,29 @@ async function generatePOPDF(data: InvoiceData) {
       height: 180,
     });
   } else {
-    // Fallback to solid color if image loading fails
     page.drawRectangle({
       x: 0,
       y: height - 100,
       width,
       height: 180,
-      color: rgb(0.07, 0.15, 0.3), // dark blue header
+      color: rgb(0.07, 0.15, 0.3),
     });
   }
 
-  // ---------------- LOGO (PAGE 1) ----------------
   try {
     const logoImage = await loadLogo(pdfDoc);
     if (logoImage) {
       const logoDims = logoImage.scale(0.5);
       page.drawImage(logoImage, {
-        x: 30,
+        x: margin,
         y: height - 40,
         width: logoDims.width,
         height: logoDims.height,
       });
     } else {
       page.drawText("PARTS CENTRAL", {
-        x: 40,
-        y: height - 40,
+        x: margin,
+        y: height - 20,
         size: 18,
         font: bold,
         color: rgb(1, 1, 1),
@@ -240,135 +211,228 @@ async function generatePOPDF(data: InvoiceData) {
   } catch (error) {
     console.error("Error loading logo:", error);
     page.drawText("PARTS CENTRAL", {
-      x: 40,
-      y: height - 40,
+      x: margin,
+      y: height - 20,
       size: 18,
       font: bold,
       color: rgb(1, 1, 1),
     });
   }
 
-  // ---------------- CONTACT INFO (PAGE 1) ----------------
   page.drawText("Location:", {
-    x: 30,
+    x: margin,
     y: height - 50,
     size: 9,
     font: bold,
     color: rgb(1, 1, 1),
   });
   page.drawText("76 Imperial Dr Suite E Evanston, WY 82930, USA", {
-    x: 80,
+    x: margin + 70,
     y: height - 50,
     size: 9,
     font: times,
     color: rgb(1, 1, 1),
   });
   page.drawText("Website:", {
-    x: 30,
-    y: height - 65,
+    x: margin,
+    y: height - 60,
     size: 9,
     font: bold,
     color: rgb(1, 1, 1),
   });
   page.drawText("https://partscentral.us", {
-    x: 80,
-    y: height - 65,
+    x: margin + 70,
+    y: height - 60,
     size: 9,
     font: times,
     color: rgb(1, 1, 1),
   });
   page.drawText("Phone:", {
-    x: 30,
-    y: height - 80,
+    x: margin,
+    y: height - 70,
     size: 9,
     font: bold,
     color: rgb(1, 1, 1),
   });
   page.drawText("(888) 338-2540", {
-    x: 70,
-    y: height - 80,
+    x: margin + 70,
+    y: height - 70,
     size: 9,
     font: times,
     color: rgb(1, 1, 1),
   });
   page.drawText("Email:", {
-    x: 30,
-    y: height - 90,
+    x: margin,
+    y: height - 80,
     size: 9,
     font: bold,
     color: rgb(1, 1, 1),
   });
   page.drawText("purchase@partscentral.us", {
-    x: 70,
-    y: height - 90,
+    x: margin + 70,
+    y: height - 80,
     size: 9,
     font: times,
     color: rgb(1, 1, 1),
   });
   page.drawText("Sales Tax ID:", {
-    x: 30,
-    y: height - 100,
+    x: margin,
+    y: height - 90,
     size: 9,
     font: bold,
     color: rgb(1, 1, 1),
   });
   page.drawText("271-4444-3598", {
-    x: 80,
-    y: height - 100,
+    x: margin + 70,
+    y: height - 90,
     size: 9,
     font: times,
     color: rgb(1, 1, 1),
   });
 
-  y = height - 120;
+  y = height - 130;
 
-  page.drawText(`Purchase Order : ${data.orderId}`, {
+  page.drawText('Purchase Order', {
+    x: margin,
+    y: y,
+    size: 18,
+    font: bold,
+    color: rgb(0.07, 0.15, 0.3),
+  });
+
+  page.drawText(`Order#: ${data.orderId}`, {
     x: width - 200,
-    y: y - 10,
+    y: y,
     size: 11,
     font: bold,
-    color: rgb(0, 0, 0.8),
+    color: rgb(0.07, 0.15, 0.3),
   });
 
-  const currentDate = new Date().toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-  y = height - 130;
-  page.drawText(`Date : ${currentDate}`, {
+  page.drawText(`VIN #: ${data.customerInfo.vinNumber}`, {
     x: width - 200,
     y: y - 15,
+    size: 11,
+    font: bold,
+    color: rgb(0.07, 0.15, 0.3),
+  });
+
+  page.drawText(`We would like to place an order with you:\nAttn: ${data.yardInfo.name}`, {
+    x: margin,
+    y: y - 25,
     size: 11,
     font: times,
     color: rgb(0, 0, 0.8),
   });
 
-  y = height - 130;
+  y -= 70;
+  const boxWidth = width - (2 * margin);
+  const boxHeight = 45;
 
-  // Footer Notes
-  y -= 40;
-  page.drawText("THANK YOU FOR YOUR BUSINESS!", {
-    x: margin,
-    y: y,
-    size: 12,
-    font: bold,
-    color: rgb(0, 0, 0.8),
-  });
+  const boxData = [
+    { label: 'Part', text: data.productInfo[0].parts },
+    { label: 'Price', text: `$${data.yardInfo.price}` },
+    { label: 'Card Details', text: data.paymentInfo.cardHolderName },
+    { label: 'Billing Address', text: data.customerInfo.billingAddress },
+    { label: 'Shipping Address (Commercial)', text: data.customerInfo.shippingAddress },
+    { label: 'Warranty', text: data.yardInfo.warranty },
+  ];
 
-  y -= 20;
-  page.drawText(
-    "Please include PO number on all correspondence and shipping documents.",
-    {
+  for (let i = 0; i < boxData.length; i++) {
+    const { label, text } = boxData[i];
+    const boxY = y - (i * (boxHeight + 10));
+
+    page.drawRectangle({
       x: margin,
-      y: y,
+      y: boxY - boxHeight,
+      width: boxWidth,
+      height: boxHeight,
+      color: rgb(0.9, 0.9, 0.9),
+      borderColor: rgb(0, 0, 0.8),
+      borderWidth: 1,
+    });
+
+    page.drawRectangle({
+      x: margin,
+      y: boxY - boxHeight,
+      width: 100,
+      height: boxHeight,
+      color: rgb(0.8, 0.8, 0.8),
+      borderColor: rgb(0, 0, 0.8),
+      borderWidth: 1,
+    });
+
+    page.drawText(label, {
+      x: margin + 10,
+      y: boxY - boxHeight + (boxHeight / 2) - 5,
+      size: 10,
+      font: bold,
+      color: rgb(0.07, 0.15, 0.3),
+    });
+
+    page.drawText(text, {
+      x: margin + 110,
+      y: boxY - boxHeight + (boxHeight / 2) - 5,
       size: 10,
       font: times,
-      color: rgb(0, 0, 0.6),
-    }
-  );
+      color: rgb(0, 0, 0.8),
+    });
+  }
 
-  if (backgroundImage) {
+
+ const tableBottomY = 120; // This is the lowest point of your table.
+                            // A value like 120 means the table ends 120 points from the bottom of the page.
+  // --- End of table/content simulation ---
+
+  // --- Footer Section (your note) ---
+
+  const textContent = "I hereby Chuck & Eddie's Used Auto Parts to charge the order as described above on the Card.\n" +
+    "PLEASE SHIP THEPART BLIND-NO PAPERWORK, NO MILES FOR ENGINES AND\n" +
+    "SEND THE PICTURE OF THE PART BEFORE YOU SHIP IT.\n" +
+    "YOU CAN EMAIL OR FAX THE INVOICE BACK TO US\n" +
+    "Thank you for your business!";
+
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const fontSize = 12; // You can adjust this
+
+  // Calculate the width of each line to find the longest line for centering
+  const lines = textContent.split('\n');
+  let longestLineWidth = 0;
+  for (const line of lines) {
+    const lineWidth = font.widthOfTextAtSize(line, fontSize);
+    if (lineWidth > longestLineWidth) {
+      longestLineWidth = lineWidth;
+    }
+  }
+   const { width: pageWidth, height: pageHeight } = page.getSize();
+
+  // Calculate the x-coordinate for centering the longest line
+  const centerX = (pageWidth - longestLineWidth) / 2;
+
+  // Calculate the total height of the text block
+  const lineHeight = fontSize * 1.2; // A common line height multiplier
+  const totalTextHeight = lines.length * lineHeight;
+
+  // Calculate the y-coordinate to place the text.
+  // We want it *below* tableBottomY, so we subtract from tableBottomY.
+  // 'tableBottomY' is distance from the bottom, so higher value means higher on page.
+  // If your tableBottomY is 120 (120 points from the bottom of the page),
+  // and your text needs to appear below it, then its starting Y will be less than 120.
+  const startY = tableBottomY - totalTextHeight - 20; // 20 points of padding below the table
+
+  // Draw the text onto the page
+  page.drawText(textContent, {
+    x: centerX, // Use the calculated center X for horizontal centering
+    y: startY + 200,
+    font: font,
+    size: fontSize,
+    color: rgb(0, 0, 0.5), // A dark blue color, for example
+    // pdf-lib's drawText can't center multiple lines directly,
+    // so we calculate centerX based on the longest line.
+    // For perfect centering of each line, you would draw each line individually.
+  });
+
+
+    if (backgroundImage) {
     page.drawImage(backgroundImage, {
       x: 0,
       y: 0,
@@ -385,658 +449,13 @@ async function generatePOPDF(data: InvoiceData) {
       color: rgb(0.07, 0.15, 0.3), // dark blue header
     });
   }
-
-  // Serialize the PDFDocument to bytes (a Uint8Array)
+    // Serialize the PDFDocument to bytes (a Uint8Array)
   const pdfBytes = await pdfDoc.save();
   return pdfBytes;
 }
 
-// async function generateInvoicePDF(data: InvoiceData) {
-//   const pdfDoc = await PDFDocument.create();
-//   const times = await pdfDoc.embedFont(StandardFonts.TimesRoman);
-//   const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-//   // --- PAGE 1: Invoice Summary ---
-//   const page = pdfDoc.addPage([600, 800]);
-//   const { height, width } = page.getSize();
-//   let y = height - 40;
-
-//   // ---------------- HEADER BAR (PAGE 1) ----------------
-//   // Draw background image or fallback to solid color
-//   const backgroundImage = await loadBackgroundImage(pdfDoc);
-
-//   if (backgroundImage) {
-//     page.drawImage(backgroundImage, {
-//       x: 0,
-//       y: height - 100,
-//       width: width,
-//       height: 100,
-//     });
-//   } else {
-//     // Fallback to solid color if image loading fails
-//     page.drawRectangle({
-//       x: 0,
-//       y: height - 100,
-//       width,
-//       height: 100,
-//       color: rgb(0.07, 0.15, 0.3), // dark blue header
-//     });
-//   }
-
-//   // ---------------- LOGO (PAGE 1) ----------------
-//   try {
-//     const logoImage = await loadLogo(pdfDoc);
-//     if (logoImage) {
-//       const logoDims = logoImage.scale(0.5);
-//       page.drawImage(logoImage, {
-//         x: 30,
-//         y: height - 40,
-//         width: logoDims.width,
-//         height: logoDims.height,
-//       });
-//     } else {
-//       page.drawText("PARTS CENTRAL", {
-//         x: 40,
-//         y: height - 40,
-//         size: 18,
-//         font: bold,
-//         color: rgb(1, 1, 1),
-//       });
-//     }
-//   } catch (error) {
-//     console.error("Error loading logo:", error);
-//     page.drawText("PARTS CENTRAL", {
-//       x: 40,
-//       y: height - 40,
-//       size: 18,
-//       font: bold,
-//       color: rgb(1, 1, 1),
-//     });
-//   }
-
-//   // ---------------- CONTACT INFO (PAGE 1) ----------------
-//   page.drawText("Location:", {
-//     x: 30,
-//     y: height - 60,
-//     size: 9,
-//     font: bold,
-//     color: rgb(1, 1, 1),
-//   });
-//   page.drawText("76 Imperial Dr Suite E Evanston, WY 82930, USA", {
-//     x: 80,
-//     y: height - 60,
-//     size: 9,
-//     font: times,
-//     color: rgb(1, 1, 1),
-//   });
-//   page.drawText("Website:", {
-//     x: 30,
-//     y: height - 75,
-//     size: 9,
-//     font: bold,
-//     color: rgb(1, 1, 1),
-//   });
-//   page.drawText("https://partscentral.us", {
-//     x: 80,
-//     y: height - 75,
-//     size: 9,
-//     font: times,
-//     color: rgb(1, 1, 1),
-//   });
-//   page.drawText("Phone:", {
-//     x: 30,
-//     y: height - 90,
-//     size: 9,
-//     font: bold,
-//     color: rgb(1, 1, 1),
-//   });
-//   page.drawText("(888) 338-2540", {
-//     x: 70,
-//     y: height - 90,
-//     size: 9,
-//     font: times,
-//     color: rgb(1, 1, 1),
-//   });
-//   y = height - 120;
-//   // ---------------- INVOICE INFO (PAGE 1) ----------------
-//   page.drawText(`Invoice : PC #${data.orderId}`, {
-//     x: width - 200,
-//     y: y - 10,
-//     size: 11,
-//     font: bold,
-//     color: rgb(0, 0, 0.8),
-//   });
-
-//   const currentDate = new Date().toLocaleDateString("en-US", {
-//     year: "numeric",
-//     month: "short",
-//     day: "numeric",
-//   });
-//   y = height - 130;
-//   page.drawText(`Date : ${currentDate}`, {
-//     x: width - 200,
-//     y: y - 15,
-//     size: 11,
-//     font: times,
-//     color: rgb(0, 0, 0.8),
-//   });
-
-//   // ---------------- ORDER BY ----------------
-//   y = height - 130;
-//   page.drawText("Order By:", {
-//     x: 40,
-//     y: y - 20,
-//     size: 12,
-//     font: bold,
-//     color: rgb(0, 0, 0.8),
-//   });
-//   y -= 15;
-
-//   page.drawText(data.customerInfo.name || "", {
-//     x: 40,
-//     y: y - 20,
-//     size: 11,
-//     font: times,
-//     color: rgb(0, 0, 0.8),
-//   });
-//   y -= 15;
-
-//   if (data.customerInfo.email) {
-//     page.drawText(`Email: ${data.customerInfo.email}`, {
-//       x: 40,
-//       y: y - 20,
-//       size: 11,
-//       font: times,
-//       color: rgb(0, 0, 0.8),
-//     });
-//     y -= 15;
-//   }
-
-//   if (data.customerInfo.mobile) {
-//     page.drawText(`Mobile: ${data.customerInfo.mobile}`, {
-//       x: 40,
-//       y: y - 20,
-//       size: 11,
-//       font: times,
-//       color: rgb(0, 0, 0.8),
-//     });
-//     y -= 15;
-//   }
-
-//   // ---------------- BILL TO ----------------
-//   y = height - 130;
-//   page.drawText("Bill To:", {
-//     x: 300,
-//     y: y - 20,
-//     size: 12,
-//     font: bold,
-//     color: rgb(0, 0, 0.8),
-//   });
-//   y -= 15;
-
-//   page.drawText(data.customerInfo.name || "", {
-//     x: 300,
-//     y: y - 20,
-//     size: 11,
-//     font: times,
-//     color: rgb(0, 0, 0.8),
-//   });
-//   y -= 15;
-
-//   if (data.customerInfo.billingAddress) {
-//     page.drawText(data.customerInfo.billingAddress, {
-//       x: 300,
-//       y: y - 20,
-//       size: 11,
-//       font: times,
-//       color: rgb(0, 0, 0.8),
-//     });
-//     y -= 15;
-//   }
-
-//   // ---------------- TABLE HEADER ----------------
-//   y -= 40;
-//   page.drawRectangle({
-//     x: 40,
-//     y: y - 20,
-//     width: width - 80,
-//     height: 20,
-//     color: rgb(0.9, 0.9, 0.95),
-//   });
-
-//   page.drawText("ITEM DESCRIPTION", { x: 50, y: y - 15, size: 10, font: bold });
-//   page.drawText("PRICE", { x: 300, y: y - 15, size: 10, font: bold });
-//   page.drawText("QTY", { x: 400, y: y - 15, size: 10, font: bold });
-//   page.drawText("TOTAL", { x: 500, y: y - 15, size: 10, font: bold });
-
-//   // ---------------- TABLE ROWS ----------------
-//   y -= 40;
-//   // Add product row
-//   if (data.productInfo) {
-//     for (const product of data.productInfo) {
-//       const productDescription = `${product.year || ""} ${product.make || ""} ${
-//         product.model || ""
-//       } ${product.parts || ""}`;
-
-//       page.drawText(productDescription, {
-//         x: 50,
-//         y: y + 5,
-//         size: 10,
-//         font: times,
-//       });
-
-//       y -= 15;
-//     }
-//   }
-
-//   page.drawText(`$${data.customerInfo.totalSellingPrice || "0.00"}`, {
-//     x: 300,
-//     y,
-//     size: 10,
-//     font: times,
-//   });
-
-//   page.drawText("1", {
-//     x: 400,
-//     y,
-//     size: 10,
-//     font: times,
-//   });
-
-//   page.drawText(`$${data.customerInfo.totalSellingPrice || "0.00"}`, {
-//     x: 500,
-//     y,
-//     size: 10,
-//     font: times,
-//   });
-
-//   y -= 40;
-
-//   // ---------------- TOTAL ----------------
-//   y -= 20;
-//   page.drawRectangle({
-//     x: 430,
-//     y,
-//     width: width - 30,
-//     height: 20,
-//     color: rgb(0.9, 0.9, 0.95),
-//   });
-//   page.drawText(`TOTAL: $${data.customerInfo.totalSellingPrice || "0.00"}`, {
-//     x: 450,
-//     y,
-//     size: 14,
-//     font: bold,
-//     color: rgb(0, 0, 0.8),
-//   });
-//   // y -= 20;
-//   page.drawText(`Notes:`, {
-//     x: 50,
-//     y,
-//     size: 14,
-//     font: bold,
-//     color: rgb(0, 0, 0.8),
-//   });
-
-//   // ---------------- FOOTER & NOTE (PAGE 1) ----------------
-//   y -= 80;
-//   page.drawText("Note :", {
-//     x: 40,
-//     y,
-//     size: 12,
-//     font: bold,
-//     color: rgb(0, 0, 0.8),
-//   });
-
-//   y -= 15;
-//   page.drawText(
-//     'Shipment without Lift gate (forklift) at the shipping address will be charged extra as per the transporting carriers for freight parts. I authorize Parts Central LLC to charge my Debit/Credit card listed above & agree for terms & conditions upon purchases including merchandise & shipping charges by signing the invoice or replying to the email. Signatures: This contract may be signed electronically or in hard copy. If signed in hard copy, it must be printed out, signed, scanned and returned to the Email - partscentralus@gmail.com or a valid record. Electronic signatures count as original for all purposes. By typing their names as signatures and replying to this same email typing - "Approved/ authorized", both parties agree to the terms and provisions of this agreement.',
-//     {
-//       x: 40,
-//       y,
-//       size: 9,
-//       font: times,
-//       maxWidth: 520,
-//       color: rgb(0, 0, 0.8),
-//     }
-//   );
-
-//   // Payment details section
-//   y -= 150;
-//   page.drawText("PAYMENT DETAILS :", {
-//     x: 40,
-//     y,
-//     size: 11,
-//     font: bold,
-//     color: rgb(0, 0, 0.8),
-//   });
-
-//   y -= 15;
-//   if (data.paymentInfo.cardHolderName) {
-//     page.drawText(`Name: ${data.paymentInfo.cardHolderName}`, {
-//       x: 40,
-//       y,
-//       size: 10,
-//       font: times,
-//       color: rgb(0, 0, 0.8),
-//     });
-//   }
-
-//   if (data.paymentInfo.cardNumber) {
-//     page.drawText(
-//       `Method: **** **** **** ${data.paymentInfo.cardNumber.slice(-4)}`,
-//       {
-//         x: 40,
-//         y: y - 15,
-//         size: 10,
-//         font: times,
-//         color: rgb(0, 0, 0.8),
-//       }
-//     );
-//   }
-//   // shipping details section
-//   page.drawText("Shipping DETAILS :", {
-//     x: 300,
-//     y: y + 15,
-//     size: 11,
-//     font: bold,
-//     color: rgb(0, 0, 0.8),
-//   });
-
-//   page.drawText(`(${data.customerInfo.shippingAddressType})`, {
-//     x: 410,
-//     y: y + 15,
-//     size: 10,
-//     font: times,
-//     color: rgb(0, 0, 0.8),
-//   });
-
-//   y -= 15;
-//   if (data.customerInfo.company) {
-//     page.drawText(`company name: ${data.customerInfo.company}`, {
-//       x: 410,
-//       y: y + 10,
-//       size: 10,
-//       font: times,
-//       color: rgb(0, 0, 0.8),
-//     });
-//   }
-//   if (data.customerInfo.shippingAddress) {
-//     page.drawText(` ${data.customerInfo.shippingAddress}`, {
-//       x: 410,
-//       y: y - 5,
-//       size: 10,
-//       font: times,
-//       color: rgb(0, 0, 0.8),
-//     });
-//   }
-
-//   if (data.customerInfo.shippingAddressType == "Terminal") {
-//     page.drawText("Shipping to nearest terminal", {
-//       x: 410,
-//       y: y - 15,
-//       size: 10,
-//       font: times,
-//       color: rgb(0, 0, 0.8),
-//     });
-//   }
-
-//   page.drawText("Authorize Signature", {
-//     x: 450,
-//     y: y - 150,
-//     size: 11,
-//     font: bold,
-//     color: rgb(0, 0, 0.8),
-//   });
-
-//   // --- PAGE 2: Full Disclaimer & Policies ---
-//   const page2 = pdfDoc.addPage([600, 800]);
-//   const { height: page2Height } = page2.getSize();
-//   let y2 = page2Height - 40;
-
-//   // ---------------- HEADER BAR (PAGE 2) ----------------
-//   const backgroundImage2 = await loadBackgroundImage(pdfDoc);
-
-//   if (backgroundImage2) {
-//     page2.drawImage(backgroundImage2, {
-//       x: 0,
-//       y: page2Height - 100,
-//       width: width,
-//       height: 100,
-//     });
-//   } else {
-//     // Fallback to solid color if image loading fails
-//     page2.drawRectangle({
-//       x: 0,
-//       y: page2Height - 100,
-//       width,
-//       height: 100,
-//       color: rgb(0.07, 0.15, 0.3), // dark blue header
-//     });
-//   }
-
-//   // ---------------- LOGO (PAGE 2) ----------------
-//   try {
-//     const logoImage = await loadLogo(pdfDoc);
-//     if (logoImage) {
-//       const logoDims = logoImage.scale(0.5);
-//       page2.drawImage(logoImage, {
-//         x: 30,
-//         y: page2Height - 40,
-//         width: logoDims.width,
-//         height: logoDims.height,
-//       });
-//     } else {
-//       page2.drawText("PARTS CENTRAL", {
-//         x: 40,
-//         y: page2Height - 40,
-//         size: 18,
-//         font: bold,
-//         color: rgb(1, 1, 1),
-//       });
-//     }
-//   } catch (error) {
-//     console.error("Error loading logo:", error);
-//     page2.drawText("PARTS CENTRAL", {
-//       x: 40,
-//       y: page2Height - 40,
-//       size: 18,
-//       font: bold,
-//       color: rgb(1, 1, 1),
-//     });
-//   }
-
-//   // ---------------- CONTACT INFO (PAGE 2) ----------------
-
-//   page2.drawText("Location:", {
-//     x: 30,
-//     y: page2Height - 60,
-//     size: 9,
-//     font: bold,
-//     color: rgb(1, 1, 1),
-//   });
-//   page2.drawText("76 Imperial Dr Suite E Evanston, WY 82930, USA", {
-//     x: 80,
-//     y: page2Height - 60,
-//     size: 9,
-//     font: times,
-//     color: rgb(1, 1, 1),
-//   });
-
-//   page2.drawText("Website:", {
-//     x: 30,
-//     y: page2Height - 75,
-//     size: 9,
-//     font: bold,
-//     color: rgb(1, 1, 1),
-//   });
-//   page2.drawText("https://partscentral.us", {
-//     x: 80,
-//     y: page2Height - 75,
-//     size: 9,
-//     font: times,
-//     color: rgb(1, 1, 1),
-//   });
-
-//   page2.drawText("Phone:", {
-//     x: 30,
-//     y: page2Height - 90,
-//     size: 9,
-//     font: bold,
-//     color: rgb(1, 1, 1),
-//   });
-//   page2.drawText("(888) 338-2540", {
-//     x: 80,
-//     y: page2Height - 90,
-//     size: 9,
-//     font: times,
-//     color: rgb(1, 1, 1),
-//   });
-
-//   // ---------------- DISCLAIMER SECTIONS (PAGE 2) ----------------
-//   y2 -= 100;
-
-//   // Disclaimer Engine
-//   page2.drawText("Disclaimer Engine:", {
-//     x: 40,
-//     y: y2,
-//     size: 12,
-//     font: bold,
-//     color: rgb(1, 0, 0),
-//   });
-
-//   y2 -= 15;
-//   page2.drawText(
-//     "Engines are sold as an assemblies with manifolds, timing cover, belts, oil pan, fuel injectors or carburetors, pulleys and other accessories. Due to warranty only on the long block, all accessories like manifolds, timing cover, belts, oil pan, fuel injectors or carburetors, pulleys, and other accessories are sold as is (NO WARRANTY APPLICABLE).",
-//     {
-//       x: 40,
-//       y: y2,
-//       size: 9,
-//       font: times,
-//       maxWidth: 520,
-//     }
-//   );
-
-//   y2 -= 80;
-
-//   // Disclaimer Transmission
-//   page2.drawText("Disclaimer Transmission:", {
-//     x: 40,
-//     y: y2,
-//     size: 12,
-//     font: bold,
-//     color: rgb(1, 0, 0),
-//   });
-
-//   y2 -= 15;
-//   page2.drawText(
-//     "The transmission is guaranteed to shift gears and bearings to be good. The oil pan and oil filter needs to be replaced before installation. Flush out all the liquid and from test cooler lines. The torque convertor needs to be fully engaged to the front pump. For manual transmission a new clutch needs to be installed along with the pressure plate and slave cylinder. The flywheel must be turned once before installation.",
-//     {
-//       x: 40,
-//       y: y2,
-//       size: 9,
-//       font: times,
-//       maxWidth: 520,
-//     }
-//   );
-
-//   y2 -= 80;
-
-//   // Installation
-//   page2.drawText("Installation:", {
-//     x: 40,
-//     y: y2,
-//     size: 12,
-//     font: bold,
-//     color: rgb(1, 0, 0),
-//   });
-
-//   y2 -= 15;
-//   page2.drawText(
-//     "Part needs to be installed within 10 days from the date of delivery.",
-//     {
-//       x: 40,
-//       y: y2,
-//       size: 9,
-//       font: times,
-//       maxWidth: 520,
-//     }
-//   );
-
-//   y2 -= 50;
-
-//   // Cancellation
-//   page2.drawText("Cancellation:", {
-//     x: 40,
-//     y: y2,
-//     size: 12,
-//     font: bold,
-//     color: rgb(1, 0, 0),
-//   });
-
-//   y2 -= 15;
-//   page2.drawText(
-//     "After placing an order, if the customer wants-to cancel the order, he/she should do so within 24 hours and a charge of 30% restocking fee and one-way shipping cost will be deducted from the paid amount. Any Cancellations of orders should be validated via E-mail and Call to customer service is mandatory.",
-//     {
-//       x: 40,
-//       y: y2,
-//       size: 9,
-//       font: times,
-//       maxWidth: 520,
-//     }
-//   );
-
-//   y2 -= 80;
-
-//   // Return Policy
-//   page2.drawText("Return Policy:", {
-//     x: 40,
-//     y: y2,
-//     size: 12,
-//     font: bold,
-//     color: rgb(1, 0, 0),
-//   });
-
-//   y2 -= 15;
-//   page2.drawText(
-//     "If in case of damaged or defective returns will be accepted within 10 calendar days from the date of delivery for mechanical parts and 7 calendar days for body parts. Parts ordered for testing or trial purposes will not be available for return. If the customer received the part and if it is damaged, defective or if the shipping is delayed, the customer has to contact Parts Central LLC before disputing the charges.",
-//     {
-//       x: 40,
-//       y: y2,
-//       size: 9,
-//       font: times,
-//       maxWidth: 520,
-//     }
-//   );
-
-//   y2 -= 80;
-
-//   // Refund Policy
-//   page2.drawText("Refund Policy:", {
-//     x: 40,
-//     y: y2,
-//     size: 12,
-//     font: bold,
-//     color: rgb(1, 0, 0),
-//   });
-
-//   y2 -= 15;
-//   page2.drawText(
-//     "Parts must be returned within 7 business days from the date of delivery for a full refund. However, shipping & handling is non-refundable. Return shipping charges must be covered at the customer's expense. Customers have to provide a registered/certified mechanic's detailed report to prove the same for mechanical parts, which shall be investigated further before processing a refund. Once the part is returned, we will be happy to send a replacement or issue a refund within 5-7 business days.",
-//     {
-//       x: 40,
-//       y: y2,
-//       size: 9,
-//       font: times,
-//       maxWidth: 520,
-//     }
-//   );
-
-//   // Serialize the PDFDocument to bytes (a Uint8Array)
-//   const pdfBytes = await pdfDoc.save();
-//   return pdfBytes;
-// }
-
-// Send email function (you'll need to configure this with your email service)
+// Send email function
 async function sendPOEmail(
   toEmail: string,
   htmlContent: string,
@@ -1044,26 +463,12 @@ async function sendPOEmail(
   pdfContent: Uint8Array
 ) {
   try {
-    // Example using a hypothetical email service
-    // You'll need to replace this with your actual email service configuration
-
-    // Option 1: Using Nodemailer
-
-    // const transporter = nodeMailer.createTransport({
-    //   service: "gmail", // or your email service
-    //   auth: {
-    //     user: "leadspartscentral.us@gmail.com",
-    //     // user: "support@partscentral.us",
-    //     // pass: "Autoparts@2025!$",
-    //     pass: "ftzc nrta ufnx sudz",
-    //   },
-    // });
     const transporter = nodeMailer.createTransport({
       host: "smtp.office365.com",
       port: 587,
-      secure: false, // use STARTTLS
+      secure: false,
       auth: {
-        user: "purchase@partscentral.us", // full email
+        user: "purchase@partscentral.us",
         pass: "mzgccnzjtvbdgdpl",
       },
       tls: {
@@ -1073,7 +478,6 @@ async function sendPOEmail(
 
     const mailOptions = {
       from: "purchase@partscentral.us",
-      // from:"support@partscentral.us",
       to: toEmail,
       subject: `Purchase Order For PC#${orderId}`,
       html: htmlContent,
@@ -1088,30 +492,10 @@ async function sendPOEmail(
 
     await transporter.sendMail(mailOptions);
 
-    // Option 2: Using Resend (recommended for Next.js)
-    /*
-    const { Resend } = require('resend');
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
-    const { data, error } = await resend.emails.send({
-      from: 'noreply@yourdomain.com',
-      to: toEmail,
-      subject: `Invoice - Order ${orderId}`,
-      html: htmlContent
-    });
-
-    if (error) {
-      throw new Error(error.message);
-    }
-    */
-
-    // For now, we'll simulate success
-    // In production, replace this with actual email sending
     console.log(`Sending PO email to: ${toEmail}`);
     console.log(`Order ID: ${orderId}`);
     console.log(`PDF size: ${pdfContent.length} bytes`);
 
-    // Simulate email sending delay
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     return { success: true };
