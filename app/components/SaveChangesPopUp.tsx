@@ -44,10 +44,11 @@ export default function SaveChangesPopUp({
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
-  // Handle browser back/forward navigation
+  // Handle all navigation attempts
   useEffect(() => {
     if (!hasUnsavedChanges) return;
 
+    // Handle browser back/forward navigation
     const handlePopState = (event: PopStateEvent) => {
       if (hasUnsavedChanges && !isNavigating) {
         event.preventDefault();
@@ -58,12 +59,140 @@ export default function SaveChangesPopUp({
       }
     };
 
+    // Handle Link component clicks and button navigation
+    const handleLinkClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+
+      // Check for Link components (Next.js Link)
+      const link = target.closest("a[href]") as HTMLAnchorElement;
+      if (link && hasUnsavedChanges && !isNavigating) {
+        const href = link.getAttribute("href");
+        if (
+          href &&
+          href !== window.location.pathname &&
+          !href.startsWith("#")
+        ) {
+          event.preventDefault();
+          setNextPath(href);
+          setIsOpen(true);
+          return;
+        }
+      }
+
+      // Check for buttons that might trigger navigation
+      const button = target.closest("button") as HTMLButtonElement;
+      if (button && hasUnsavedChanges && !isNavigating) {
+        // Check if button has navigation-related attributes or classes
+        const buttonText = button.textContent?.toLowerCase() || "";
+        const buttonClass = button.className || "";
+
+        // Common navigation button patterns
+        const isNavigationButton =
+          buttonText.includes("orders") ||
+          buttonText.includes("leads") ||
+          buttonText.includes("production") ||
+          buttonText.includes("dashboard") ||
+          buttonText.includes("home") ||
+          buttonClass.includes("nav") ||
+          buttonClass.includes("menu");
+
+        if (isNavigationButton) {
+          // Try to find the intended destination from button context
+          const parentLink = button.closest("a[href]");
+          if (parentLink) {
+            const href = parentLink.getAttribute("href");
+            if (href && href !== window.location.pathname) {
+              event.preventDefault();
+              setNextPath(href);
+              setIsOpen(true);
+            }
+          }
+        }
+      }
+    };
+
+    // Handle programmatic navigation (router.push, router.replace)
+    const originalPush = router.push;
+    const originalReplace = router.replace;
+
+    router.push = (href: string) => {
+      if (hasUnsavedChanges && !isNavigating) {
+        setNextPath(href);
+        setIsOpen(true);
+        return Promise.resolve(false);
+      }
+      return originalPush.call(router, href);
+    };
+
+    router.replace = (href: string) => {
+      if (hasUnsavedChanges && !isNavigating) {
+        setNextPath(href);
+        setIsOpen(true);
+        return Promise.resolve(false);
+      }
+      return originalReplace.call(router, href);
+    };
+
+    // Handle hash changes (for single-page app navigation)
+    const handleHashChange = (event: HashChangeEvent) => {
+      if (hasUnsavedChanges && !isNavigating) {
+        event.preventDefault();
+        setIsOpen(true);
+        // Restore the current hash
+        window.location.hash = window.location.hash;
+      }
+    };
+
+    // Handle direct URL changes (when user types in address bar)
+    const handleLocationChange = () => {
+      if (hasUnsavedChanges && !isNavigating) {
+        // This is a fallback for direct URL changes
+        // We can't prevent them completely, but we can warn
+        // const shouldLeave = window.confirm(
+        //   "You have unsaved changes. Are you sure you want to leave this page?"
+        // );
+        setIsOpen(true);
+        const shouldLeave = true;
+        if (!shouldLeave) {
+          // Try to restore the previous URL
+          window.history.pushState(null, "", window.location.pathname);
+        }
+      }
+    };
+
+    // Handle keyboard navigation (Alt+Left, Alt+Right, etc.)
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (hasUnsavedChanges && !isNavigating) {
+        // Alt + Left Arrow (Back)
+        if (event.altKey && event.key === "ArrowLeft") {
+          event.preventDefault();
+          setIsOpen(true);
+          setNextPath("back");
+        }
+        // Alt + Right Arrow (Forward)
+        if (event.altKey && event.key === "ArrowRight") {
+          event.preventDefault();
+          setIsOpen(true);
+          setNextPath("forward");
+        }
+      }
+    };
+
+    // Add event listeners
     window.addEventListener("popstate", handlePopState);
+    window.addEventListener("hashchange", handleHashChange);
+    document.addEventListener("click", handleLinkClick, true); // Use capture phase
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
       window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("hashchange", handleHashChange);
+      document.removeEventListener("click", handleLinkClick, true);
+      document.removeEventListener("keydown", handleKeyDown);
+      router.push = originalPush;
+      router.replace = originalReplace;
     };
-  }, [hasUnsavedChanges, isNavigating, setIsOpen]);
+  }, [hasUnsavedChanges, isNavigating, setIsOpen, router]);
 
   const handleSave = async () => {
     const success = await onSave();
@@ -71,7 +200,13 @@ export default function SaveChangesPopUp({
       setIsOpen(false);
       if (nextPath) {
         setIsNavigating(true);
-        router.push(nextPath);
+        if (nextPath === "back") {
+          window.history.back();
+        } else if (nextPath === "forward") {
+          window.history.forward();
+        } else {
+          router.push(nextPath);
+        }
       }
     }
   };
@@ -81,7 +216,13 @@ export default function SaveChangesPopUp({
     setIsOpen(false);
     if (nextPath) {
       setIsNavigating(true);
-      router.push(nextPath);
+      if (nextPath === "back") {
+        window.history.back();
+      } else if (nextPath === "forward") {
+        window.history.forward();
+      } else {
+        router.push(nextPath);
+      }
     }
   };
 
