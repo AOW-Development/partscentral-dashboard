@@ -2,8 +2,9 @@
 import Header from "@/app/components/Header";
 import ProtectRoute from "@/app/components/ProtectRoute";
 import Sidebar from "@/app/components/Sidebar";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { ChevronDown, X, Plus, Minus, Calendar } from "lucide-react";
+
 import Image from "next/image";
 declare global {
   interface Window {
@@ -98,6 +99,7 @@ export type OrderFormData = {
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { URL } from "@/utils/imageUrl";
 import { createOrderFromAdmin, getOrderById } from "@/utils/orderApi";
 import { updateOrderFromAdmin } from "@/utils/updateOrderApi";
@@ -105,6 +107,7 @@ import { getCardType, isValidCardNumber } from "@/utils/cardValidator";
 import { MAKES, MODELS } from "@/vehicleData-dashboard";
 import { fetchYears } from "@/utils/vehicleApi";
 import { getProductVariants, GroupedVariant } from "@/utils/productApi";
+import SaveChangesPopUp from "@/app/components/SaveChangesPopUp";
 
 interface CartItem {
   id: string;
@@ -181,7 +184,7 @@ const OrderDetails = () => {
                   })
                 )
               : formData.products; // Keep existing products if data.items is empty
-                  console.log("DEBUG 1: Products from server mapping:", products)
+          console.log("DEBUG 1: Products from server mapping:", products);
           setFormData({
             ...formData,
             products, // Set the products here
@@ -322,29 +325,44 @@ const OrderDetails = () => {
     } else {
       // This is a new order, initialize with one empty product
       setFormData((prev) => ({
-          ...prev,
-          products: [
-              {
-                  variantSku: "",
-                  make: "",
-                  model: "",
-                  year: "",
-                  parts: "",
-                  partPrice: "",
-                  quantity: 1,
-                  milesPromised: "",
-                  specification: "",
-                  pictureUrl: "",
-                  pictureStatus: "PENDING",
-                  productVariants: [],
-                  selectedSubpart: null,
-                  selectedMileage: "",
-              },
-          ],
+        ...prev,
+        products: [
+          {
+            variantSku: "",
+            make: "",
+            model: "",
+            year: "",
+            parts: "",
+            partPrice: "",
+            quantity: 1,
+            milesPromised: "",
+            specification: "",
+            pictureUrl: "",
+            pictureStatus: "PENDING",
+            productVariants: [],
+            selectedSubpart: null,
+            selectedMileage: "",
+          },
+        ],
       }));
       setLoadingOrder(false);
     }
   }, [orderId]); // State for product variants
+
+  // Per-product loading state for variants
+  // const [isLoadingVariants, setIsLoadingVariants] = useState<{
+  //   [index: number]: boolean;
+  // }>({});
+  // const [variantError, setVariantError] = useState("");
+  // const [cardEntry, setCardEntry] = useState(false);
+
+  // const [statusPopUp, setStatusPopUp] = useState(false);
+
+  // const [formData, setFormData] = useState<OrderFormData>({
+  //   products: [],
+  //       });
+  //   }
+  // }, [orderId]); // State for product variants
 
   // Per-product loading state for variants
   const [isLoadingVariants, setIsLoadingVariants] = useState<{
@@ -354,9 +372,83 @@ const OrderDetails = () => {
   const [cardEntry, setCardEntry] = useState(false);
 
   const [statusPopUp, setStatusPopUp] = useState(false);
+  const pathName = usePathname();
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+  const [nextPath, setNextPath] = useState<string | null>(null);
+  const [initialFormData, setInitialFormData] = useState<OrderFormData | null>(
+    null
+  );
+  const router = useRouter();
+
+  // Remove this useEffect - we don't want to show popup immediately when changes are detected
+  // The popup should only show when user tries to navigate away
+
+  // Handle save changes for unsaved changes popup
+  const handleSaveChanges = async (): Promise<boolean> => {
+    try {
+      // Call the existing handleSave function
+      await handleSave();
+      setHasUnsavedChanges(false);
+      // Update initial data to current data after successful save
+      setInitialFormData(JSON.parse(JSON.stringify(formData)));
+      return true;
+    } catch (error) {
+      console.error("Error saving changes:", error);
+      return false;
+    }
+  };
+
+  // Handle discard changes
+  const handleDiscard = () => {
+    // Reset form to initial state or reload the current data
+    setHasUnsavedChanges(false);
+    setIsSaveDialogOpen(false);
+    if (nextPath) {
+      router.push(nextPath);
+    }
+  };
+
+  // Handle navigation with unsaved changes check
+  const handleNavigation = (href: string) => {
+    if (hasUnsavedChanges) {
+      setNextPath(href);
+      setIsSaveDialogOpen(true);
+    } else {
+      router.push(href);
+    }
+  };
+
+  // Function to check if form data has changed
+  const checkForChanges = (currentData: OrderFormData) => {
+    if (!initialFormData) return false;
+
+    // Deep comparison of form data
+    return JSON.stringify(currentData) !== JSON.stringify(initialFormData);
+  };
+
+  // Track form changes - to be used in form inputs
+  // Example: onChange={(e) => { /* existing onChange */; handleFormChange(); }}
 
   const [formData, setFormData] = useState<OrderFormData>({
-    products: [],
+    products: [
+      {
+        variantSku: "",
+        make: "",
+        model: "",
+        year: "",
+        parts: "",
+        partPrice: "",
+        quantity: 1,
+        milesPromised: "",
+        specification: "",
+        pictureUrl: "",
+        pictureStatus: "",
+        productVariants: [],
+        selectedSubpart: null,
+        selectedMileage: "",
+      },
+    ],
     customerName: "",
     id: "",
     date: "",
@@ -423,6 +515,22 @@ const OrderDetails = () => {
     },
   });
 
+  // Update hasUnsavedChanges whenever formData changes
+  useEffect(() => {
+    if (initialFormData) {
+      const hasChanges = checkForChanges(formData);
+      setHasUnsavedChanges(hasChanges);
+    }
+  }, [formData, initialFormData]);
+
+  // Set initial form data when component mounts or data loads
+  useEffect(() => {
+    // Only set initial data once when formData is first populated
+    if (formData && !initialFormData) {
+      setInitialFormData(JSON.parse(JSON.stringify(formData)));
+    }
+  }, [formData, initialFormData]);
+
   const handleProductInputChange = (
     index: number,
     field: keyof ProductFormData,
@@ -436,6 +544,14 @@ const OrderDetails = () => {
       };
       return { ...prev, products: updatedProducts };
     });
+  };
+
+  // Helper function to handle any form field change
+  const handleFormFieldChange = (field: keyof OrderFormData, value: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
   const addProduct = () => {
@@ -525,16 +641,19 @@ const OrderDetails = () => {
     handleProductInputChange(index, "selectedSubpart", subpart);
     handleProductInputChange(index, "variantSku", "");
     handleProductInputChange(index, "milesPromised", "");
-    debugger
+    debugger;
   };
- debugger 
-  const fetchProductVariants = async (product: ProductFormData, index: number) => {
+  debugger;
+  const fetchProductVariants = async (
+    product: ProductFormData,
+    index: number
+  ) => {
     if (product.make && product.model && product.year && product.parts) {
-   debugger 
+      debugger;
       setIsLoadingVariants((prev) => ({ ...prev, [index]: true }));
-     debugger
+      debugger;
       setVariantError("");
-      debugger
+      debugger;
       try {
         const data = await getProductVariants({
           make: product.make,
@@ -548,17 +667,22 @@ const OrderDetails = () => {
         console.log(`  - Fetched variants:`, variants);
         console.log(`  - Existing specification:`, product.specification);
         console.log(`  - Existing milesPromised:`, product.milesPromised);
-        debugger
+        debugger;
         handleProductInputChange(index, "productVariants", variants);
-        
+
         // If there's an existing specification value, find and set the corresponding selectedSubpart
         if (product.specification && variants.length > 0) {
-          console.log(`  - Looking for variant with subPart.name = "${product.specification}"`);
+          console.log(
+            `  - Looking for variant with subPart.name = "${product.specification}"`
+          );
           const matchingVariant = variants.find(
             (variant: any) => variant.subPart.name === product.specification
           );
           if (matchingVariant) {
-            console.log(`Setting selectedSubpart for index ${index}:`, matchingVariant);
+            console.log(
+              `Setting selectedSubpart for index ${index}:`,
+              matchingVariant
+            );
             handleProductInputChange(index, "selectedSubpart", matchingVariant);
           }
         }
@@ -577,7 +701,7 @@ const OrderDetails = () => {
   // useEffect to reactively fetch variants and reset dependent fields
   useEffect(() => {
     formData.products.forEach((product, index) => {
-      debugger
+      debugger;
       console.log(`DEBUG 2: useEffect running for index ${index}`, product);
       const { make, model, year, parts } = product;
       // Compose a unique key for these fields
@@ -682,10 +806,10 @@ const OrderDetails = () => {
   useEffect(() => {
     const newTotalPrice =
       Number(formData.partPrice) +
-        Number(formData.handlingPrice) +
-        Number(formData.corePrice) +
-        Number(formData.taxesPrice) +
-        Number(formData.processingPrice);
+      Number(formData.handlingPrice) +
+      Number(formData.corePrice) +
+      Number(formData.taxesPrice) +
+      Number(formData.processingPrice);
 
     if (Number(formData.totalPrice) !== newTotalPrice) {
       setFormData((prev) => ({
@@ -1709,16 +1833,20 @@ const OrderDetails = () => {
             {/* Header with breadcrumb and close button */}
             <div className="flex items-center justify-between mb-20">
               <div className="flex items-center gap-2 text-sm">
-                <Link href="/orders">
-                  <span className="text-white/60">Orders</span>
-                </Link>
+                <button
+                  onClick={() => handleNavigation("/orders")}
+                  className="text-white/60 hover:text-white"
+                >
+                  <span>Orders</span>
+                </button>
                 <span className="text-white/60">›</span>
                 <span className="text-white">Order Details</span>
               </div>
-              <button className="text-white/60 hover:text-white">
-                <Link href="/orders">
-                  <X size={20} />
-                </Link>
+              <button
+                onClick={() => handleNavigation("/orders")}
+                className="text-white/60 hover:text-white"
+              >
+                <X size={20} />
               </button>
             </div>
 
@@ -2361,10 +2489,16 @@ const OrderDetails = () => {
                         placeholder="Card Number"
                         value={formData.cardNumber}
                         inputMode="numeric"
-                        maxLength={23}
+                        maxLength={19}
                         onChange={(e) => {
-                          const formatted = formatCardNumber(e.target.value);
-                          handleInputChange("cardNumber", formatted);
+                          // Remove all non-digits first
+                          const digitsOnly = e.target.value.replace(/\D/g, "");
+
+                          // Limit to 16 digits maximum
+                          if (digitsOnly.length <= 16) {
+                            const formatted = formatCardNumber(digitsOnly);
+                            handleInputChange("cardNumber", formatted);
+                          }
                         }}
                         onBlur={(e) => {
                           const err = validateField(
@@ -2715,7 +2849,8 @@ const OrderDetails = () => {
                         <option value="">Select make</option>
                         {MAKES.map((make) => (
                           <option key={make} value={make}>
-                            {make}
+                            {make.charAt(0).toUpperCase() +
+                              make.slice(1).toLowerCase()}
                           </option>
                         ))}
                       </select>
@@ -2957,9 +3092,15 @@ const OrderDetails = () => {
                     className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
                     placeholder="VIN Number"
                     value={formData.vinNumber}
-                    onChange={(e) =>
-                      handleInputChange("vinNumber", e.target.value)
-                    }
+                    maxLength={17}
+                    pattern="[A-Za-z0-9]{17}"
+                    onChange={(e) => {
+                      // Only allow alphanumeric and max 17 chars
+                      const value = e.target.value
+                        .replace(/[^A-Za-z0-9]/g, "")
+                        .slice(0, 17);
+                      handleInputChange("vinNumber", value);
+                    }}
                   />
                 </div>
                 <div>
@@ -4041,6 +4182,13 @@ const OrderDetails = () => {
           </div>
         </div>
       )}
+      <SaveChangesPopUp
+        hasUnsavedChanges={hasUnsavedChanges}
+        onSave={handleSaveChanges}
+        onDiscard={handleDiscard}
+        isOpen={isSaveDialogOpen}
+        setIsOpen={setIsSaveDialogOpen}
+      />
     </ProtectRoute>
   );
 };
