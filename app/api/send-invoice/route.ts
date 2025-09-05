@@ -395,11 +395,8 @@ async function generateInvoicePDF(data: InvoiceData) {
   // Add product row
   if (data.productInfo) {
     for (const product of data.productInfo) {
-      const productDescription = `${product.year || ""} ${product.make || ""} ${
-        product.model || ""
-      } ${product.parts || ""}
+      const productDescription = `${product.year || ""} ${product.make || ""} ${product.model || ""} ${product.parts || ""}
       ${product.specification || ""}`;
-
       page.drawText(productDescription, {
         x: 50,
         y: y + 5,

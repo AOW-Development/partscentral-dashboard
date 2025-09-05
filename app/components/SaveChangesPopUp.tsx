@@ -36,8 +36,9 @@ export default function SaveChangesPopUp({
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
-      e.returnValue = "";
-      return "";
+      e.returnValue =
+        "You have unsaved changes. Are you sure you want to leave?";
+      return "You have unsaved changes. Are you sure you want to leave?";
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
@@ -48,14 +49,28 @@ export default function SaveChangesPopUp({
   useEffect(() => {
     if (!hasUnsavedChanges) return;
 
+    // Add a history entry to intercept back/forward navigation
+    const currentUrl = window.location.href;
+    window.history.pushState(
+      { preventNavigation: true, timestamp: Date.now() },
+      "",
+      currentUrl
+    );
+
     // Handle browser back/forward navigation
     const handlePopState = (event: PopStateEvent) => {
       if (hasUnsavedChanges && !isNavigating) {
-        event.preventDefault();
         // Show popup for browser navigation
         setIsOpen(true);
-        // Restore the current URL
-        window.history.pushState(null, "", window.location.pathname);
+        // Determine if it's back or forward navigation
+        const isBackNavigation = event.state?.preventNavigation === true;
+        setNextPath(isBackNavigation ? "back" : "forward");
+        // Push current state back to prevent navigation
+        window.history.pushState(
+          { preventNavigation: true, timestamp: Date.now() },
+          "",
+          currentUrl
+        );
       }
     };
 
@@ -73,7 +88,24 @@ export default function SaveChangesPopUp({
           !href.startsWith("#")
         ) {
           event.preventDefault();
-          setNextPath(href);
+          event.stopPropagation();
+          console.log("href", href);
+
+          // Set the nextPath to the actual href for proper navigation
+          if (href.includes("orders") && href.includes("dashboard")) {
+            setNextPath("https://partscentral.us/dashboard/orders");
+          } else if (href.includes("leads") && href.includes("dashboard")) {
+            setNextPath("https://partscentral.us/dashboard/leads");
+          } else if (
+            href.includes("production") &&
+            href.includes("dashboard")
+          ) {
+            setNextPath("https://partscentral.us/dashboard/production");
+          } else if (href.includes("dashboard")) {
+            setNextPath("https://partscentral.us/dashboard");
+          } else {
+            setNextPath(href);
+          }
           setIsOpen(true);
           return;
         }
@@ -99,10 +131,13 @@ export default function SaveChangesPopUp({
         if (isNavigationButton) {
           // Try to find the intended destination from button context
           const parentLink = button.closest("a[href]");
+          console.log("parentLink", parentLink);
           if (parentLink) {
             const href = parentLink.getAttribute("href");
+            console.log("href1", href);
             if (href && href !== window.location.pathname) {
               event.preventDefault();
+              event.stopPropagation();
               setNextPath(href);
               setIsOpen(true);
             }
@@ -117,6 +152,7 @@ export default function SaveChangesPopUp({
 
     router.push = (href: string) => {
       if (hasUnsavedChanges && !isNavigating) {
+        console.log("href2", href);
         setNextPath(href);
         setIsOpen(true);
         return Promise.resolve(false);
@@ -126,6 +162,7 @@ export default function SaveChangesPopUp({
 
     router.replace = (href: string) => {
       if (hasUnsavedChanges && !isNavigating) {
+        console.log("href3", href);
         setNextPath(href);
         setIsOpen(true);
         return Promise.resolve(false);
@@ -146,11 +183,6 @@ export default function SaveChangesPopUp({
     // Handle direct URL changes (when user types in address bar)
     const handleLocationChange = () => {
       if (hasUnsavedChanges && !isNavigating) {
-        // This is a fallback for direct URL changes
-        // We can't prevent them completely, but we can warn
-        // const shouldLeave = window.confirm(
-        //   "You have unsaved changes. Are you sure you want to leave this page?"
-        // );
         setIsOpen(true);
         const shouldLeave = true;
         if (!shouldLeave) {
@@ -166,12 +198,14 @@ export default function SaveChangesPopUp({
         // Alt + Left Arrow (Back)
         if (event.altKey && event.key === "ArrowLeft") {
           event.preventDefault();
+          event.stopPropagation();
           setIsOpen(true);
           setNextPath("back");
         }
         // Alt + Right Arrow (Forward)
         if (event.altKey && event.key === "ArrowRight") {
           event.preventDefault();
+          event.stopPropagation();
           setIsOpen(true);
           setNextPath("forward");
         }
@@ -191,8 +225,20 @@ export default function SaveChangesPopUp({
       document.removeEventListener("keydown", handleKeyDown);
       router.push = originalPush;
       router.replace = originalReplace;
+
+      // Clean up the history state if it exists
+      if (window.history.state?.preventNavigation) {
+        window.history.replaceState(null, "", window.location.href);
+      }
     };
   }, [hasUnsavedChanges, isNavigating, setIsOpen, router]);
+
+  // Clean up history state when hasUnsavedChanges becomes false
+  useEffect(() => {
+    if (!hasUnsavedChanges && window.history.state?.preventNavigation) {
+      window.history.replaceState(null, "", window.location.href);
+    }
+  }, [hasUnsavedChanges]);
 
   const handleSave = async () => {
     const success = await onSave();
@@ -200,13 +246,20 @@ export default function SaveChangesPopUp({
       setIsOpen(false);
       if (nextPath) {
         setIsNavigating(true);
-        if (nextPath === "back") {
-          window.history.back();
-        } else if (nextPath === "forward") {
-          window.history.forward();
-        } else {
-          router.push(nextPath);
-        }
+        // Use setTimeout to ensure state is updated before navigation
+        setTimeout(() => {
+          if (nextPath === "back") {
+            // Go back by removing our dummy state and going back twice
+            window.history.go(-1);
+          } else if (nextPath === "forward") {
+            // Go forward by removing our dummy state and going forward
+            window.history.go(1);
+          } else {
+            router.push(nextPath);
+          }
+          setNextPath(null);
+          setIsNavigating(false);
+        }, 500);
       }
     }
   };
@@ -216,13 +269,20 @@ export default function SaveChangesPopUp({
     setIsOpen(false);
     if (nextPath) {
       setIsNavigating(true);
-      if (nextPath === "back") {
-        window.history.back();
-      } else if (nextPath === "forward") {
-        window.history.forward();
-      } else {
-        router.push(nextPath);
-      }
+      // Use setTimeout to ensure state is updated before navigation
+      setTimeout(() => {
+        if (nextPath === "back") {
+          // Go back by removing our dummy state and going back twice
+          window.history.go(-2);
+        } else if (nextPath === "forward") {
+          // Go forward by removing our dummy state and going forward
+          window.history.go(1);
+        } else {
+          router.push(nextPath);
+        }
+        setNextPath(null);
+        setIsNavigating(false);
+      }, 100);
     }
   };
 

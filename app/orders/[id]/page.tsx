@@ -108,6 +108,8 @@ import { MAKES, MODELS } from "@/vehicleData-dashboard";
 import { fetchYears } from "@/utils/vehicleApi";
 import { getProductVariants, GroupedVariant } from "@/utils/productApi";
 import SaveChangesPopUp from "@/app/components/SaveChangesPopUp";
+import MoveYardPopUp from "@/app/components/MoveYardPopUp";
+import YardInfo from "@/app/components/YardInfo";
 
 interface CartItem {
   id: string;
@@ -379,6 +381,7 @@ const OrderDetails = () => {
   const [initialFormData, setInitialFormData] = useState<OrderFormData | null>(
     null
   );
+  const [reason, setReason] = useState("");
   const router = useRouter();
 
   // Remove this useEffect - we don't want to show popup immediately when changes are detected
@@ -389,6 +392,7 @@ const OrderDetails = () => {
     try {
       // Call the existing handleSave function
       await handleSave();
+      console.log("REASON", reason);
       setHasUnsavedChanges(false);
       // Update initial data to current data after successful save
       setInitialFormData(JSON.parse(JSON.stringify(formData)));
@@ -3368,336 +3372,29 @@ const OrderDetails = () => {
                 </div>
               </div>
               {/* Yard Info Section */}
-              <div className=" relative p-2 mt-6">
-                <div className="relative flex justify-between items-center mb-4">
-                  <h3 className="text-white text-lg font-semibold">
-                    Yard Info
-                  </h3>
-
-                  <button
-                    className="absolute right-0 top-20 hover:bg-red-600 bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
-                    onClick={() => {
-                      setStatusPopUp(!statusPopUp);
-                    }}
-                  >
-                    <Minus size={18} />
-                  </button>
-                  <button
-                    className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
-                    onClick={() => setShowPreviousYard((prev) => !prev)}
-                  >
-                    {showPreviousYard
-                      ? "Hide Previous Yard"
-                      : "Show Previous Yard"}
-                  </button>
-                </div>
-                {showPreviousYard && previousYards.length > 0 && (
-                  <div className="mb-6 bg-[#222c3a] rounded-lg p-4 border border-blue-700">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-white font-semibold">
-                        Previous Yard Details
-                      </span>
-                      {previousYards.length > 1 && (
-                        <select
-                          className="bg-[#0a1929] border border-gray-600 rounded px-2 py-1 text-white text-xs"
-                          value={selectedPrevYardIdx}
-                          onChange={(e) =>
-                            setSelectedPrevYardIdx(Number(e.target.value))
-                          }
-                        >
-                          {previousYards.map((_, idx) => (
-                            <option key={idx} value={idx}>
-                              Yard #{idx + 1}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    </div>
-
-                    <div className=" grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-white/60 text-xs mb-1">
-                          Yard Name
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                          value={previousYards[selectedPrevYardIdx].yardName}
-                          disabled
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-white/60 text-xs mb-1">
-                          Address
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                          value={previousYards[selectedPrevYardIdx].yardAddress}
-                          disabled
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-white/60 text-xs mb-1">
-                          Mobile
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                          value={previousYards[selectedPrevYardIdx].yardMobile}
-                          disabled
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-white/60 text-xs mb-1">
-                          Email
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                          value={previousYards[selectedPrevYardIdx].yardEmail}
-                          disabled
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-white/60 text-xs mb-1">
-                          Price
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                          value={previousYards[selectedPrevYardIdx].yardPrice}
-                          disabled
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-white/60 text-xs mb-1">
-                          Warranty
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                          value={
-                            previousYards[selectedPrevYardIdx].yardWarranty
-                          }
-                          disabled
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-white/60 text-xs mb-1">
-                          Miles
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                          value={previousYards[selectedPrevYardIdx].yardMiles}
-                          disabled
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-white/60 text-xs mb-1">
-                          Shipping
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                          value={
-                            previousYards[selectedPrevYardIdx].yardShipping
-                          }
-                          disabled
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-white/60 text-xs mb-1">
-                          Yard Cost
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                          value={previousYards[selectedPrevYardIdx].yardCost}
-                          disabled
-                        />
-                      </div>
-                      <div className="md:col-span-3">
-                        <label className="block text-white/60 text-xs mb-1">
-                          Reason
-                        </label>
-                        <textarea
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                          value={previousYards[selectedPrevYardIdx].reason}
-                          disabled
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-                <h3 className="text-white text-lg font-semibold mb-4">
-                  Current Yard Info
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-[#FFFFFF33] rounded-lg p-2">
-                  {/* Name */}
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Yard Name
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                      placeholder="Enter name"
-                      value={formData.yardName}
-                      onChange={(e) =>
-                        handleInputChange("yardName", e.target.value)
-                      }
-                    />
-                  </div>
-                  {/* Address */}
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Address
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                      placeholder="Enter address"
-                      value={formData.yardAddress}
-                      onChange={(e) =>
-                        handleInputChange("yardAddress", e.target.value)
-                      }
-                    />
-                  </div>
-
-                  {/* Mobile */}
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Mobile
-                    </label>
-                    <input
-                      type="tel"
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                      placeholder="Enter mobile number"
-                      value={formData.yardMobile}
-                      onChange={(e) =>
-                        handleInputChange("yardMobile", e.target.value)
-                      }
-                    />
-                  </div>
-
-                  {/* Email */}
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                      placeholder="Enter email"
-                      value={formData.yardEmail}
-                      onChange={(e) =>
-                        handleInputChange("yardEmail", e.target.value)
-                      }
-                    />
-                  </div>
-
-                  {/* Price */}
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Price
-                    </label>
-                    <input
-                      type="number"
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                      placeholder="Enter price"
-                      value={formData.yardPrice}
-                      onChange={(e) =>
-                        handleInputChange("yardPrice", e.target.value)
-                      }
-                    />
-                  </div>
-
-                  {/* Warranty */}
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Warranty
-                    </label>
-                    <div className="relative">
-                      <select
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                        value={formData.yardWarranty}
-                        onChange={(e) =>
-                          handleInputChange("yardWarranty", e.target.value)
-                        }
-                      >
-                        <option value="">Select warranty</option>
-                        <option>30 Days</option>
-                        <option>60 Days</option>
-                        <option>90 Days</option>
-                        <option>6 Months</option>
-                        <option>1 Year</option>
-                      </select>
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                        size={16}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Miles */}
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Miles
-                    </label>
-                    <input
-                      type="number"
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                      placeholder="Enter miles"
-                      value={formData.yardMiles}
-                      onChange={(e) =>
-                        handleInputChange("yardMiles", e.target.value)
-                      }
-                    />
-                  </div>
-
-                  {/* Shipping */}
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Shipping
-                    </label>
-                    <div className="relative">
-                      <select
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                        value={formData.yardShipping}
-                        onChange={(e) => {
-                          handleInputChange("yardShipping", e.target.value);
-                        }}
-                      >
-                        <option value="">Select shipping option</option>
-                        <option value="Own Shipping">Own Shipping</option>
-                        <option value="Yard Shipping">Yard Shipping</option>
-                      </select>
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                        size={16}
-                      />
-                    </div>
-                  </div>
-                  {showYardShippingCost && (
-                    <div>
-                      <label className="block text-white/60 text-sm mb-2">
-                        Yard Shipping Cost
-                      </label>
-                      <input
-                        type="number"
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                        placeholder="Enter yard cost"
-                        value={formData.yardCost}
-                        onChange={(e) =>
-                          handleInputChange("yardCost", e.target.value)
-                        }
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
+              <YardInfo
+                formData={{
+                  yardName: formData.yardName,
+                  yardAddress: formData.yardAddress,
+                  yardMobile: formData.yardMobile,
+                  yardEmail: formData.yardEmail,
+                  yardPrice: formData.yardPrice,
+                  yardWarranty: formData.yardWarranty,
+                  yardMiles: formData.yardMiles,
+                  yardShipping: formData.yardShipping,
+                  yardCost: formData.yardCost,
+                  reason: reason,
+                }}
+                handleInputChange={handleInputChange}
+                showYardShippingCost={showYardShippingCost}
+                previousYards={previousYards}
+                showPreviousYard={showPreviousYard}
+                setShowPreviousYard={setShowPreviousYard}
+                selectedPrevYardIdx={selectedPrevYardIdx}
+                setSelectedPrevYardIdx={setSelectedPrevYardIdx}
+                setStatusPopUp={setStatusPopUp}
+                statusPopUp={statusPopUp}
+              />
               <div className="flex justify-end gap-2">
                 <button
                   onClick={handleSendPO}
@@ -4159,32 +3856,7 @@ const OrderDetails = () => {
         </div>
       </div>
       {statusPopUp && (
-        <div className="fixed right-0 top-20 w-full h-full z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black opacity-50" />
-          <div className="z-50 bg-[#222c3a] w-[300px] h-[200px] rounded-lg p-4 flex flex-col justify-center items-center gap-2">
-            <p className="text-white">
-              Are you sure you want to remove this yard?if yes then enter the
-              reason
-            </p>
-            <input
-              className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-              type="text"
-              placeholder="Enter reason"
-            />
-            <button
-              className="bg-[#006BA9] hover:bg-[#006BA9]/90 text-white px-4 py-2 rounded-lg transition-colors cursor-pointer"
-              onClick={() => setStatusPopUp(false)}
-            >
-              Submit
-            </button>
-            <button
-              className="bg-[#006BA9] hover:bg-[#006BA9]/90 text-white px-4 py-2 rounded-lg transition-colors cursor-pointer"
-              onClick={() => setStatusPopUp(false)}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
+        <MoveYardPopUp setStatus={setStatusPopUp} setReason={setReason} />
       )}
       <SaveChangesPopUp
         hasUnsavedChanges={hasUnsavedChanges}
