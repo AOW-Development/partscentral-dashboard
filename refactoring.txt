@@ -1,0 +1,103 @@
+
+split/divide partscentral-dashboard/app/orders/[id]/page.tsx file into multiple files/components WITHOUT BREAKING ANY EXISTING FUNCTIONALITY.
+this is 3000+ lines of big file so read it very carefully and make sure have proper understanding.
+this file has : updatingOrder,creating order,sending invoices, sending po,notes and ton of other things and lot of jsx.
+
+i have created all these empty files :
+
+types/ordertypes.ts :
+
+export type ProductFormData = { ... } // From lines 14-29  
+export type OrderFormData = { ... }   // From lines 30-96
+
+// contexts/OrderContext.tsx  
+export const OrderProvider = ({ children, orderId }) => {  
+  // Move all useState and useEffect logic here  
+  // Provide formData, handlers, and actions through context  
+}
+
+
+
+
+
+Create Custom Hooks
+
+// hooks/useOrderActions.ts  
+export const useOrderActions = () => {  
+  // Move handleSave, handleUpdateOrder, handleSendInvoice, etc.  
+}  
+  
+// hooks/useProductVariants.ts    
+export const useProductVariants = () => {  
+  // Move fetchProductVariants and related logic  
+}
+
+
+here to export and import do you need to pass state/context for that do you think react context is enough or for should go for zustand for better management.
+
+
+create store orderStore 
+
+in next phase create  following componenets :
+
+
+
+NotesSystem.tsx : create this and customerNotes + yardNotes. move all notes logic here 
+customerNotes and yardNotes arrays page.tsx:1541-1542
+customerNoteInput and yardNoteInput strings page.tsx:1543-1544
+addCustomerNote and addYardNote functions page.tsx:1546-1582
+// store/notesStore.ts  
+interface NotesState {  
+  customerNotes: NoteEntry[];  
+  yardNotes: NoteEntry[];  
+  addCustomerNote: (message: string, actor?: string) => void;  
+  addYardNote: (message: string, actor?: string) => void;  
+}
+// components/noteSystems.tsx  
+export const NotesSystem = () => {  
+  const { customerNotes, yardNotes, addCustomerNote, addYardNote } = useNotesStore();  
+  // Move all notes UI and logic here  
+}
+
+
+
+orderHeader.tsx
+
+Basic order info: customerName, id, date, source, status page.tsx:1767-1840
+Picture upload functionality page.tsx:1745-1764
+// components/OrderHeader.tsx    
+export const OrderHeader = () => {  
+  const { formData, updateFormData } = useOrderStore();  
+  // Move customer profile and basic order info  
+}
+
+Needs handleInputChange function
+Picture upload state page.tsx:1531
+
+Needs handleInputChange function
+Picture upload state 
+
+
+ContactInformation.tsx
+
+email, mobile, alternateMobile
+shippingAddress, billingAddress, company
+showAlternateMobileNumber toggle
+
+// components/ContactInformation.tsx  
+export const ContactInformation = () => {  
+  const { formData, updateFormData, fieldErrors } = useOrderStore();  
+  // Move all contact and address fields  
+}
+
+Field validation errors
+handleInputChange function
+
+do this splitting in phases. AGAIN RULE NUMBER 1 :  DO NOT  BRAEK EXISTING FUNCTIONALITY
+create related store files and write in them.
+
+
+
+
+
+

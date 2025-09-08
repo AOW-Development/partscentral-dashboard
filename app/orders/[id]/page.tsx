@@ -11,91 +11,7 @@ declare global {
     _lastVariantKeys?: { [index: number]: string };
   }
 }
-// --- Strong types for cart mapping ---
-export type ProductFormData = {
-  variantSku: string;
-  make: string;
-  model: string;
-  year: string;
-  parts: string;
-  partPrice: string | number;
-  quantity?: number;
-  milesPromised?: string | number;
-  specification?: string;
-  pictureUrl?: string;
-  pictureStatus?: string;
-  productVariants?: GroupedVariant[];
-  selectedSubpart?: GroupedVariant | null;
-  selectedMileage?: string;
-};
-export type OrderFormData = {
-  products: ProductFormData[];
-  customerName: string;
-  id: string;
-  date: string;
-  source: string;
-  status: string;
-  email: string;
-  mobile: string;
-  alternateMobile: string;
-  partPrice: string | number;
-  taxesPrice: string | number;
-  handlingPrice: string | number;
-  processingPrice: string | number;
-  corePrice: string | number;
-  shippingAddressType: string;
-  company: string;
-  shippingAddress: string;
-  billingAddress: string;
-  cardHolderName: string;
-  cardNumber: string;
-  cardDate: string;
-  cardCvv: string;
-  alternateCardHolderName: string;
-  alternateCardNumber: string;
-  alternateCardDate: string;
-  alternateCardCvv: string;
-  warranty: string;
-  totalSellingPrice: string | number;
-  totalPrice: string | number;
-  merchantMethod: string;
-  approvalCode: string;
-  entity: string;
-  charged: string;
-  saleMadeBy: string;
-  yardName: string;
-  yardMobile: string;
-  yardAddress: string;
-  yardEmail: string;
-  yardPrice: string | number;
-  yardWarranty: string;
-  yardMiles: string | number;
-  yardShipping: string;
-  yardCost: string | number;
-  pictureStatus: string;
-  pictureUrl: string;
-  carrierName: string;
-  trackingNumber: string;
-  customerNotes: any;
-  yardNotes: any;
-  invoiceStatus: string;
-  invoiceSentAt: string;
-  invoiceConfirmedAt: string;
-  vinNumber: string;
-  notes: string;
-  ownShippingInfo: {
-    productType: string;
-    packageType: string;
-    weight: string;
-    dimensions: string;
-    pickUpDate: string;
-    carrier: string;
-    price: string;
-    variance: string;
-    bolNumber: string;
-  };
-};
-// --- End strong types for cart mapping ---
+// Types are now imported from @/types/orderTypes
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -110,16 +26,24 @@ import { getProductVariants, GroupedVariant } from "@/utils/productApi";
 import SaveChangesPopUp from "@/app/components/SaveChangesPopUp";
 import MoveYardPopUp from "@/app/components/MoveYardPopUp";
 import YardInfo from "@/app/components/YardInfo";
+import NotesSystem from "@/components/NotesSystem";
+import { useNotesStore } from "@/store/notesStore";
+import { 
+  ProductFormData, 
+  OrderFormData, 
+  NoteEntry, 
+  CartItem, 
+  PaymentEntry,
+  MessageState,
+  VisiblePriceFields,
+  FieldErrors,
+  LoadingVariants,
+  AvailableYears,
+  PreviousYard,
+  ProductEntry
+} from "@/types/orderTypes";
 
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  // warranty?: string;
-  milesPromised?: string;
-  specification?: string;
-}
+// CartItem interface moved to @/types/orderTypes
 
 const OrderDetails = () => {
   const params = useParams();
@@ -1668,12 +1592,7 @@ const OrderDetails = () => {
   const [uploadedPicture, setUploadedPicture] = useState<File | null>(null);
 
   // Notes system state
-  type NoteEntry = {
-    id: number;
-    timestamp: Date;
-    message: string;
-    actor?: string;
-  };
+  // NoteEntry type moved to @/types/orderTypes
 
   const [customerNotes, setCustomerNotes] = useState<NoteEntry[]>([]);
   const [yardNotes, setYardNotes] = useState<NoteEntry[]>([]);
