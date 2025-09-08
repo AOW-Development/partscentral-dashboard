@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const ALLOWED_IPS =
-  "2406:7400:98:67a8:f8a9:3943:7485:5385,::1,127.0.0.1,49.205.146.68";
+  "2406:7400:98:67a8:f8a9:3943:7485:5385,::1,127.0.0.1,49.205.146.68,172.26.7.92,2600:1f13:1c1:2000:4d00:b7c7:c943:7b36";
 
 export function middleware(req: NextRequest) {
   const allowedIps = ALLOWED_IPS.split(",");
@@ -26,5 +26,4 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   matcher: ["/production", "/dashboard/production"],
-  //   matcher: ["/", "/orders/:path*"],
 };

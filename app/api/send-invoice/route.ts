@@ -38,6 +38,11 @@ interface InvoiceData {
     billingAddress: string;
     shippingAddressType: string;
     company: string;
+    partPrice: number;
+    taxesPrice: number;
+    handlingPrice: number;
+    processingPrice: number;
+    corePrice: number;
     totalSellingPrice: number;
     milesPromised: number;
     vinNumber: string;
@@ -138,18 +143,18 @@ function generateInvoiceHTML(data: InvoiceData) {
     </head>
     <body>
       <div>
-      <h3 >Hello,${data.customerInfo.name}</h3>
-      <p >Please find the attached invoice for the order you have placed with us.</p>
-      <p>Kindly reply "YES" to this email as an acknowledgement, and also sign the invoice copy and send it back to us.  Please send us a Valid ID proof as well.</p>
-      <p >As per our tele-conversation, we will charge your card ending with (${data.paymentInfo.cardNumber.slice(
+      <h3 >Hello ${data.customerInfo.name},</h3>
+      <h4 >Please find the attached invoice for the order you have placed with us.</h4>
+      <h4>Kindly reply "YES" to this email as an acknowledgement, and also sign the invoice copy and send it back to us.  Please send us a Valid ID proof as well.</h4>
+      <h4 >As per our tele-conversation, we will charge your card ending with (${data.paymentInfo.cardNumber.slice(
         -4
       )}) for the amount of $${
     data.customerInfo.totalSellingPrice
-  }. This authorization is for a single transaction only and does not provide authorization for any additional unrelated debits or credits to your account.</p>
-      <p style="margin-top:36px;">Regards,</p>
-      <p >Parts Central LLC</p>
-      <p >Contact: (888) 338-2540</p>
-      <p >Fax#: (312) 845-9711</p>
+  }. This authorization is for a single transaction only and does not provide authorization for any additional unrelated debits or credits to your account.</h3>
+      <h4 style="margin-top:36px;">Regards,</h4>
+      <h4 >Parts Central LLC</h4>
+      <h4 >Contact: (888) 338-2540</h4>
+      <h4 >Fax#: (312) 845-9711</h4>
       </div>
     </body>
     </html>
@@ -265,7 +270,7 @@ async function generateInvoicePDF(data: InvoiceData) {
   y = height - 120;
   // ---------------- INVOICE INFO (PAGE 1) ----------------
   page.drawText(`Invoice : PC#${data.orderId}`, {
-    x: width - 200,
+    x: width - 150,
     y: y - 10,
     size: 11,
     font: bold,
@@ -279,7 +284,7 @@ async function generateInvoicePDF(data: InvoiceData) {
   });
   y = height - 130;
   page.drawText(`Date : ${currentDate}`, {
-    x: width - 200,
+    x: width - 150,
     y: y - 15,
     size: 11,
     font: times,
@@ -380,9 +385,9 @@ async function generateInvoicePDF(data: InvoiceData) {
   });
 
   page.drawText("ITEM DESCRIPTION", { x: 50, y: y - 15, size: 10, font: bold });
-  page.drawText("PRICE", { x: 200, y: y - 15, size: 10, font: bold });
-  page.drawText("QTY", { x: 300, y: y - 15, size: 10, font: bold });
-  page.drawText("WARRANTY", { x: 400, y: y - 15, size: 10, font: bold });
+  page.drawText("PRICE", { x: 250, y: y - 15, size: 10, font: bold });
+  page.drawText("QTY", { x: 400, y: y - 15, size: 10, font: bold });
+  // page.drawText("WARRANTY", { x: 400, y: y - 15, size: 10, font: bold });
   page.drawText("TOTAL", { x: 500, y: y - 15, size: 10, font: bold });
 
   // ---------------- TABLE ROWS ----------------
@@ -390,10 +395,8 @@ async function generateInvoicePDF(data: InvoiceData) {
   // Add product row
   if (data.productInfo) {
     for (const product of data.productInfo) {
-      const productDescription = `${product.year || ""} ${product.make || ""} ${
-        product.model || ""
-      } ${product.parts || ""}`;
-
+      const productDescription = `${product.year || ""} ${product.make || ""} ${product.model || ""} ${product.parts || ""}
+      ${product.specification || ""}`;
       page.drawText(productDescription, {
         x: 50,
         y: y + 5,
@@ -404,21 +407,34 @@ async function generateInvoicePDF(data: InvoiceData) {
       // y -= 15;
     }
   }
+  if (data.customerInfo.vinNumber) {
+    let yAxis = y - 15;
+    page.drawText(`VIN#: ${data.customerInfo.vinNumber || ""}`, {
+      x: 50,
+      y: yAxis,
+      size: 10,
+      font: times,
+    });
+  }
 
-  page.drawText(`$${data.customerInfo.totalSellingPrice || "0.00"}`, {
-    x: 200,
-    y: y + 5,
-    size: 10,
-    font: times,
-  });
+  page.drawText(
+    `$${data.customerInfo.partPrice || "0.00"}
+(TP:$${data.customerInfo.taxesPrice || "0.00"},HP:$${
+      data.customerInfo.handlingPrice || "0.00"
+    },
+CP:$${data.customerInfo.corePrice || "0.00"},PP:$${
+      data.customerInfo.processingPrice || "0.00"
+    })
+    `,
+    {
+      x: 250,
+      y: y + 5,
+      size: 10,
+      font: times,
+    }
+  );
 
   page.drawText("1", {
-    x: 300,
-    y: y + 5,
-    size: 10,
-    font: times,
-  });
-  page.drawText(data.paymentInfo.warranty || "", {
     x: 400,
     y: y + 5,
     size: 10,
@@ -435,9 +451,9 @@ async function generateInvoicePDF(data: InvoiceData) {
   y -= 40;
 
   // ---------------- TOTAL ----------------
-  y -= 20;
+  y -= 25;
   page.drawRectangle({
-    x: 430,
+    x: 420,
     y,
     width: 150,
     height: 30,
@@ -452,8 +468,8 @@ async function generateInvoicePDF(data: InvoiceData) {
   });
 
   page.drawText(`Notes:`, {
-    x: 50,
-    y,
+    x: 40,
+    y: y - 10,
     size: 14,
     font: bold,
     color: rgb(0, 0, 0.8),
@@ -461,19 +477,24 @@ async function generateInvoicePDF(data: InvoiceData) {
 
   page.drawText(`${data.customerInfo.notes || ""}`, {
     x: 100,
-    y,
+    y: y - 10,
     size: 14,
     font: times,
     color: rgb(0, 0, 0.8),
   });
-  y -= 20;
-  page.drawText(`VIN number:${data.customerInfo.vinNumber || ""}`, {
-    x: 50,
-    y,
-    size: 14,
-    font: times,
-    color: rgb(0, 0, 0.8),
-  });
+  y -= 25;
+  page.drawText(
+    `${
+      data.paymentInfo.warranty || ""
+    } Warranty. NO LABOUR. Will be Delivered in 8-9 Business Days`,
+    {
+      x: 40,
+      y,
+      size: 10,
+      font: times,
+      color: rgb(0, 0, 0.8),
+    }
+  );
 
   // ---------------- FOOTER & NOTE (PAGE 1) ----------------
   y -= 80;
@@ -487,7 +508,7 @@ async function generateInvoicePDF(data: InvoiceData) {
 
   y -= 20;
   page.drawText(
-    'Shipment without Lift gate (forklift) at the shipping address will be charged extra as per the transporting carriers for freight parts. I authorize Parts Central LLC to charge my Debit/Credit card listed above & agree for terms & conditions upon purchases including merchandise & shipping charges by signing the invoice or replying to the email. Signatures: This contract may be signed electronically or in hard copy. If signed in hard copy, it must be printed out, signed, scanned and returned to the Email - partscentralus@gmail.com or a valid record. Electronic signatures count as original for all purposes. By typing their names as signatures and replying to this same email typing - "Approved/ authorized", both parties agree to the terms and provisions of this agreement.',
+    'Shipment without Lift gate (forklift) at the shipping address will be charged extra as per the transporting carriers for freight parts. I authorize Parts Central LLC to charge my Debit/Credit card listed above & agree for terms & conditions upon purchases including merchandise & shipping charges by signing the invoice or replying to the email. Signatures: This contract may be signed electronically or in hard copy. If signed in hard copy, it must be printed out, signed, scanned and returned to the Email - support@partscentral.us or a valid record. Electronic signatures count as original for all purposes. By typing their names as signatures and replying to this same email typing - "Approved/ authorized", both parties agree to the terms and provisions of this agreement.',
     {
       x: 40,
       y,
