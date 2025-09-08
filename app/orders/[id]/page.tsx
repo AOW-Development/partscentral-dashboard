@@ -3912,7 +3912,7 @@ const OrderDetails = () => {
               >
                 Save
               </button>
-              <button className="bg-gray-600 cursor-pointer hover:bg-gray-700 text-white px-8 py-3 rounded-lg font-medium transition-colors cursor-pointer">
+              <button className="bg-gray-600 hover:bg-gray-700 text-white px-8 py-3 rounded-lg font-medium transition-colors cursor-pointer">
                 Close
               </button>
             </div>
