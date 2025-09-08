@@ -645,19 +645,19 @@ const OrderDetails = () => {
     handleProductInputChange(index, "selectedSubpart", subpart);
     handleProductInputChange(index, "variantSku", "");
     handleProductInputChange(index, "milesPromised", "");
-    debugger;
+    // debugger;
   };
-  debugger;
+  // debugger;
   const fetchProductVariants = async (
     product: ProductFormData,
     index: number
   ) => {
     if (product.make && product.model && product.year && product.parts) {
-      debugger;
+      // debugger;
       setIsLoadingVariants((prev) => ({ ...prev, [index]: true }));
-      debugger;
+      // debugger;
       setVariantError("");
-      debugger;
+      // debugger;
       try {
         const data = await getProductVariants({
           make: product.make,
@@ -671,7 +671,7 @@ const OrderDetails = () => {
         console.log(`  - Fetched variants:`, variants);
         console.log(`  - Existing specification:`, product.specification);
         console.log(`  - Existing milesPromised:`, product.milesPromised);
-        debugger;
+        // debugger;
         handleProductInputChange(index, "productVariants", variants);
 
         // If there's an existing specification value, find and set the corresponding selectedSubpart
@@ -705,7 +705,7 @@ const OrderDetails = () => {
   // useEffect to reactively fetch variants and reset dependent fields
   useEffect(() => {
     formData.products.forEach((product, index) => {
-      debugger;
+      // debugger;
       console.log(`DEBUG 2: useEffect running for index ${index}`, product);
       const { make, model, year, parts } = product;
       // Compose a unique key for these fields

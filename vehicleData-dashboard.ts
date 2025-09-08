@@ -3,19 +3,19 @@ export const MAKES = [
   "Audi",
   "BMW",
   "Buick",
-  "cadillac",
-  "chevy",
+  "Cadillac",
+  "Chevy",
   "Chrysler",
   "Dodge",
   "Ford",
   "GMC",
   "Honda",
-  "hyundai",
-  "infiniti",
-  "isuzu",
+  "Hyundai",
+  "Infiniti",
+  "Isuzu",
   "Jaguar",
   "Jeep",
-  "kia",
+  "Kia",
   "LandRover",
   "Lexus",
   "Lincoln",
@@ -25,8 +25,8 @@ export const MAKES = [
   "Pontiac",
   "Porsche",
   "Saturn",
-  "subaru",
-  "suzuki",
+  "Subaru",
+  "Suzuki",
   "Toyota",
   "Volvo",
   "Volkswagen"
@@ -123,7 +123,7 @@ export const MODELS: Record<string, string[]> = {
     "Van Savana 2500",
     "Van Savana 3500"
   ],
-  isuzu: [
+  Isuzu: [
     "Amigo",
     "Ascender",
     "Axiom",
@@ -174,7 +174,7 @@ export const MODELS: Record<string, string[]> = {
     "Touareg",
     "Van-EuroVan"
   ],
-  kia: [
+  Kia: [
     "Amanti",
     "Borrego",
     "Cadenza",
@@ -191,7 +191,7 @@ export const MODELS: Record<string, string[]> = {
     "Spectra",
     "Sportage"
   ],
-  hyundai: [
+  Hyundai: [
     "Accent",
     "Azera",
     "Elantra",
@@ -383,7 +383,7 @@ export const MODELS: Record<string, string[]> = {
     "Van (Sprinter 2500)",
     "Van (Sprinter 3500)"
   ],
-  cadillac: [
+  Cadillac: [
     "ATS",
     "Catera",
     "Concours",
@@ -478,7 +478,7 @@ export const MODELS: Record<string, string[]> = {
     "Sprinter 2500",
     "Sprinter 3500"
   ],
-  infiniti: [
+  Infiniti: [
     "EX35",
     "EX37",
     "FX",
@@ -507,7 +507,7 @@ export const MODELS: Record<string, string[]> = {
     "QX70",
     "QX80"
   ],
-  subaru: [
+  Subaru: [
     "Baja",
     "BRZ",
     "Forester",
@@ -707,7 +707,7 @@ export const MODELS: Record<string, string[]> = {
     "Z4",
     "Z8"
   ],
-  suzuki: [
+  Suzuki: [
     "Aerio",
     "Equator",
     "Esteem",
@@ -723,7 +723,7 @@ export const MODELS: Record<string, string[]> = {
     "X90",
     "XL7"
   ],
-  chevy: [
+  Chevy: [
     "Astro",
     "Aveo",
     "Beretta",
