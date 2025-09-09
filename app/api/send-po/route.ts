@@ -133,10 +133,10 @@ function generateInvoiceHTML(data: InvoiceData) {
     </head>
     <body>
       <div>
-      <h3 >Hello,${data.yardInfo.name}</h3>
-      <p >Please Find the attached PO.
+      <h3 >Hello ${data.yardInfo.name},</h3>
+      <p style= "font-weight: bold;" >Please Find the attached PO.
         Requesting pictures before you wrap up the part for shipping.</p>
-        <p style="font-weight: bold;">${data.productInfo
+        <p style= "font-weight: bold;">${data.productInfo
           .map(
             (item) =>
               item.make +
@@ -151,9 +151,14 @@ function generateInvoiceHTML(data: InvoiceData) {
               " "
           )
           .join(", ")}</p>
-      <p >
-***Please Note this is a Blind Shipment, No Tags/Labels/Price Miles Not to be disclosed, except for the Shipping label to be attached.
-Regards,</p>
+      <p style="font-weight: bold;">
+    ***Please Note this is a Blind Shipment, No Tags/Labels/Price Miles Not to be disclosed, except for the Shipping label to be attached.
+    </p>
+      <h4 style="margin-top:36px; font-weight: bold;">Regards,</h4>
+      <p style="margin-bottom:-5px; font-weight: bold;">Parts Central LLC</p>
+      <p style="margin-bottom:-5px; font-weight: bold;">Contact: (888) 338-2540</p>
+      <p style="margin-bottom:-5px; font-weight: bold;">Fax#: (312) 845-9711</p>
+
       </div>
     </body>
     </html>
@@ -219,218 +224,280 @@ async function generatePOPDF(data: InvoiceData) {
     });
   }
 
-  page.drawText("Location:", {
+// Resolve path to public folder
+const locationBytes = fs.readFileSync(path.join(process.cwd(), "public", "location.png"));
+const websiteBytes  = fs.readFileSync(path.join(process.cwd(), "public", "website.png"));
+const phoneBytes    = fs.readFileSync(path.join(process.cwd(), "public", "phone.png"));
+const emailBytes    = fs.readFileSync(path.join(process.cwd(), "public", "email.png"));
+const taxBytes      = fs.readFileSync(path.join(process.cwd(), "public", "sales.png"));
+
+const locationIcon = await pdfDoc.embedPng(locationBytes);
+const websiteIcon  = await pdfDoc.embedPng(websiteBytes);
+const phoneIcon    = await pdfDoc.embedPng(phoneBytes);
+const emailIcon    = await pdfDoc.embedPng(emailBytes);
+const taxIcon      = await pdfDoc.embedPng(taxBytes);
+
+// --- Now draw them with labels + values ---
+const iconSize = 8;   // icon width/height
+y = height - 50;   // starting Y for first row
+
+const infoRows = [
+  { icon: locationIcon, label: "Location:", value: "76 Imperial Dr Suite E Evanston, WY 82930, USA" },
+  { icon: websiteIcon,  label: "Website:",  value: "https://partscentral.us" },
+  { icon: phoneIcon,    label: "Phone:",    value: "(888) 338-2540" },
+  { icon: emailIcon,    label: "Email:",    value: "purchase@partscentral.us" },
+  { icon: taxIcon,      label: "Sales Tax ID:", value: "271-4444-3598" },
+];
+
+
+for (const row of infoRows) {
+  // Draw icon
+  page.drawImage(row.icon, {
     x: margin,
-    y: height - 50,
-    size: 9,
+    y: y - 2, // tweak for vertical alignment
+    width: iconSize,
+    height: iconSize,
+  });
+
+  // Draw label
+  page.drawText(row.label, {
+    x: margin + iconSize + 4,
+    y,
+    size: 7,
     font: bold,
     color: rgb(1, 1, 1),
   });
-  page.drawText("76 Imperial Dr Suite E Evanston, WY 82930, USA", {
-    x: margin + 70,
-    y: height - 50,
-    size: 9,
-    font: times,
-    color: rgb(1, 1, 1),
-  });
-  page.drawText("Website:", {
-    x: margin,
-    y: height - 60,
-    size: 9,
-    font: bold,
-    color: rgb(1, 1, 1),
-  });
-  page.drawText("https://partscentral.us", {
-    x: margin + 70,
-    y: height - 60,
-    size: 9,
-    font: times,
-    color: rgb(1, 1, 1),
-  });
-  page.drawText("Phone:", {
-    x: margin,
-    y: height - 70,
-    size: 9,
-    font: bold,
-    color: rgb(1, 1, 1),
-  });
-  page.drawText("(888) 338-2540", {
-    x: margin + 70,
-    y: height - 70,
-    size: 9,
-    font: times,
-    color: rgb(1, 1, 1),
-  });
-  page.drawText("Email:", {
-    x: margin,
-    y: height - 80,
-    size: 9,
-    font: bold,
-    color: rgb(1, 1, 1),
-  });
-  page.drawText("purchase@partscentral.us", {
-    x: margin + 70,
-    y: height - 80,
-    size: 9,
-    font: times,
-    color: rgb(1, 1, 1),
-  });
-  page.drawText("Sales Tax ID:", {
-    x: margin,
-    y: height - 90,
-    size: 9,
-    font: bold,
-    color: rgb(1, 1, 1),
-  });
-  page.drawText("271-4444-3598", {
-    x: margin + 70,
-    y: height - 90,
-    size: 9,
+
+  // Draw value
+  page.drawText(row.value, {
+    x: margin + 70, // align values nicely
+    y,
+    size: 7,
     font: times,
     color: rgb(1, 1, 1),
   });
 
-  y = height - 130;
+  y -= 10; // move down for next row
+}
 
   page.drawText('Purchase Order', {
     x: margin,
-    y: y,
+    y: y - 30,
     size: 18,
     font: bold,
-    color: rgb(0.07, 0.15, 0.3),
+    color: rgb(0, 0, 0.8),
   });
 
   page.drawText(`Order#: ${data.orderId}`, {
     x: width - 200,
-    y: y,
-    size: 11,
+    y: y - 30,
+    size: 14,
     font: bold,
-    color: rgb(0.07, 0.15, 0.3),
+    color: rgb(0, 0, 0.8),
   });
 
   page.drawText(`VIN #: ${data.customerInfo.vinNumber}`, {
     x: width - 200,
-    y: y - 15,
-    size: 11,
+    y: y - 50,
+    size: 14,
     font: bold,
-    color: rgb(0.07, 0.15, 0.3),
+    color: rgb(0, 0, 0.8),
   });
 
-  page.drawText(`We would like to place an order with you:\nAttn: ${data.yardInfo.name}`, {
+  page.drawText(`We would like to place an order with you`, {
     x: margin,
-    y: y - 25,
-    size: 11,
+    y: y - 55,
+    size: 14,
     font: times,
     color: rgb(0, 0, 0.8),
   });
 
-  y -= 70;
-  const boxWidth = width - (2 * margin);
-  const boxHeight = 45;
+    page.drawText(`Attn: ${data.yardInfo.name}`, {
+    x: margin,
+    y: y - 70,
+    size: 14,
+    font: times,
+    color: rgb(0, 0, 0.8),
+  });
 
-  const boxData = [
-    { label: 'Part', text: data.productInfo[0].parts },
-    { label: 'Price', text: `$${data.yardInfo.price}` },
-    { label: 'Card Details', text: data.paymentInfo.cardHolderName },
-    { label: 'Billing Address', text: data.customerInfo.billingAddress },
-    { label: 'Shipping Address (Commercial)', text: data.customerInfo.shippingAddress },
-    { label: 'Warranty', text: data.yardInfo.warranty },
-  ];
+// --- The corrected drawing logic starts here ---
+let currentX = y - 100;
 
-  for (let i = 0; i < boxData.length; i++) {
-    const { label, text } = boxData[i];
-    const boxY = y - (i * (boxHeight + 10));
+const leftPadding = margin;
+const labelWidth = 120;
+const defaultLineHeight = 12;
+const verticalPadding = 30;
+const boxSpacing = 10;
 
-    page.drawRectangle({
-      x: margin,
-      y: boxY - boxHeight,
-      width: boxWidth,
-      height: boxHeight,
-      color: rgb(0.9, 0.9, 0.9),
-      borderColor: rgb(0, 0, 0.8),
-      borderWidth: 1,
-    });
+// Dynamically handle shipping address based on type
+let shippingText = "";
+if (data.customerInfo.shippingAddressType === "Commercial") {
+  shippingText = `${data.customerInfo.company}\n${data.customerInfo.shippingAddress}\nAttn: ${data.customerInfo.name || ""}\nPH#${data.customerInfo.mobile || ""}`;
+} else if (data.customerInfo.shippingAddressType === "Terminal") {
+  shippingText = `Terminal\n${data.customerInfo.shippingAddress}`;
+} else {
+  // Residential / Own Shipping
+  shippingText = `Residential\n${data.customerInfo.shippingAddress}`;
+}
 
-    page.drawRectangle({
-      x: margin,
-      y: boxY - boxHeight,
-      width: 100,
-      height: boxHeight,
-      color: rgb(0.8, 0.8, 0.8),
-      borderColor: rgb(0, 0, 0.8),
-      borderWidth: 1,
-    });
+const boxData = [
+  { label: 'Part', text: data.productInfo[0].parts },
+  { label: 'Price', text: `$${data.yardInfo.price}` },
+  { label: 'Card Details', text: `${data.paymentInfo.cardHolderName}\n${data.paymentInfo.cardNumber}\n${data.paymentInfo.cardDate}\n${data.paymentInfo.cardCvv}` },
+  { label: 'Billing Address', text: data.customerInfo.billingAddress },
+  { label: `Shipping Address`, text: shippingText },
+  { label: 'Warranty', text: data.yardInfo.warranty },
+];
 
-    page.drawText(label, {
-      x: margin + 10,
-      y: boxY - boxHeight + (boxHeight / 2) - 5,
-      size: 10,
-      font: bold,
-      color: rgb(0.07, 0.15, 0.3),
-    });
+// ---
+// First pass: Calculate the dynamic height for each block and the total height of the left block
+// ---
+let totalLeftBlockHeight = 0;
+const blockHeights = [];
 
-    page.drawText(text, {
-      x: margin + 110,
-      y: boxY - boxHeight + (boxHeight / 2) - 5,
+for (let i = 0; i < boxData.length; i++) {
+  const { text } = boxData[i];
+  const lines = text.split('\n');
+  const requiredHeight = (lines.length * defaultLineHeight) + verticalPadding;
+  blockHeights.push(requiredHeight);
+  totalLeftBlockHeight += requiredHeight;
+  if (i < boxData.length - 1) {
+    totalLeftBlockHeight += boxSpacing;
+  }
+}
+
+const totalLeftBlockY = currentX - totalLeftBlockHeight;
+
+// ---
+// Draw the single, continuous dark blue rectangle on the left
+// ---
+page.drawRectangle({
+  x: leftPadding,
+  y: totalLeftBlockY,
+  width: labelWidth,
+  height: totalLeftBlockHeight,
+  color: rgb(0.07, 0.15, 0.3),
+});
+
+// ---
+// Second pass: Loop through each item to draw the labels and the horizontal content blocks
+// ---
+for (let i = 0; i < boxData.length; i++) {
+  const { label, text } = boxData[i];
+  const actualBoxHeight = blockHeights[i];
+
+  // ---
+  // Draw the horizontal light gray rectangle for the content
+  // ---
+  page.drawRectangle({
+    x: leftPadding + labelWidth,
+    y: currentX - actualBoxHeight,
+    width: width - (2 * leftPadding) - labelWidth,
+    height: actualBoxHeight,
+    color: rgb(0.9, 0.9, 0.9),
+  });
+
+  // ---
+  // Draw the label text inside the left blue block
+  // ---
+  // Measure label width
+  const labelWidthAtSize = bold.widthOfTextAtSize(label, 10);
+
+  // Compute X so the text is centered inside the blue block
+  const labelX = leftPadding + (labelWidth - labelWidthAtSize) / 2;
+
+  // Compute Y so it's vertically centered in this block
+  const labelY = currentX - (actualBoxHeight / 2) - (defaultLineHeight / 2);
+
+  page.drawText(label, {
+    x: labelX,
+    y: labelY,
+    size: 10,
+    font: bold,
+    color: rgb(1, 1, 1),
+  });
+
+  // ---
+  // Draw the multi-line content text
+  // ---
+  const lines = text.split('\n');
+  const textX = leftPadding + labelWidth + 15;
+  let textYStart = currentX - (verticalPadding / 2) - defaultLineHeight;
+
+  for (let j = 0; j < lines.length; j++) {
+    page.drawText(lines[j], {
+      x: textX,
+      y: textYStart - (j * defaultLineHeight),
       size: 10,
       font: times,
-      color: rgb(0, 0, 0.8),
+      color: rgb(0, 0, 0),
     });
   }
 
+  // ---
+  // Update currentY for the next block
+  // ---
+  currentX -= (actualBoxHeight + boxSpacing);
+}
 
- const tableBottomY = 120; // This is the lowest point of your table.
+ const tableBottomY = 100; // This is the lowest point of your table.
                             // A value like 120 means the table ends 120 points from the bottom of the page.
   // --- End of table/content simulation ---
 
   // --- Footer Section (your note) ---
 
-  const textContent = "I hereby Chuck & Eddie's Used Auto Parts to charge the order as described above on the Card.\n" +
-    "PLEASE SHIP THEPART BLIND-NO PAPERWORK, NO MILES FOR ENGINES AND\n" +
-    "SEND THE PICTURE OF THE PART BEFORE YOU SHIP IT.\n" +
-    "YOU CAN EMAIL OR FAX THE INVOICE BACK TO US\n" +
-    "Thank you for your business!";
+  const textContent = [
+    "I hereby Chuck & Eddie's Used Auto Parts to charge the order as described above on the Card.",
+    "PLEASE SHIP THE PART BLIND-NO PAPERWORK, NO MILES FOR ENGINES AND",
+    "SEND THE PICTURE OF THE PART BEFORE YOU SHIP IT.",
+    "YOU CAN EMAIL OR FAX THE INVOICE BACK TO US",
+    "", // This empty string creates a line break
+    "Thank you for your business!"
+  ];
 
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const fontSize = 12; // You can adjust this
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const fontSize = 12;
 
-  // Calculate the width of each line to find the longest line for centering
-  const lines = textContent.split('\n');
-  let longestLineWidth = 0;
-  for (const line of lines) {
+  const { width: pageWidth } = page.getSize();
+  const lineHeight = fontSize * 1.2;
+  const totalTextHeight = textContent.length * lineHeight;
+
+  // We want the text to appear below the table, so we calculate the starting Y
+  // from the table's bottom edge, with some padding.
+  const startY = tableBottomY - totalTextHeight - 20; 
+
+  let currentY = startY + 200;
+
+  for (let i = 0; i < textContent.length; i++) {
+    const line = textContent[i];
     const lineWidth = font.widthOfTextAtSize(line, fontSize);
-    if (lineWidth > longestLineWidth) {
-      longestLineWidth = lineWidth;
+    const centerX = (pageWidth - lineWidth) / 2;
+    let color = rgb(0, 0, 0.5); // Default dark blue color
+    let currentFont = font; 
+    
+
+    // Check for the line to be red as in the image
+    if (line.includes("SEND THE PICTURE")) {
+      color = rgb(1, 0, 0); // Red color
     }
+    // Check for the line to be a darker blue and bold
+    if (line.includes("Thank you for your business!")) {
+      color = rgb(0, 0, 0.5);
+       currentFont = boldFont; 
+       // Dark blue color
+    }
+
+    page.drawText(line, {
+      x: centerX,
+      y: currentY,
+      font: font,
+      size: fontSize,
+      color: color,
+    });
+
+    currentY -= lineHeight;
   }
-   const { width: pageWidth, height: pageHeight } = page.getSize();
-
-  // Calculate the x-coordinate for centering the longest line
-  const centerX = (pageWidth - longestLineWidth) / 2;
-
-  // Calculate the total height of the text block
-  const lineHeight = fontSize * 1.2; // A common line height multiplier
-  const totalTextHeight = lines.length * lineHeight;
-
-  // Calculate the y-coordinate to place the text.
-  // We want it *below* tableBottomY, so we subtract from tableBottomY.
-  // 'tableBottomY' is distance from the bottom, so higher value means higher on page.
-  // If your tableBottomY is 120 (120 points from the bottom of the page),
-  // and your text needs to appear below it, then its starting Y will be less than 120.
-  const startY = tableBottomY - totalTextHeight - 20; // 20 points of padding below the table
-
-  // Draw the text onto the page
-  page.drawText(textContent, {
-    x: centerX, // Use the calculated center X for horizontal centering
-    y: startY + 200,
-    font: font,
-    size: fontSize,
-    color: rgb(0, 0, 0.5), // A dark blue color, for example
-    // pdf-lib's drawText can't center multiple lines directly,
-    // so we calculate centerX based on the longest line.
-    // For perfect centering of each line, you would draw each line individually.
-  });
-
 
     if (backgroundImage) {
     page.drawImage(backgroundImage, {
