@@ -4,11 +4,13 @@ import React, { useState } from "react";
 interface MoveYardPopUpProps {
   setStatus: (status: boolean) => void;
   setReason: (reason: string) => void;
+  setSubmitReason: (submitReason: boolean) => void;
 }
 
 export default function MoveYardPopUp({
   setStatus,
   setReason,
+  setSubmitReason,
 }: MoveYardPopUpProps) {
   const [reason, setLocalReason] = useState("");
 
@@ -21,6 +23,7 @@ export default function MoveYardPopUp({
     setReason(reason.trim());
     console.log("REASON", reason);
     setStatus(false);
+    setSubmitReason(true);
   };
 
   const handleCancel = () => {

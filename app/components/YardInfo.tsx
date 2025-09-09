@@ -60,14 +60,6 @@ const YardInfo: React.FC<YardInfoProps> = ({
         <h3 className="text-white text-lg font-semibold">Yard Info</h3>
 
         <button
-          className="absolute right-0 top-20 hover:bg-red-600 bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
-          onClick={() => {
-            setStatusPopUp(!statusPopUp);
-          }}
-        >
-          <Minus size={18} />
-        </button>
-        <button
           className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
           onClick={() => setShowPreviousYard((prev) => !prev)}
         >
@@ -80,7 +72,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
             <span className="text-white font-semibold">
               Previous Yard Details
             </span>
-            {previousYards.length > 1 && (
+            {previousYards.length > 0 && (
               <select
                 className="bg-[#0a1929] border border-gray-600 rounded px-2 py-1 text-white text-xs"
                 value={selectedPrevYardIdx}
@@ -103,7 +95,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
               <input
                 type="text"
                 className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                value={previousYards[selectedPrevYardIdx].yardName}
+                value={previousYards[selectedPrevYardIdx]?.yardName || ""}
                 disabled
               />
             </div>
@@ -114,7 +106,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
               <input
                 type="text"
                 className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                value={previousYards[selectedPrevYardIdx].yardAddress}
+                value={previousYards[selectedPrevYardIdx]?.yardAddress || ""}
                 disabled
               />
             </div>
@@ -123,7 +115,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
               <input
                 type="text"
                 className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                value={previousYards[selectedPrevYardIdx].yardMobile}
+                value={previousYards[selectedPrevYardIdx]?.yardMobile || ""}
                 disabled
               />
             </div>
@@ -132,7 +124,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
               <input
                 type="text"
                 className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                value={previousYards[selectedPrevYardIdx].yardEmail}
+                value={previousYards[selectedPrevYardIdx]?.yardEmail || ""}
                 disabled
               />
             </div>
@@ -141,7 +133,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
               <input
                 type="text"
                 className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                value={previousYards[selectedPrevYardIdx].yardPrice}
+                value={previousYards[selectedPrevYardIdx]?.yardPrice || ""}
                 disabled
               />
             </div>
@@ -152,7 +144,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
               <input
                 type="text"
                 className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                value={previousYards[selectedPrevYardIdx].yardWarranty}
+                value={previousYards[selectedPrevYardIdx]?.yardWarranty || ""}
                 disabled
               />
             </div>
@@ -161,7 +153,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
               <input
                 type="text"
                 className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                value={previousYards[selectedPrevYardIdx].yardMiles}
+                value={previousYards[selectedPrevYardIdx]?.yardMiles || ""}
                 disabled
               />
             </div>
@@ -172,7 +164,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
               <input
                 type="text"
                 className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                value={previousYards[selectedPrevYardIdx].yardShipping}
+                value={previousYards[selectedPrevYardIdx]?.yardShipping || ""}
                 disabled
               />
             </div>
@@ -183,7 +175,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
               <input
                 type="text"
                 className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                value={previousYards[selectedPrevYardIdx].yardCost}
+                value={previousYards[selectedPrevYardIdx]?.yardCost || ""}
                 disabled
               />
             </div>
@@ -191,7 +183,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
               <label className="block text-white/60 text-xs mb-1">Reason</label>
               <textarea
                 className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                value={previousYards[selectedPrevYardIdx].reason}
+                value={previousYards[selectedPrevYardIdx]?.reason || ""}
                 disabled
               />
             </div>
@@ -201,7 +193,15 @@ const YardInfo: React.FC<YardInfoProps> = ({
       <h3 className="text-white text-lg font-semibold mb-4">
         Current Yard Info
       </h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-[#FFFFFF33] rounded-lg p-2">
+      <div className="relative grid grid-cols-1 md:grid-cols-3 gap-6 bg-[#FFFFFF33] rounded-lg p-2">
+        <button
+          className="absolute right-0 top-0 z-5 hover:bg-red-600 bg-red-500 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg"
+          onClick={() => {
+            setStatusPopUp(!statusPopUp);
+          }}
+        >
+          <Minus size={18} />
+        </button>
         {/* Name */}
         <div>
           <label className="block text-white/60 text-sm mb-2">Yard Name</label>

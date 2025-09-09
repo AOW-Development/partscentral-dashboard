@@ -71,7 +71,7 @@ export type OrderFormData = {
   yardWarranty: string;
   yardMiles: string | number;
   yardShipping: string;
-  yardCost: string | number;
+  yardCost: string;
   pictureStatus: string;
   pictureUrl: string;
   carrierName: string;
@@ -110,6 +110,23 @@ import { getProductVariants, GroupedVariant } from "@/utils/productApi";
 import SaveChangesPopUp from "@/app/components/SaveChangesPopUp";
 import MoveYardPopUp from "@/app/components/MoveYardPopUp";
 import YardInfo from "@/app/components/YardInfo";
+import MerchantInfo from "@/app/components/MerchantInfo";
+import OwnShippingInfo from "@/app/components/OwnShippingInfo";
+import Notes from "@/app/components/Notes";
+
+// Import the PreviousYard type from YardInfo
+type PreviousYard = {
+  yardName: string;
+  yardAddress: string;
+  yardMobile: string;
+  yardEmail: string;
+  yardPrice: string | number;
+  yardWarranty: string;
+  yardMiles: string | number;
+  yardShipping: string;
+  yardCost: string | number;
+  reason?: string;
+};
 
 interface CartItem {
   id: string;
@@ -382,58 +399,8 @@ const OrderDetails = () => {
     null
   );
   const [reason, setReason] = useState("");
+  const [submitReason, setSubmitReason] = useState(false);
   const router = useRouter();
-
-  // Remove this useEffect - we don't want to show popup immediately when changes are detected
-  // The popup should only show when user tries to navigate away
-
-  // Handle save changes for unsaved changes popup
-  const handleSaveChanges = async (): Promise<boolean> => {
-    try {
-      // Call the existing handleSave function
-      await handleSave();
-      console.log("REASON", reason);
-      setHasUnsavedChanges(false);
-      // Update initial data to current data after successful save
-      setInitialFormData(JSON.parse(JSON.stringify(formData)));
-      return true;
-    } catch (error) {
-      console.error("Error saving changes:", error);
-      return false;
-    }
-  };
-
-  // Handle discard changes
-  const handleDiscard = () => {
-    // Reset form to initial state or reload the current data
-    setHasUnsavedChanges(false);
-    setIsSaveDialogOpen(false);
-    if (nextPath) {
-      router.push(nextPath);
-    }
-  };
-
-  // Handle navigation with unsaved changes check
-  const handleNavigation = (href: string) => {
-    if (hasUnsavedChanges) {
-      setNextPath(href);
-      setIsSaveDialogOpen(true);
-    } else {
-      router.push(href);
-    }
-  };
-
-  // Function to check if form data has changed
-  const checkForChanges = (currentData: OrderFormData) => {
-    if (!initialFormData) return false;
-
-    // Deep comparison of form data
-    return JSON.stringify(currentData) !== JSON.stringify(initialFormData);
-  };
-
-  // Track form changes - to be used in form inputs
-  // Example: onChange={(e) => { /* existing onChange */; handleFormChange(); }}
-
   const [formData, setFormData] = useState<OrderFormData>({
     products: [
       {
@@ -518,6 +485,110 @@ const OrderDetails = () => {
       bolNumber: "",
     },
   });
+
+  useEffect(() => {
+    if (submitReason && reason.trim()) {
+      // Only add to previous yards if we have a reason and this is a valid yard move
+      const currentYard = {
+        yardName: formData.yardName,
+        yardAddress: formData.yardAddress,
+        yardMobile: formData.yardMobile,
+        yardEmail: formData.yardEmail,
+        yardPrice: formData.yardPrice.toString(),
+        yardWarranty: formData.yardWarranty,
+        yardMiles: formData.yardMiles.toString(),
+        yardShipping: formData.yardShipping,
+        yardCost: formData.yardCost.toString(),
+        reason: reason.trim(),
+      };
+
+      // Only add if the yard has meaningful data
+      if (currentYard.yardName && currentYard.yardAddress) {
+        setPreviousYards((prev) => [currentYard, ...prev]);
+        console.log("Added to PREVIOUS YARDS", currentYard);
+
+        // Reset form data for new yard entry
+        setFormData((prev) => ({
+          ...prev,
+          yardName: "",
+          yardAddress: "",
+          yardMobile: "",
+          yardEmail: "",
+          yardPrice: "",
+          yardWarranty: "",
+          yardMiles: "",
+          yardShipping: "",
+          yardCost: "",
+        }));
+      }
+
+      // Reset the reason and submit flag
+      setReason("");
+      setSubmitReason(false);
+    }
+  }, [
+    submitReason,
+    reason,
+    formData.yardName,
+    formData.yardAddress,
+    formData.yardMobile,
+    formData.yardEmail,
+    formData.yardPrice,
+    formData.yardWarranty,
+    formData.yardMiles,
+    formData.yardShipping,
+    formData.yardCost,
+  ]);
+
+  // Remove this useEffect - we don't want to show popup immediately when changes are detected
+  // The popup should only show when user tries to navigate away
+
+  // Handle save changes for unsaved changes popup
+  const handleSaveChanges = async (): Promise<boolean> => {
+    try {
+      // Call the existing handleSave function
+      await handleSave();
+      console.log("REASON", reason);
+      setHasUnsavedChanges(false);
+      // Update initial data to current data after successful save
+      setInitialFormData(JSON.parse(JSON.stringify(formData)));
+      return true;
+    } catch (error) {
+      console.error("Error saving changes:", error);
+      return false;
+    }
+  };
+
+  // Handle discard changes
+  const handleDiscard = () => {
+    // Reset form to initial state or reload the current data
+    setHasUnsavedChanges(false);
+    setIsSaveDialogOpen(false);
+    if (nextPath) {
+      router.push(nextPath);
+    }
+  };
+
+  // Handle navigation with unsaved changes check
+  const handleNavigation = (href: string) => {
+    if (hasUnsavedChanges) {
+      setNextPath(href);
+      setIsSaveDialogOpen(true);
+    } else {
+      router.push(href);
+    }
+  };
+
+  // Function to check if form data has changed
+  const checkForChanges = (currentData: OrderFormData) => {
+    if (!initialFormData) return false;
+
+    // Deep comparison of form data
+    return JSON.stringify(currentData) !== JSON.stringify(initialFormData);
+  };
+
+  // Track form changes - to be used in form inputs
+  // Example: onChange={(e) => { /* existing onChange */; handleFormChange(); }}
 
   // Update hasUnsavedChanges whenever formData changes
   useEffect(() => {
@@ -1205,6 +1276,7 @@ const OrderDetails = () => {
           warranty: formData.yardWarranty,
           miles: formData.yardMiles,
           shipping: formData.yardShipping,
+          yardCost: formData.yardCost,
         },
         // previousYards: {
         //   name: formData.yardName,
@@ -1327,6 +1399,7 @@ const OrderDetails = () => {
           warranty: formData.yardWarranty,
           miles: formData.yardMiles,
           shipping: formData.yardShipping,
+          yardCost: formData.yardCost,
         },
         // previousYards: {
         //   name: formData.yardName,
@@ -1635,32 +1708,7 @@ const OrderDetails = () => {
 
   // State for previous yards and toggle
   const [showPreviousYard, setShowPreviousYard] = useState(false);
-  const [previousYards, setPreviousYards] = useState([
-    {
-      yardName: "Old Yard Name1",
-      yardAddress: "Old Address",
-      yardMobile: "1234567890",
-      yardEmail: "oldyard@email.com",
-      yardPrice: "1000",
-      yardWarranty: "30 Days",
-      yardMiles: "50000",
-      yardShipping: "Own Shipping",
-      yardCost: "800",
-      reason: "Better price from new yard",
-    },
-    {
-      yardName: "Old Yard Name2",
-      yardAddress: "Old Address",
-      yardMobile: "1234567890",
-      yardEmail: "oldyard@email.com",
-      yardPrice: "1000",
-      yardWarranty: "30 Days",
-      yardMiles: "70000",
-      yardShipping: "Own Shipping",
-      yardCost: "800",
-      reason: "Better price from new yard",
-    },
-  ]);
+  const [previousYards, setPreviousYards] = useState<PreviousYard[]>([]);
   const [selectedPrevYardIdx, setSelectedPrevYardIdx] = useState(0);
   console.log(setPreviousYards, setShowPreviousYard);
 
@@ -3215,162 +3263,19 @@ const OrderDetails = () => {
               </div>
 
               {/* Payment Entries */}
-              <div className="space-y-6">
-                {paymentEntries.map((entry, index) => (
-                  <div
-                    key={entry.id}
-                    className="relative bg-[#0f1e35] p-4 rounded-lg border border-gray-700"
-                  >
-                    {index > 0 && (
-                      <button
-                        onClick={() => removePaymentEntry(entry.id)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                        title="Remove payment"
-                      >
-                        <X size={16} />
-                      </button>
-                    )}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          Merchant Method
-                        </label>
-                        <div className="relative">
-                          <select
-                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                            value={entry.merchantMethod}
-                            onChange={(e) =>
-                              handlePaymentEntryChange(
-                                entry.id,
-                                "merchantMethod",
-                                e.target.value
-                              )
-                            }
-                          >
-                            <option value="">Select merchant</option>
-                            <option>Paypal</option>
-                            <option>Wire Transfer</option>
-                            <option>Zelle</option>
-                            <option>EMS</option>
-                            <option>EPX</option>
-                            <option>CLOVER</option>
-                            <option>MAVRICK</option>
-                            <option>ALTRUPAY</option>
-                            <option>Stripe</option>
-                            {/* <option>Bank Transfer</option> */}
-                            <option>Cash</option>
-                            <option>Cheque</option>
-                            <option>Other</option>
-                          </select>
-                          <ChevronDown
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                            size={16}
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          Total Price
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                          placeholder="Total Price"
-                          value={entry.totalPrice}
-                          onChange={(e) =>
-                            handlePaymentEntryChange(
-                              entry.id,
-                              "totalPrice",
-                              e.target.value
-                            )
-                          }
-                        />
-                      </div>
-                      <div>
-                        <button
-                          className={`cursor-pointer w-full mt-7 px-6 py-3 rounded-lg font-medium transition-colors ${
-                            isLoading
-                              ? "bg-gray-500 cursor-not-allowed"
-                              : "bg-[#006BA9] hover:bg-[#006BA9]/90"
-                          } text-white`}
-                          onClick={() => handleCharge(entry.id)}
-                          disabled={isLoading}
-                        >
-                          {entry.chargeClicked ? "Re-charge" : "Charge"}
-                        </button>
-                      </div>
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          Approval Code
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                          placeholder="Enter approval code"
-                          value={entry.approvalCode}
-                          onChange={(e) =>
-                            handlePaymentEntryChange(
-                              entry.id,
-                              "approvalCode",
-                              e.target.value
-                            )
-                          }
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          Entity
-                        </label>
-                        <div className="relative">
-                          <select
-                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                            value={formData.entity}
-                            onChange={(e) =>
-                              handleInputChange("entity", e.target.value)
-                            }
-                          >
-                            <option value="">Select entity</option>
-                            <option>WY</option>
-                            <option>IL</option>
-                          </select>
-                          <ChevronDown
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                            size={16}
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-white/60 text-sm mb-2">
-                          Charged
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                          placeholder="Enter charged status"
-                          value={entry.charged}
-                          onChange={(e) =>
-                            handlePaymentEntryChange(
-                              entry.id,
-                              "charged",
-                              e.target.value
-                            )
-                          }
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                <div className="flex justify-end">
-                  <button
-                    onClick={addPaymentEntry}
-                    className="flex items-center gap-2 bg-[#006BA9] hover:bg-[#006BA9]/90 text-white px-4 py-2 rounded-lg transition-colors cursor-pointer"
-                  >
-                    <Plus size={18} />
-                    Add Payment
-                  </button>
-                </div>
-              </div>
+              <MerchantInfo
+                paymentEntries={paymentEntries}
+                isLoading={isLoading}
+                formData={formData}
+                handlePaymentEntryChange={handlePaymentEntryChange}
+                handleInputChange={handleInputChange}
+                handleCharge={handleCharge}
+                removePaymentEntry={removePaymentEntry}
+                addPaymentEntry={addPaymentEntry}
+                ChevronDown={ChevronDown}
+                X={X}
+                Plus={Plus}
+              />
               {/* Yard Info Section */}
               <YardInfo
                 formData={{
@@ -3495,221 +3400,13 @@ const OrderDetails = () => {
                   )}
                 </div>
               </div>
-
               {showOwnShipping && (
-                <>
-                  <h3 className="text-white text-lg font-semibold mb-4">
-                    Own Shipping Info
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-[#FFFFFF33] rounded-lg p-2 my-4">
-                    {/* Name */}
-                    <div>
-                      <label className="block text-white/60 text-sm mb-2">
-                        Product type
-                      </label>
-                      <div className="relative">
-                        <select
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                          value={formData.ownShippingInfo.productType}
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              ownShippingInfo: {
-                                ...prev.ownShippingInfo,
-                                productType: e.target.value,
-                              },
-                            }))
-                          }
-                        >
-                          <option value="">Select Product Type</option>
-                          <option>LTL</option>
-                          <option>Parcel</option>
-                        </select>
-                        <ChevronDown
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                          size={16}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-white/60 text-sm mb-2">
-                        Package type
-                      </label>
-                      <div className="relative">
-                        <select
-                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                          value={formData.ownShippingInfo.packageType}
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              ownShippingInfo: {
-                                ...prev.ownShippingInfo,
-                                packageType: e.target.value,
-                              },
-                            }))
-                          }
-                        >
-                          <option value="">Select Package Type</option>
-                          <option>Pallet</option>
-                          <option>Box</option>
-                          <option>Crate</option>
-                        </select>
-                        <ChevronDown
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                          size={16}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-white/60 text-sm mb-2">
-                        Weight
-                      </label>
-                      <input
-                        type="number"
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                        placeholder="Enter weight"
-                        value={formData.ownShippingInfo.weight}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            ownShippingInfo: {
-                              ...prev.ownShippingInfo,
-                              weight: e.target.value,
-                            },
-                          }))
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-white/60 text-sm mb-2">
-                        Dimensions
-                      </label>
-                      <input
-                        type="number"
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                        placeholder="Enter dimensions"
-                        value={formData.ownShippingInfo.dimensions}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            ownShippingInfo: {
-                              ...prev.ownShippingInfo,
-                              dimensions: e.target.value,
-                            },
-                          }))
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-white/60 text-sm mb-2">
-                        Pick Up Date
-                      </label>
-                      <input
-                        type="date"
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                        placeholder="Enter pick up date"
-                        value={formData.ownShippingInfo.pickUpDate}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            ownShippingInfo: {
-                              ...prev.ownShippingInfo,
-                              pickUpDate: e.target.value,
-                            },
-                          }))
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-white/60 text-sm mb-2">
-                        Carrier
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                        placeholder="Enter carrier"
-                        value={formData.ownShippingInfo.carrier}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            ownShippingInfo: {
-                              ...prev.ownShippingInfo,
-                              carrier: e.target.value,
-                            },
-                          }))
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-white/60 text-sm mb-2">
-                        Price
-                      </label>
-                      <input
-                        type="number"
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                        placeholder="Enter price"
-                        value={formData.ownShippingInfo.price}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            ownShippingInfo: {
-                              ...prev.ownShippingInfo,
-                              price: e.target.value,
-                            },
-                          }))
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-white/60 text-sm mb-2">
-                        Variance
-                      </label>
-                      <input
-                        type="number"
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                        placeholder="Enter variance"
-                        value={formData.ownShippingInfo.variance}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            ownShippingInfo: {
-                              ...prev.ownShippingInfo,
-                              variance: e.target.value,
-                            },
-                          }))
-                        }
-                      />
-                    </div>
-                    <div className="flex justify-end">
-                      <button
-                        onClick={handleCreateBOL}
-                        className="bg-[#006BA9] hover:bg-[#006BA9]/90 cursor-pointer mt-8 w-40 h-10 px-2 py-2 text-white  rounded-lg font-medium transition-colors"
-                      >
-                        Create BOL
-                      </button>
-                    </div>
-                    <div>
-                      <label className="block text-white/60 text-sm mb-2">
-                        BOL Number
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:border-blue-500 focus:outline-none"
-                        placeholder="Enter BOL number"
-                        value={formData.ownShippingInfo.bolNumber}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            ownShippingInfo: {
-                              ...prev.ownShippingInfo,
-                              bolNumber: e.target.value,
-                            },
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
-                </>
+                <OwnShippingInfo
+                  formData={formData}
+                  setFormData={setFormData}
+                  handleCreateBOL={handleCreateBOL}
+                  ChevronDown={ChevronDown}
+                />
               )}
             </div>
             <div className="grid md:grid-cols-3 gap-10">
@@ -3759,104 +3456,41 @@ const OrderDetails = () => {
               >
                 Save
               </button>
-              <button className="bg-gray-600 hover:bg-gray-700 text-white px-8 py-3 rounded-lg font-medium transition-colors cursor-pointer">
+              <button className="bg-gray-600  hover:bg-gray-700 text-white px-8 py-3 rounded-lg font-medium transition-colors cursor-pointer">
                 Close
               </button>
             </div>
 
             {/* Notes Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-              {/* Customer Notes */}
-              <div className="bg-[#0a1929] rounded-lg p-4 border border-gray-700">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-white text-lg font-semibold">
-                    Customer Notes
-                  </h3>
-                </div>
-                <div className="flex flex-col md:flex-row items-start md:items-center gap-2 mb-3">
-                  <input
-                    className="flex-1 bg-[#0f1e35] border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none"
-                    placeholder="Notes"
-                    value={customerNoteInput}
-                    onChange={(e) => setCustomerNoteInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleManualAddCustomerNote();
-                      }
-                    }}
-                  />
-                  <button
-                    onClick={handleManualAddCustomerNote}
-                    className="bg-[#006BA9] hover:bg-[#006BA9]/90 text-white px-4 py-2 rounded-lg cursor-pointer"
-                  >
-                    Add
-                  </button>
-                </div>
-                <div className="max-h-80 overflow-auto pr-1 space-y-3">
-                  {customerNotes.length === 0 && (
-                    <p className="text-white/60 text-sm">No notes yet</p>
-                  )}
-                  {customerNotes.map((n) => (
-                    <div key={n.id} className="text-sm">
-                      <div className="text-white/80">{n.message}</div>
-                      <div className="text-white/40 text-xs">
-                        {formatDay(n.timestamp)} {formatTime(n.timestamp)}
-                        {n.actor ? `  |  ${n.actor}` : ""}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Yard Notes */}
-              <div className="bg-[#0a1929] rounded-lg p-4 border border-gray-700">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-white text-lg font-semibold">
-                    Yard Notes
-                  </h3>
-                </div>
-                <div className="flex flex-col md:flex-row items-start md:items-center gap-2 mb-3">
-                  <input
-                    className="flex-1 bg-[#0f1e35] border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none"
-                    placeholder="Notes"
-                    value={yardNoteInput}
-                    onChange={(e) => setYardNoteInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleManualAddYardNote();
-                      }
-                    }}
-                  />
-                  <button
-                    onClick={handleManualAddYardNote}
-                    className="bg-[#006BA9] hover:bg-[#006BA9]/90 text-white px-4 py-2 rounded-lg cursor-pointer"
-                  >
-                    Add
-                  </button>
-                </div>
-                <div className="max-h-80 overflow-auto pr-1 space-y-3">
-                  {yardNotes.length === 0 && (
-                    <p className="text-white/60 text-sm">No notes yet</p>
-                  )}
-                  {yardNotes.map((n) => (
-                    <div key={n.id} className="text-sm">
-                      <div className="text-white/80">{n.message}</div>
-                      <div className="text-white/40 text-xs">
-                        {formatDay(n.timestamp)} {formatTime(n.timestamp)}
-                        {n.actor ? `  |  ${n.actor}` : ""}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            <div className="grid md:grid-cols-2 gap-10">
+              <Notes
+                title="Customer Notes"
+                noteInput={customerNoteInput}
+                setNoteInput={setCustomerNoteInput}
+                handleAddNote={handleManualAddCustomerNote}
+                notes={customerNotes}
+                formatDay={formatDay}
+                formatTime={formatTime}
+              />
+              <Notes
+                title="Yard Notes"
+                noteInput={yardNoteInput}
+                setNoteInput={setYardNoteInput}
+                handleAddNote={handleManualAddYardNote}
+                notes={yardNotes}
+                formatDay={formatDay}
+                formatTime={formatTime}
+              />
             </div>
           </main>
         </div>
       </div>
       {statusPopUp && (
-        <MoveYardPopUp setStatus={setStatusPopUp} setReason={setReason} />
+        <MoveYardPopUp
+          setStatus={setStatusPopUp}
+          setReason={setReason}
+          setSubmitReason={setSubmitReason}
+        />
       )}
       <SaveChangesPopUp
         hasUnsavedChanges={hasUnsavedChanges}
