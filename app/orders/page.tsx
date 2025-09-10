@@ -511,13 +511,13 @@ export default function Orders() {
                               >
                                 Details
                               </Link>
-                              <button
+                              {/* <button
                                 className="text-black text-base px-2 py-1 text-left rounded hover:bg-gray-200"
                                 onClick={() => setOpenActionMenu(null)}
                                 type="button"
                               >
                                 Change Status
-                              </button>
+                              </button> */}
                               <button
                                 className="text-red-600 text-base px-2 py-1 text-left rounded hover:bg-red-100"
                                 onClick={() => handleDeleteOrder(order.id)}

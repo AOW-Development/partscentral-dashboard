@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronDown, Minus } from "lucide-react";
+import MoveYardPopUp from "./MoveYardPopUp";
+import axios from "axios";
 
 interface PreviousYard {
   yardName: string;
@@ -10,7 +12,6 @@ interface PreviousYard {
   yardWarranty: string;
   yardMiles: string | number;
   yardShipping: string;
-  //   yardShippingCost: string | number;
   yardCost: string | number;
   reason?: string;
 }
@@ -25,7 +26,6 @@ interface FormData {
   yardMiles: string | number;
   yardShipping: string;
   yardCost: string | number;
-  //   yardShippingCost: string | number;
   reason?: string;
 }
 
@@ -40,6 +40,7 @@ interface YardInfoProps {
   setSelectedPrevYardIdx: React.Dispatch<React.SetStateAction<number>>;
   setStatusPopUp: React.Dispatch<React.SetStateAction<boolean>>;
   statusPopUp: boolean;
+  orderId: string;
 }
 
 const YardInfo: React.FC<YardInfoProps> = ({
@@ -53,9 +54,38 @@ const YardInfo: React.FC<YardInfoProps> = ({
   setSelectedPrevYardIdx,
   setStatusPopUp,
   statusPopUp,
+  orderId,
 }) => {
+  const [reason, setReason] = useState("");
+  const [submitReason, setSubmitReason] = useState(false);
+
+  useEffect(() => {
+    if (submitReason) {
+      moveYardToHistory();
+    }
+  }, [submitReason]);
+
+  const moveYardToHistory = async () => {
+    try {
+      const response = await axios.post(`/api/yards/move-to-history/${orderId}`, { reason });
+      console.log('Successfully moved yard to history:', response.data);
+      // Handle success - maybe refresh data or update UI
+      setSubmitReason(false);
+    } catch (error ) {
+      console.error("Error moving yard to history:", error);
+      setSubmitReason(false);
+    }
+  };
+
   return (
     <div className=" relative p-2 mt-6">
+       {statusPopUp && (
+        <MoveYardPopUp
+          setStatus={setStatusPopUp}
+          setReason={setReason}
+          setSubmitReason={setSubmitReason}
+        />
+      )}
       <div className="relative flex justify-between items-center mb-4">
         <h3 className="text-white text-lg font-semibold">Yard Info</h3>
 
@@ -170,7 +200,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
             </div>
             <div>
               <label className="block text-white/60 text-xs mb-1">
-                Yard Cost
+                Yard Cost / Own Shipping Info
               </label>
               <input
                 type="text"

@@ -1,0 +1,9 @@
+Move Logic to 
+YardInfo
+:
+Handle the entire flow (API call + state update) in one place
+Pass a callback to update the parent's state after successful API call
+Or Coordinate with Promises:
+Make the API call first
+Only update local state if the API call succeeds
+Handle errors appropriately

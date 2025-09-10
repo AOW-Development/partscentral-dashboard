@@ -3299,6 +3299,7 @@ const OrderDetails = () => {
                 setSelectedPrevYardIdx={setSelectedPrevYardIdx}
                 setStatusPopUp={setStatusPopUp}
                 statusPopUp={statusPopUp}
+                orderId={String(params.id)}
               />
               <div className="flex justify-end gap-2">
                 <button
