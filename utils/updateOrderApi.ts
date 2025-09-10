@@ -94,6 +94,7 @@ export const updateOrderFromAdmin = async (orderId: string, formData: any, cartI
     source: formData.source,
     status: formData.status,
     year: parseInt(formData.year, 10) || null,
+    warranty: mapWarrantyToPrismaEnum(formData.warranty || '30 Days'),
     taxesAmount: parseFloat(formData.taxesPrice) || 0,
     handlingFee: parseFloat(formData.handlingPrice) || 0,
     processingFee: parseFloat(formData.processingPrice) || 0,

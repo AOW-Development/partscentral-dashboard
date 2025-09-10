@@ -114,6 +114,17 @@ import MerchantInfo from "@/app/components/MerchantInfo";
 import OwnShippingInfo from "@/app/components/OwnShippingInfo";
 import Notes from "@/app/components/Notes";
 
+const mapPrismaEnumToWarranty = (enumValue: string): string => {
+  switch (enumValue) {
+    case 'WARRANTY_30_DAYS': return '30 Days';
+    case 'WARRANTY_60_DAYS': return '60 Days';
+    case 'WARRANTY_90_DAYS': return '90 Days';
+    case 'WARRANTY_6_MONTHS': return '6 Months';
+    case 'WARRANTY_1_YEAR': return '1 Year';
+    default: return '';
+  }
+};
+
 // Import the PreviousYard type from YardInfo
 type PreviousYard = {
   yardName: string;
@@ -173,6 +184,40 @@ const OrderDetails = () => {
 
           setCustomerNotes(customerNotesArray);
           setYardNotes(yardNotesArray);
+
+          const yardHistory = Array.isArray(data.yardHistory)
+            ? data.yardHistory.map((item: any) => ({
+                yardName: item.yardName || "",
+                yardAddress: item.yardAddress || "",
+                yardMobile: item.yardMobile || "",
+                yardEmail: item.yardEmail || "",
+                yardPrice: item.yardPrice || "",
+                yardWarranty: item.yardWarranty || "",
+                yardMiles: item.yardMiles || "",
+                yardShipping: item.shipping || "",
+                yardCost:
+                  item.shipping === "Own Shipping"
+                    ? item.yardCost?.yardOwnShippingInfo?.price || "0"
+                    : item.yardCost?.yardShippingCost?.toString() || "0",
+                reason: item.reason || "",
+              }))
+            : [];
+          setPreviousYards(yardHistory);
+
+          const payments = Array.isArray(data.payments) ? data.payments : [];
+          const mappedPaymentEntries = payments.map((p: any, index: number) => ({
+            id: p.id || Date.now() + index,
+            merchantMethod: p.method || "",
+            totalPrice: p.amount || "",
+            approvalCode: p.approvelCode || "",
+            entity: p.entity || "",
+            charged: p.charged || (p.status === "SUCCEEDED" ? "Yes" : "No"),
+            chargeClicked: p.status === "SUCCEEDED",
+          }));
+
+          if (mappedPaymentEntries.length > 0) {
+            setPaymentEntries(mappedPaymentEntries);
+          }
 
           // Map backend cartItems to UI cartItems array with strong typing
           const products =
@@ -266,7 +311,7 @@ const OrderDetails = () => {
             charged: payment.status === "SUCCEEDED" ? "Yes" : "No",
 
             // Product info (from first item if available)
-            warranty: data.items?.[0]?.metadata?.warranty || "",
+            warranty: mapPrismaEnumToWarranty(data.warranty) || "",
             pictureUrl: data.items?.[0]?.pictureUrl || "",
             pictureStatus: data.items?.[0]?.pictureStatus || "",
 
@@ -398,8 +443,6 @@ const OrderDetails = () => {
   const [initialFormData, setInitialFormData] = useState<OrderFormData | null>(
     null
   );
-  const [reason, setReason] = useState("");
-  const [submitReason, setSubmitReason] = useState(false);
   const router = useRouter();
   const [formData, setFormData] = useState<OrderFormData>({
     products: [
@@ -486,59 +529,39 @@ const OrderDetails = () => {
     },
   });
 
-  useEffect(() => {
-    if (submitReason && reason.trim()) {
-      // Only add to previous yards if we have a reason and this is a valid yard move
-      const currentYard = {
-        yardName: formData.yardName,
-        yardAddress: formData.yardAddress,
-        yardMobile: formData.yardMobile,
-        yardEmail: formData.yardEmail,
-        yardPrice: formData.yardPrice.toString(),
-        yardWarranty: formData.yardWarranty,
-        yardMiles: formData.yardMiles.toString(),
-        yardShipping: formData.yardShipping,
-        yardCost: formData.yardCost.toString(),
-        reason: reason.trim(),
-      };
+  const handleYardMoved = (reason: string) => {
+    addYardNote(`Yard Removed. Reason: ${reason}`, "By Agent");
 
-      // Only add if the yard has meaningful data
-      if (currentYard.yardName && currentYard.yardAddress) {
-        setPreviousYards((prev) => [currentYard, ...prev]);
-        console.log("Added to PREVIOUS YARDS", currentYard);
+    const currentYard = {
+      yardName: formData.yardName,
+      yardAddress: formData.yardAddress,
+      yardMobile: formData.yardMobile,
+      yardEmail: formData.yardEmail,
+      yardPrice: formData.yardPrice.toString(),
+      yardWarranty: formData.yardWarranty,
+      yardMiles: formData.yardMiles.toString(),
+      yardShipping: formData.yardShipping,
+      yardCost: formData.yardCost.toString(),
+      reason: reason.trim(),
+    };
 
-        // Reset form data for new yard entry
-        setFormData((prev) => ({
-          ...prev,
-          yardName: "",
-          yardAddress: "",
-          yardMobile: "",
-          yardEmail: "",
-          yardPrice: "",
-          yardWarranty: "",
-          yardMiles: "",
-          yardShipping: "",
-          yardCost: "",
-        }));
-      }
-
-      // Reset the reason and submit flag
-      setReason("");
-      setSubmitReason(false);
+    if (currentYard.yardName && currentYard.yardAddress) {
+      setPreviousYards((prev) => [currentYard, ...prev]);
     }
-  }, [
-    submitReason,
-    reason,
-    formData.yardName,
-    formData.yardAddress,
-    formData.yardMobile,
-    formData.yardEmail,
-    formData.yardPrice,
-    formData.yardWarranty,
-    formData.yardMiles,
-    formData.yardShipping,
-    formData.yardCost,
-  ]);
+
+    setFormData((prev) => ({
+      ...prev,
+      yardName: "",
+      yardAddress: "",
+      yardMobile: "",
+      yardEmail: "",
+      yardPrice: "",
+      yardWarranty: "",
+      yardMiles: "",
+      yardShipping: "",
+      yardCost: "",
+    }));
+  };
 
   // Remove this useEffect - we don't want to show popup immediately when changes are detected
   // The popup should only show when user tries to navigate away
@@ -548,7 +571,6 @@ const OrderDetails = () => {
     try {
       // Call the existing handleSave function
       await handleSave();
-      console.log("REASON", reason);
       setHasUnsavedChanges(false);
       // Update initial data to current data after successful save
       setInitialFormData(JSON.parse(JSON.stringify(formData)));
@@ -776,6 +798,9 @@ const OrderDetails = () => {
 
   // useEffect to reactively fetch variants and reset dependent fields
   useEffect(() => {
+    if (loadingOrder) {
+      return;
+    }
     formData.products.forEach((product, index) => {
       // debugger;
       console.log(`DEBUG 2: useEffect running for index ${index}`, product);
@@ -790,7 +815,7 @@ const OrderDetails = () => {
 
         // Only reset dependent fields if this is NOT the initial load AND the key actually changed
         // This prevents resetting fields when loading existing order data
-        if (lastVariantKeys.current[index] && !loadingOrder) {
+        if (lastVariantKeys.current[index]) {
           console.log(`DEBUG 5: Resetting fields for index ${index}`);
           handleProductInputChange(index, "specification", "");
           handleProductInputChange(index, "selectedSubpart", null);
@@ -1738,10 +1763,10 @@ const OrderDetails = () => {
     };
     setCustomerNotes((prev) => {
       const updatedNotes = [newNote, ...prev];
-      // setFormData(prev => ({
-      //   ...prev ,
-      //           customerNotes: updatedNotes
-      // }))
+      setFormData(prevData => ({
+        ...prevData,
+        customerNotes: updatedNotes
+      }));
       return updatedNotes;
     });
   };
@@ -1757,11 +1782,10 @@ const OrderDetails = () => {
     };
     setYardNotes((prev) => {
       const updatedNotes = [newNote, ...prev];
-      // setFormData(prev => ({
-      //   newNote
-      //   ...prev ,
-      //           yardNotes: updatedNotes
-      // }))
+      setFormData(prevData => ({
+        ...prevData,
+        yardNotes: updatedNotes
+      }));
       return updatedNotes;
     });
   };
@@ -3288,7 +3312,6 @@ const OrderDetails = () => {
                   yardMiles: formData.yardMiles,
                   yardShipping: formData.yardShipping,
                   yardCost: formData.yardCost,
-                  reason: reason,
                 }}
                 handleInputChange={handleInputChange}
                 showYardShippingCost={showYardShippingCost}
@@ -3300,6 +3323,7 @@ const OrderDetails = () => {
                 setStatusPopUp={setStatusPopUp}
                 statusPopUp={statusPopUp}
                 orderId={String(params.id)}
+                onYardMoved={handleYardMoved}
               />
               <div className="flex justify-end gap-2">
                 <button
@@ -3486,13 +3510,7 @@ const OrderDetails = () => {
           </main>
         </div>
       </div>
-      {statusPopUp && (
-        <MoveYardPopUp
-          setStatus={setStatusPopUp}
-          setReason={setReason}
-          setSubmitReason={setSubmitReason}
-        />
-      )}
+      
       <SaveChangesPopUp
         hasUnsavedChanges={hasUnsavedChanges}
         onSave={handleSaveChanges}

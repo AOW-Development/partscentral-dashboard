@@ -41,6 +41,7 @@ interface YardInfoProps {
   setStatusPopUp: React.Dispatch<React.SetStateAction<boolean>>;
   statusPopUp: boolean;
   orderId: string;
+  onYardMoved: (reason: string) => void;
 }
 
 const YardInfo: React.FC<YardInfoProps> = ({
@@ -55,31 +56,40 @@ const YardInfo: React.FC<YardInfoProps> = ({
   setStatusPopUp,
   statusPopUp,
   orderId,
+  onYardMoved,
 }) => {
   const [reason, setReason] = useState("");
   const [submitReason, setSubmitReason] = useState(false);
 
   useEffect(() => {
-    if (submitReason) {
+    if (submitReason && reason.trim()) {
+      const moveYardToHistory = async () => {
+        try {
+          const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+          const response = await axios.post(
+            `${API_URL}/yards/move-to-history/${orderId}`,
+            { reason: reason.trim() }
+          );
+          console.log("Successfully moved yard to history:", response.data);
+
+          // Notify parent component that yard has been moved
+          onYardMoved(reason.trim());
+        } catch (error) {
+          console.error("Error moving yard to history:", error);
+        } finally {
+          // Reset state
+          setReason("");
+          setSubmitReason(false);
+        }
+      };
+
       moveYardToHistory();
     }
-  }, [submitReason]);
-
-  const moveYardToHistory = async () => {
-    try {
-      const response = await axios.post(`/api/yards/move-to-history/${orderId}`, { reason });
-      console.log('Successfully moved yard to history:', response.data);
-      // Handle success - maybe refresh data or update UI
-      setSubmitReason(false);
-    } catch (error ) {
-      console.error("Error moving yard to history:", error);
-      setSubmitReason(false);
-    }
-  };
+  }, [submitReason, reason, orderId, onYardMoved]);
 
   return (
     <div className=" relative p-2 mt-6">
-       {statusPopUp && (
+      {statusPopUp && (
         <MoveYardPopUp
           setStatus={setStatusPopUp}
           setReason={setReason}
