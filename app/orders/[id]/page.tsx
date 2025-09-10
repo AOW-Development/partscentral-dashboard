@@ -596,15 +596,16 @@ const OrderDetails = () => {
       const hasChanges = checkForChanges(formData);
       setHasUnsavedChanges(hasChanges);
     }
-  }, [formData, initialFormData]);
+  }, [JSON.stringify(formData), initialFormData]);
 
   // Set initial form data when component mounts or data loads
   useEffect(() => {
-    // Only set initial data once when formData is first populated
-    if (formData && !initialFormData) {
+    // Only set initial data once when the order has loaded
+    if (!loadingOrder && !initialFormData) {
       setInitialFormData(JSON.parse(JSON.stringify(formData)));
     }
-  }, [formData, initialFormData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadingOrder]);
 
   const handleProductInputChange = (
     index: number,
@@ -899,7 +900,6 @@ const OrderDetails = () => {
     formData.corePrice,
     formData.taxesPrice,
     formData.processingPrice,
-    formData.totalPrice,
   ]);
 
   // Close dropdown when clicking outside
