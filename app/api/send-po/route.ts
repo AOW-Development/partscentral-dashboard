@@ -135,23 +135,18 @@ function generateInvoiceHTML(data: InvoiceData) {
     <body>
       <div>
       <h3 >Hello ${data.yardInfo.name},</h3>
-      <p style= "font-weight: bold;" >Please Find the attached PO.
-        Requesting pictures before you wrap up the part for shipping.</p>
+      <p style= "font-weight: bold;" >Please Find the attached PO.</p>
+        <p style= "font-weight: bold;"> Requesting pictures before you wrap up the part for shipping.</p>
         <p style= "font-weight: bold;">${data.productInfo
           .map(
-            (item) =>
-              item.make +
-              " " +
-              item.model +
-              " " +
-              item.year +
-              " " +
-              item.parts +
-              " " +
-              item.specification +
-              " "
-          )
-          .join(", ")}</p>
+          (item) => `
+            ${item.year} ${item.make} ${item.model}<br> 
+            ${item.parts}<br>
+            ${item.specification}<br>
+            VIN # ${data.customerInfo.vinNumber}<br>
+          `
+        )
+        .join("")}
       <p style="font-weight: bold;">
     ***Please Note this is a Blind Shipment, No Tags/Labels/Price Miles Not to be disclosed, except for the Shipping label to be attached.
     </p>
@@ -171,7 +166,7 @@ async function generatePOPDF(data: InvoiceData) {
   const times = await pdfDoc.embedFont(StandardFonts.TimesRoman);
   const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  const page = pdfDoc.addPage([612, 792]);
+  const page = pdfDoc.addPage([612, 820]);
   const { width, height } = page.getSize();
   const margin = 36;
   let y = height - margin;
@@ -395,7 +390,10 @@ async function generatePOPDF(data: InvoiceData) {
     },
     { label: "Billing Address", text: data.customerInfo.billingAddress },
     { label: `Shipping Address`, text: shippingText },
-    { label: "Warranty", text: data.yardInfo.warranty },
+    { 
+    label: "Warranty", 
+    text: `${data.yardInfo.warranty}\nPlease send Pictures Before Shipping Out the Part to the\nEmail: purchase@partscentral.us or Ph: 888-338-2540` 
+  },
   ];
 
   // ---
