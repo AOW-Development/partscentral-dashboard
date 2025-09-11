@@ -261,6 +261,20 @@ const OrderDetails = () => {
                 )
               : formData.products; // Keep existing products if data.items is empty
           console.log("DEBUG 1: Products from server mapping:", products);
+          const dataPoStatus = data.poStatus || "";
+          const dataInvoiceStatus = data.invoiceStatus || "";
+
+          if (dataPoStatus === "yes") {
+            setPoButtonState(true);
+          } else {
+            setPoButtonState(false);
+          }
+
+          if (dataInvoiceStatus === "yes") {
+            setInvoiceButtonState(true);
+          } else {
+            setInvoiceButtonState(false);
+          }
           setFormData({
             ...formData,
             products, // Set the products here
@@ -348,12 +362,19 @@ const OrderDetails = () => {
             yardCost: yard.yardShippingCost || "",
             customerNotes: customerNotesArray,
             yardNotes: yardNotesArray,
-            invoiceStatus: data.invoiceStatus || "",
+            invoiceStatus: dataInvoiceStatus,
             invoiceSentAt: data.invoiceSentAt
               ? new Date(data.invoiceSentAt).toISOString().split("T")[0]
               : "",
             invoiceConfirmedAt: data.invoiceConfirmedAt
               ? new Date(data.invoiceConfirmedAt).toISOString().split("T")[0]
+              : "",
+            poStatus: dataPoStatus,
+            poSentAt: data.poSentAt
+              ? new Date(data.poSentAt).toISOString().split("T")[0]
+              : "",
+            poConfirmedAt: data.poConfirmAt
+              ? new Date(data.poConfirmAt).toISOString().split("T")[0]
               : "",
             ownShippingInfo: {
               productType: ownShipping.productType || "",
@@ -2135,7 +2156,7 @@ const OrderDetails = () => {
                   {/* Row 1 */}
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
-                      Email *
+                      Email (required and unique)
                     </label>
                     <input
                       type="email"
@@ -2160,7 +2181,7 @@ const OrderDetails = () => {
                   </div>
                   <div className="relative">
                     <label className="block text-white/60 text-sm mb-2">
-                      Mobile *
+                      Mobile (required)
                     </label>
                     <div className="relative" ref={priceOptionsRef}>
                       <input

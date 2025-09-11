@@ -79,7 +79,7 @@ const orderData = {
     email: formData.email || 'no-email@example.com',
     phone: formData.mobile || '000-000-0000',
     alternativePhone: formData.alternateMobile,
-    firstName: formData.customerName?.split(' ')[0] || 'Unknown',
+    firstName: formData.customerName,
     // lastName: formData.cardHolderName?.split(' ').slice(1).join(' ') || '',
     company: formData.company || null,
     address: formData.shippingAddress || 'Unknown',
@@ -160,6 +160,11 @@ pictureUrl: item.pictureUrl || formData.pictureUrl || '',
   invoiceSentAt: formData.invoiceSentAt ? new Date(formData.invoiceSentAt).toISOString() : null,
   invoiceStatus: formData.invoiceStatus,
   invoiceConfirmedAt: formData.invoiceConfirmedAt ? new Date(formData.invoiceConfirmedAt).toISOString() : null,
+
+  // po
+  poSentAt: formData.poSentAt ? new Date(formData.poSentAt).toISOString() : null,
+  poStatus: formData.poStatus,
+  poConfirmAt: formData.poConfirmedAt ? new Date(formData.poConfirmedAt).toISOString() : null,
 
   orderDate: formData.date ? new Date(formData.date).toISOString() : new Date().toISOString(),
   addressType: formData.shippingAddressType,

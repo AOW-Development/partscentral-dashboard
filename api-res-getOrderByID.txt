@@ -1,0 +1,162 @@
+ curl -X GET "http://localhost:3001/api/orders/cmff8rbjg0007vdegns53nd49"   -H "Content-Typcation/json"   -H "Authorization: Be
+arer your-jwt-token-here" | jq
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  3041  100  3041    0     0  98538      0 --:--:-- --:--:-- --:--:--   98k
+{
+  "id": "cmff8rbjg0007vdegns53nd49",
+  "orderNumber": "pc-1231390Loopisd",
+  "year": null,
+  "saleMadeBy": "Shiva",
+  "currency": "USD",
+  "source": "",
+  "status": "NA",
+  "subtotal": "0",
+  "taxesAmount": null,
+  "shippingAmount": null,
+  "handlingFee": null,
+  "processingFee": null,
+  "corePrice": null,
+  "totalAmount": "0",
+  "customerId": 113,
+  "billingSnapshot": {
+    "city": "Unknown",
+    "email": "weocsesd@gmail.com",
+    "phone": "9929157789",
+    "state": "CA",
+    "address": "Unknown",
+    "company": null,
+    "country": "US",
+    "lastName": "",
+    "firstName": "Unknown",
+    "postalCode": "00000",
+    "addressType": "RESIDENTIAL"
+  },
+  "shippingSnapshot": {
+    "city": "Unknown",
+    "email": "weocsesd@gmail.com",
+    "phone": "9929157789",
+    "state": "CA",
+    "address": "Unknown",
+    "company": null,
+    "country": "US",
+    "lastName": "",
+    "firstName": "Unknown",
+    "postalCode": "00000",
+    "addressType": "RESIDENTIAL"
+  },
+  "addressId": "cmff8rbj20005vdegt02msyys",
+  "addressType": "RESIDENTIAL",
+  "companyName": null,
+  "shippingAddress": "",
+  "billingAddress": "",
+  "idempotencyKey": null,
+  "metadata": null,
+  "customerNotes": [
+    {
+      "id": 1757584502468,
+      "actor": "Added By System",
+      "message": "Order Received – Customer placed the order online.",
+      "timestamp": "2025-09-11T09:48:26.441Z"
+    }
+  ],
+  "yardNotes": [],
+  "notes": "",
+  "vinNumber": "",
+  "orderDate": "2025-09-11T10:04:08.988Z",
+  "carrierName": "UNKNOWN",
+  "trackingNumber": "TRK-1757585048988",
+  "poStatus": "yes",
+  "poSentAt": "2025-09-01T00:00:00.000Z",
+  "poConfirmAt": "2025-09-10T00:00:00.000Z",
+  "invoiceSentAt": "2025-09-01T00:00:00.000Z",
+  "invoiceConfirmedAt": "2025-09-30T00:00:00.000Z",
+  "invoiceStatus": "yes",
+  "warranty": "WARRANTY_6_MONTHS",
+  "createdAt": "2025-09-11T10:04:09.387Z",
+  "updatedAt": "2025-09-11T10:04:09.629Z",
+  "customer": {
+    "id": 113,
+    "email": "weocsesd@gmail.com",
+    "password_hash": null,
+    "full_name": "jasschoudahry ",
+    "created_at": "2025-09-11T10:04:09.352Z",
+    "updated_at": "2025-09-11T10:04:09.352Z",
+    "emailVerified": null,
+    "image": null,
+    "otp": null,
+    "otpExpiry": null,
+    "alternativePhone": null,
+    "phone": null
+  },
+  "items": [
+    {
+      "id": "cmff8rbkm0009vdegtfpsmsrk",
+      "orderId": "cmff8rbjg0007vdegns53nd49",
+      "makeName": "Honda",
+      "modelName": "Odyssey",
+      "yearName": "2007",
+      "partName": "Engine",
+      "specification": "(3.5L, VIN 3, 6th digit), EX-L, VIN 7 (8th digit)",
+      "milesPromised": "89",
+      "pictureStatus": "PENDING",
+      "pictureUrl": null,
+      "productVariantId": 18647,
+      "product_id": 47081,
+      "sku": "HONDA-ODYSSEY-2007-ENGINE-(3.5L,VIN3,6THDIGIT),EX-L,VIN7(8THDIGIT)-89K",
+      "quantity": 1,
+      "unitPrice": "1950",
+      "lineTotal": "1950",
+      "metadata": null,
+      "createdAt": "2025-09-11T10:04:09.430Z"
+    }
+  ],
+  "payments": [],
+  "yardInfo": null,
+  "yardHistory": [],
+  "address": {
+    "id": "cmff8rbj20005vdegt02msyys",
+    "addressType": "RESIDENTIAL",
+    "shippingInfo": {
+      "city": "Unknown",
+      "email": "weocsesd@gmail.com",
+      "phone": "9929157789",
+      "state": "CA",
+      "address": "Unknown",
+      "company": null,
+      "country": "US",
+      "lastName": "",
+      "firstName": "Unknown",
+      "postalCode": "00000",
+      "addressType": "RESIDENTIAL"
+    },
+    "billingInfo": {
+      "city": "Unknown",
+      "email": "weocsesd@gmail.com",
+      "phone": "9929157789",
+      "state": "CA",
+      "address": "Unknown",
+      "company": null,
+      "country": "US",
+      "lastName": "",
+      "firstName": "Unknown",
+      "postalCode": "00000",
+      "addressType": "RESIDENTIAL"
+    },
+    "companyName": null,
+    "createdAt": "2025-09-11T10:04:09.374Z",
+    "updatedAt": "2025-09-11T10:04:09.374Z"
+  }
+}
+--------------------------------
+
+check OrderDetails useEffect in partscentral-dashboard\app\orders\[id]\page.tsx
+
+ "poSentAt": "2025-09-01T00:00:00.000Z",
+  "poConfirmAt": "2025-09-10T00:00:00.000Z",
+  "invoiceSentAt": "2025-09-01T00:00:00.000Z",
+  "invoiceConfirmedAt": "2025-09-30T00:00:00.000Z",
+
+  Why thsese 4 are not mapped correclty in api response so theyu are not showing .
+  also see jsx in orders/[id]/page.tsx see if there might be issue .
+  is it date conversion (just an idea)??
