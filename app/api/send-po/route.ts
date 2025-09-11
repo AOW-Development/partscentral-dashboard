@@ -277,16 +277,16 @@ async function generatePOPDF(data: InvoiceData) {
     page.drawText(row.label, {
       x: margin + iconSize + 4,
       y,
-      size: 7,
+      size: 9,
       font: bold,
       color: rgb(1, 1, 1),
     });
 
     // Draw value
     page.drawText(row.value, {
-      x: margin + 70, // align values nicely
+      x: margin + 80, // align values nicely
       y,
-      size: 7,
+      size: 9,
       font: times,
       color: rgb(1, 1, 1),
     });
@@ -305,7 +305,7 @@ async function generatePOPDF(data: InvoiceData) {
   page.drawText(`Order: PC#${data.orderId}`, {
     x: width - 200,
     y: y - 30,
-    size: 14,
+    size: 12,
     font: bold,
     color: rgb(0, 0, 0.8),
   });
@@ -313,29 +313,29 @@ async function generatePOPDF(data: InvoiceData) {
   page.drawText(`VIN #: ${data.customerInfo.vinNumber}`, {
     x: width - 200,
     y: y - 50,
-    size: 14,
+    size: 12,
     font: bold,
     color: rgb(0, 0, 0.8),
   });
 
   page.drawText(`We would like to place an order with you`, {
     x: margin,
-    y: y - 55,
-    size: 14,
+    y: y - 45,
+    size: 12,
     font: times,
     color: rgb(0, 0, 0.8),
   });
 
   page.drawText(`Attn: ${data.yardInfo.name}`, {
     x: margin,
-    y: y - 70,
-    size: 14,
+    y: y - 60,
+    size: 12,
     font: times,
     color: rgb(0, 0, 0.8),
   });
 
   // --- The corrected drawing logic starts here ---
-  let currentX = y - 100;
+  let currentX = y - 80;
 
   const leftPadding = margin;
   const labelWidth = 120;
@@ -461,7 +461,7 @@ async function generatePOPDF(data: InvoiceData) {
     page.drawText(label, {
       x: labelX,
       y: labelY,
-      size: 10,
+      size: 11,
       font: bold,
       color: rgb(1, 1, 1),
     });
@@ -477,7 +477,7 @@ async function generatePOPDF(data: InvoiceData) {
       page.drawText(lines[j], {
         x: textX,
         y: textYStart - j * defaultLineHeight,
-        size: 10,
+        size: 11,
         font: times,
         color: rgb(0, 0, 0),
       });
@@ -489,7 +489,7 @@ async function generatePOPDF(data: InvoiceData) {
     currentX -= actualBoxHeight + boxSpacing;
   }
 
-  const tableBottomY = 65; // This is the lowest point of your table.
+  const tableBottomY = 60; // This is the lowest point of your table.
   // A value like 120 means the table ends 120 points from the bottom of the page.
   // --- End of table/content simulation ---
 

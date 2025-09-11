@@ -355,6 +355,7 @@ const OrderDetails = () => {
               bolNumber: ownShipping.bolNumber || "",
             },
           });
+          console.log("formData after loading order:", formData);
 
           if (data.customerNotes && typeof data.customerNotes === "string") {
             try {
@@ -1590,6 +1591,7 @@ const OrderDetails = () => {
           pictureStatus: item.pictureStatus || "PENDING",
         }))
         .filter((item) => !!item.id); // Ensure SKU is present
+        console.log("Cart items:", cartItems);
 
       // Get the first payment entry (or use default values if none exists)
       const paymentEntry = paymentEntries[0] || {};
@@ -2703,7 +2705,7 @@ const OrderDetails = () => {
                           placeholder="Card Number"
                           value={formData.alternateCardNumber}
                           inputMode="numeric"
-                          maxLength={23}
+                          maxLength={19}
                           onChange={(e) => {
                             const formatted = formatCardNumber(e.target.value);
                             handleInputChange("alternateCardNumber", formatted);
