@@ -168,7 +168,12 @@ async function generateInvoicePDF(data: InvoiceData) {
   
 
   // --- PAGE 1: Invoice Summary ---
-  const page = pdfDoc.addPage([600, 850]);
+  let dynamicHeight = 850;
+  for(let i=1; i<data.productInfo.length; i++){
+    dynamicHeight += 70;
+    
+  }
+  const page = pdfDoc.addPage([600, dynamicHeight]);
   const { height, width } = page.getSize();
   let y = height - 40;
 
@@ -355,7 +360,7 @@ function drawCustomerInfo(page: any, y: number, data: any, bold: any, times: any
       y: orderY,
       size: 11,
       font: times,
-      color: rgb(0.07, 0.15, 0.3),
+      color: rgb(0, 0, 0.8),
     });
     orderY -= lineHeight;
   }
@@ -1030,7 +1035,15 @@ page.drawText("Authorize Signature", {
   
   // --- Now draw them with labels + values ---
   const iconSize = 10;   // icon width/height
-  y = height - 100;   // starting Y for first row
+  let iconHeight = 98
+
+  for ( let j=1; j<data.productInfo.length; j++) {
+    iconHeight += 70;
+  }
+
+  y = height - iconHeight;
+
+     // starting Y for first row
   
   const infoRows = [
     { icon: locationIcon, label: "Location:", value: "76 Imperial Dr Suite E Evanston, WY 82930, USA" },
