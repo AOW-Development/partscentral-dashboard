@@ -135,23 +135,18 @@ function generateInvoiceHTML(data: InvoiceData) {
     <body>
       <div>
       <h3 >Hello ${data.yardInfo.name},</h3>
-      <p style= "font-weight: bold;" >Please Find the attached PO.
-        Requesting pictures before you wrap up the part for shipping.</p>
+      <p style= "font-weight: bold;" >Please Find the attached PO.</p>
+        <p style= "font-weight: bold;"> Requesting pictures before you wrap up the part for shipping.</p>
         <p style= "font-weight: bold;">${data.productInfo
           .map(
-            (item) =>
-              item.make +
-              " " +
-              item.model +
-              " " +
-              item.year +
-              " " +
-              item.parts +
-              " " +
-              item.specification +
-              " "
-          )
-          .join(", ")}</p>
+          (item) => `
+            ${item.year} ${item.make} ${item.model}<br> 
+            ${item.parts}<br>
+            ${item.specification}<br>
+            VIN # ${data.customerInfo.vinNumber}<br>
+          `
+        )
+        .join("")}
       <p style="font-weight: bold;">
     ***Please Note this is a Blind Shipment, No Tags/Labels/Price Miles Not to be disclosed, except for the Shipping label to be attached.
     </p>
@@ -171,7 +166,7 @@ async function generatePOPDF(data: InvoiceData) {
   const times = await pdfDoc.embedFont(StandardFonts.TimesRoman);
   const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  const page = pdfDoc.addPage([612, 792]);
+  const page = pdfDoc.addPage([612, 820]);
   const { width, height } = page.getSize();
   const margin = 36;
   let y = height - margin;
@@ -277,16 +272,16 @@ async function generatePOPDF(data: InvoiceData) {
     page.drawText(row.label, {
       x: margin + iconSize + 4,
       y,
-      size: 7,
+      size: 9,
       font: bold,
       color: rgb(1, 1, 1),
     });
 
     // Draw value
     page.drawText(row.value, {
-      x: margin + 70, // align values nicely
+      x: margin + 80, // align values nicely
       y,
-      size: 7,
+      size: 9,
       font: times,
       color: rgb(1, 1, 1),
     });
@@ -305,7 +300,7 @@ async function generatePOPDF(data: InvoiceData) {
   page.drawText(`Order: PC#${data.orderId}`, {
     x: width - 200,
     y: y - 30,
-    size: 14,
+    size: 12,
     font: bold,
     color: rgb(0, 0, 0.8),
   });
@@ -313,29 +308,29 @@ async function generatePOPDF(data: InvoiceData) {
   page.drawText(`VIN #: ${data.customerInfo.vinNumber}`, {
     x: width - 200,
     y: y - 50,
-    size: 14,
+    size: 12,
     font: bold,
     color: rgb(0, 0, 0.8),
   });
 
   page.drawText(`We would like to place an order with you`, {
     x: margin,
-    y: y - 55,
-    size: 14,
+    y: y - 45,
+    size: 12,
     font: times,
     color: rgb(0, 0, 0.8),
   });
 
   page.drawText(`Attn: ${data.yardInfo.name}`, {
     x: margin,
-    y: y - 70,
-    size: 14,
+    y: y - 60,
+    size: 12,
     font: times,
     color: rgb(0, 0, 0.8),
   });
 
   // --- The corrected drawing logic starts here ---
-  let currentX = y - 100;
+  let currentX = y - 80;
 
   const leftPadding = margin;
   const labelWidth = 120;
@@ -395,7 +390,10 @@ async function generatePOPDF(data: InvoiceData) {
     },
     { label: "Billing Address", text: data.customerInfo.billingAddress },
     { label: `Shipping Address`, text: shippingText },
-    { label: "Warranty", text: data.yardInfo.warranty },
+    { 
+    label: "Warranty", 
+    text: `${data.yardInfo.warranty}\nPlease send Pictures Before Shipping Out the Part to the\nEmail: purchase@partscentral.us or Ph: 888-338-2540` 
+  },
   ];
 
   // ---
@@ -461,7 +459,7 @@ async function generatePOPDF(data: InvoiceData) {
     page.drawText(label, {
       x: labelX,
       y: labelY,
-      size: 10,
+      size: 11,
       font: bold,
       color: rgb(1, 1, 1),
     });
@@ -477,7 +475,7 @@ async function generatePOPDF(data: InvoiceData) {
       page.drawText(lines[j], {
         x: textX,
         y: textYStart - j * defaultLineHeight,
-        size: 10,
+        size: 11,
         font: times,
         color: rgb(0, 0, 0),
       });
@@ -489,7 +487,7 @@ async function generatePOPDF(data: InvoiceData) {
     currentX -= actualBoxHeight + boxSpacing;
   }
 
-  const tableBottomY = 65; // This is the lowest point of your table.
+  const tableBottomY = 60; // This is the lowest point of your table.
   // A value like 120 means the table ends 120 points from the bottom of the page.
   // --- End of table/content simulation ---
 

@@ -165,9 +165,15 @@ async function generateInvoicePDF(data: InvoiceData) {
   const pdfDoc = await PDFDocument.create();
   const times = await pdfDoc.embedFont(StandardFonts.TimesRoman);
   const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  
 
   // --- PAGE 1: Invoice Summary ---
-  const page = pdfDoc.addPage([600, 800]);
+  let dynamicHeight = 850;
+  for(let i=1; i<data.productInfo.length; i++){
+    dynamicHeight += 70;
+    
+  }
+  const page = pdfDoc.addPage([600, dynamicHeight]);
   const { height, width } = page.getSize();
   let y = height - 40;
 
@@ -223,54 +229,70 @@ async function generateInvoicePDF(data: InvoiceData) {
       color: rgb(1, 1, 1),
     });
   }
+  const margin1 = 36;
 
   // ---------------- CONTACT INFO (PAGE 1) ----------------
-  page.drawText("Location:", {
-    x: 30,
-    y: height - 60,
-    size: 9,
-    font: bold,
-    color: rgb(1, 1, 1),
-  });
-  page.drawText("76 Imperial Dr Suite E Evanston, WY 82930, USA", {
-    x: 80,
-    y: height - 60,
-    size: 9,
-    font: times,
-    color: rgb(1, 1, 1),
-  });
-  page.drawText("Website:", {
-    x: 30,
-    y: height - 75,
-    size: 9,
-    font: bold,
-    color: rgb(1, 1, 1),
-  });
-  page.drawText("https://partscentral.us", {
-    x: 80,
-    y: height - 75,
-    size: 9,
-    font: times,
-    color: rgb(1, 1, 1),
-  });
-  page.drawText("Phone:", {
-    x: 30,
-    y: height - 90,
-    size: 9,
-    font: bold,
-    color: rgb(1, 1, 1),
-  });
-  page.drawText("(888) 338-2540", {
-    x: 80,
-    y: height - 90,
-    size: 9,
-    font: times,
-    color: rgb(1, 1, 1),
-  });
-  y = height - 120;
+  
+  // Resolve path to public folder
+  const locationBytes1 = fs.readFileSync(path.join(process.cwd(), "public", "location.png"));
+  const websiteBytes1  = fs.readFileSync(path.join(process.cwd(), "public", "website.png"));
+  const phoneBytes1    = fs.readFileSync(path.join(process.cwd(), "public", "phone.png"));
+  // const emailBytes    = fs.readFileSync(path.join(process.cwd(), "public", "email.png"));
+  // const taxBytes      = fs.readFileSync(path.join(process.cwd(), "public", "sales.png"));
+  
+  const locationIcon1 = await pdfDoc.embedPng(locationBytes1);
+  const websiteIcon1  = await pdfDoc.embedPng(websiteBytes1);
+  const phoneIcon1  = await pdfDoc.embedPng(phoneBytes1);
+  // const emailIcon    = await pdfDoc.embedPng(emailBytes);
+  // const taxIcon      = await pdfDoc.embedPng(taxBytes);
+  
+  // --- Now draw them with labels + values ---
+  const iconSize1 = 10;   // icon width/height
+  y = height - 50;   // starting Y for first row
+  
+  const infoRows1 = [
+    { icon: locationIcon1, label: "Location:", value: "76 Imperial Dr Suite E Evanston, WY 82930, USA" },
+    { icon: websiteIcon1,  label: "Website:",  value: "https://partscentral.us" },
+    { icon: phoneIcon1,    label: "Phone:",    value: "(888) 338-2540" },
+    // { icon: emailIcon,    label: "Email:",    value: "purchase@partscentral.us" },
+    // { icon: taxIcon,      label: "Sales Tax ID:", value: "271-4444-3598" },
+  ];
+  
+  
+  for (const row of infoRows1) {
+    // Draw icon
+    page.drawImage(row.icon, {
+      x: margin1,
+      y: y - 2, // tweak for vertical alignment
+      width: iconSize1,
+      height: iconSize1,
+    });
+  
+    // Draw label
+    page.drawText(row.label, {
+      x: margin1 + iconSize1 + 4,
+      y,
+      size: 10,
+      font: bold,
+      color: rgb(1, 1, 1),
+    });
+  
+    // Draw value
+    page.drawText(row.value, {
+      x: margin1 + 70, // align values nicely
+      y,
+      size: 10,
+      font: times,
+      color: rgb(1, 1, 1),
+    });
+  
+    y -= 20; // move down for next row
+  }
+
+  y = height - 110;
   // ---------------- INVOICE INFO (PAGE 1) ----------------
   page.drawText(`Invoice : PC#${data.orderId}`, {
-    x: width - 150,
+    x: width - 180,
     y: y - 10,
     size: 11,
     font: bold,
@@ -284,333 +306,665 @@ async function generateInvoicePDF(data: InvoiceData) {
   });
   y = height - 130;
   page.drawText(`Date : ${currentDate}`, {
-    x: width - 150,
-    y: y - 15,
+    x: width - 180,
+    y: y - 10,
     size: 11,
-    font: times,
+    font: bold,
     color: rgb(0, 0, 0.8),
   });
 
   // ---------------- ORDER BY ----------------
-  y = height - 130;
-  page.drawText("Order By:", {
-    x: 40,
-    y: y - 20,
-    size: 12,
-    font: bold,
-    color: rgb(0, 0, 0.8),
-  });
-  y -= 15;
+y = height - 100;
+// Function to draw the content for the "Order By" and "Bill to" sections
+function drawCustomerInfo(page: any, y: number, data: any, bold: any, times: any, rgb: any) {
+  // ---------------- ORDER BY ----------------
+  const orderX = 40;
+  let orderY = y - 15;
+  const startY = y;
+  const lineHeight = 18; // more spacing between lines for clarity
 
-  page.drawText(data.customerInfo.name || "", {
-    x: 40,
-    y: y - 20,
+  page.drawText(`Order By: ${data.customerInfo.name || ""}`, {
+    x: orderX,
+    y: orderY,
     size: 11,
     font: times,
     color: rgb(0, 0, 0.8),
   });
-  y -= 15;
+  orderY -= lineHeight;
 
   if (data.customerInfo.email) {
     page.drawText(`Email: ${data.customerInfo.email}`, {
-      x: 40,
-      y: y - 20,
+      x: orderX,
+      y: orderY,
       size: 11,
       font: times,
       color: rgb(0, 0, 0.8),
     });
-    y -= 15;
+    orderY -= lineHeight;
   }
 
   if (data.customerInfo.mobile) {
     page.drawText(`Mobile: ${data.customerInfo.mobile}`, {
-      x: 40,
-      y: y - 20,
+      x: orderX,
+      y: orderY,
       size: 11,
       font: times,
       color: rgb(0, 0, 0.8),
     });
-    y -= 15;
+    orderY -= lineHeight;
   }
+
   if (data.customerInfo.alternateMobile) {
     page.drawText(`Alternate Mobile: ${data.customerInfo.alternateMobile}`, {
-      x: 40,
-      y: y - 20,
+      x: orderX,
+      y: orderY,
       size: 11,
       font: times,
       color: rgb(0, 0, 0.8),
     });
-    y -= 15;
+    orderY -= lineHeight;
   }
+
+  const endY = orderY;
+
+  // ---------------- VERTICAL SEPARATOR ----------------
+  const lineX = 270; // moved left (was 300) to better center
+  const lineTopY = startY + 10; // extend slightly above "Order By"
+  const lineBottomY = endY - 5; // extend slightly below last line
+
+  page.drawLine({
+    start: { x: lineX, y: lineTopY },
+    end: { x: lineX, y: lineBottomY },
+    color: rgb(0.07, 0.15, 0.3),
+    thickness: 2,
+  });
 
   // ---------------- BILL TO ----------------
-  y = height - 130;
-  page.drawText("Bill To:", {
-    x: 300,
-    y: y - 20,
+  const billX = lineX + 40; // keeps some margin after the line
+  let billY = y - 15;
+
+  page.drawText("Bill to", {
+    x: billX,
+    y: billY,
     size: 12,
     font: bold,
     color: rgb(0, 0, 0.8),
   });
-  y -= 15;
+  billY -= 20;
 
-  page.drawText(data.customerInfo.name || "", {
-    x: 300,
-    y: y - 20,
+  page.drawText(`Name : ${data.customerInfo.name || ""}`, {
+    x: billX,
+    y: billY,
     size: 11,
     font: times,
     color: rgb(0, 0, 0.8),
   });
-  y -= 15;
+  billY -= lineHeight;
 
-  if (data.customerInfo.billingAddress) {
-    page.drawText(data.customerInfo.billingAddress, {
-      x: 300,
-      y: y - 20,
-      size: 11,
+if (data.customerInfo.billingAddress) {
+  const label = "Address :";
+  const address = data.customerInfo.billingAddress;
+  const fontSize = 11;
+  const lineHeight = fontSize + 4;
+  const maxWidth = 250; // Total width available for the entire address block
+
+  // Draw the label
+  page.drawText(label, {
+    x: billX,
+    y: billY,
+    size: fontSize,
+    font: times,
+    color: rgb(0, 0, 0.8),
+  });
+
+  // Calculate the width of the label to determine the start position of the address text
+  const labelWidth = times.widthOfTextAtSize(label + " ", fontSize);
+  const startX = billX + labelWidth;
+
+  // Split the address into lines, starting from the first line after the label
+  const addressWords = address.split(" ");
+  let currentLine = "";
+  let addressLines = [];
+
+  // Handle the first line, which has a reduced width due to the label
+  for (const word of addressWords) {
+    const testLine = currentLine.length > 0 ? currentLine + " " + word : word;
+    let testWidth;
+    if (addressLines.length === 0) {
+      // For the first line, check against the remaining width
+      testWidth = times.widthOfTextAtSize(testLine, fontSize);
+      if (testWidth > (maxWidth - labelWidth)) {
+        addressLines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    } else {
+      // For subsequent lines, use the full maxWidth
+      testWidth = times.widthOfTextAtSize(testLine, fontSize);
+      if (testWidth > maxWidth) {
+        addressLines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    }
+  }
+  if (currentLine) addressLines.push(currentLine);
+
+  // Draw the first line of the address next to the label
+  if (addressLines.length > 0) {
+    page.drawText(addressLines[0], {
+      x: startX,
+      y: billY,
+      size: fontSize,
       font: times,
       color: rgb(0, 0, 0.8),
     });
-    y -= 15;
   }
+
+  // Draw any subsequent wrapped lines below the first line
+  addressLines.slice(1).forEach((line, i) => {
+    page.drawText(line, {
+      x: billX,
+      y: billY - ((i + 1) * lineHeight),
+      size: fontSize,
+      font: times,
+      color: rgb(0, 0, 0.8),
+    });
+  });
+}
+
+}
+
+// Example usage in your main code block
+y = height - 150; // Set a starting Y position for this section
+drawCustomerInfo(page, y, data, bold, times, rgb);
 
   // ---------------- TABLE HEADER ----------------
-  y -= 50;
-  page.drawRectangle({
-    x: 40,
-    y: y - 20,
-    width: width - 80,
-    height: 20,
-    color: rgb(0.9, 0.9, 0.95),
-  });
 
-  page.drawText("ITEM DESCRIPTION", { x: 50, y: y - 15, size: 10, font: bold });
-  page.drawText("PRICE", { x: 250, y: y - 15, size: 10, font: bold });
-  page.drawText("QTY", { x: 400, y: y - 15, size: 10, font: bold });
-  // page.drawText("WARRANTY", { x: 400, y: y - 15, size: 10, font: bold });
-  page.drawText("TOTAL", { x: 500, y: y - 15, size: 10, font: bold });
 
-  // ---------------- TABLE ROWS ----------------
-  y -= 40;
-  // Add product row
-  if (data.productInfo) {
-    for (const product of data.productInfo) {
-      const productDescription = `${product.year || ""} ${product.make || ""} ${
-        product.model || ""} ${product.parts || ""}
-      ${product.specification || ""}`;
-      page.drawText(productDescription, {
-        x: 50,
-        y: y + 5,
-        size: 10,
-        font: times,
-      });
-      // y -= 15;
+
+
+// Start of your main invoice content block
+// A helper function to split a string into an array of lines based on a maximum width.
+const getWrappedText = (text: string, maxWidth: number, font: any, size: number): string[] => {
+  if (!text) return [];
+  const words = text.split(' ');
+  const lines = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    const testLine = currentLine.length > 0 ? currentLine + ' ' + word : word;
+    const testWidth = font.widthOfTextAtSize(testLine, size);
+
+    if (testWidth <= maxWidth) {
+      currentLine = testLine;
+    } else {
+      lines.push(currentLine);
+      currentLine = word;
     }
   }
-  if (data.customerInfo.vinNumber) {
-    let yAxis = y - 15;
-    page.drawText(`VIN#: ${data.customerInfo.vinNumber || ""}`, {
-      x: 50,
-      y: yAxis,
+  lines.push(currentLine);
+  return lines;
+};
+
+// Start of your main invoice content block
+y = height - 180; 
+y -= 70;
+
+const headerY = y - 10;
+
+page.drawRectangle({
+  x: 40,
+  y: headerY,
+  width: width - 80,
+  height: 20,
+  color: rgb(0.07, 0.15, 0.3),
+});
+
+page.drawText("ITEM DESCRIPTION", { x: 50, y: headerY + 5, size: 10, font: bold, color: rgb(1, 1, 1) });
+page.drawText("PRICE", { x: 250, y: headerY + 5, size: 10, font: bold, color: rgb(1, 1, 1) });
+page.drawText("QTY.", { x: 400, y: headerY + 5, size: 10, font: bold, color: rgb(1, 1, 1) });
+page.drawText("TOTAL", { x: 500, y: headerY + 5, size: 10, font: bold, color: rgb(1, 1, 1) });
+
+y -= 25; // Initial space after header
+
+if (data.productInfo && data.productInfo.length > 0) {
+  for (const product of data.productInfo) {
+    const startY = y;
+    
+    // Define the width for the Item Description column
+    const itemDescriptionWidth = 180;
+    const lineHeight = 15;
+    const verticalPadding = 10;
+    
+    // Create the lines of text to be drawn
+    const lines = [];
+    const mainDescription = `${product.year || ""} ${product.make || ""} ${product.model || ""} ${product.parts || ""}`;
+    lines.push(mainDescription);
+
+    if (product.specification) {
+      // Use the getWrappedText helper function to handle long specifications
+      const wrappedSpecLines = getWrappedText(product.specification, itemDescriptionWidth, times, 10);
+      lines.push(...wrappedSpecLines);
+    }
+    
+    // The VIN number should also be handled carefully to avoid overflow
+    if (data.customerInfo.vinNumber) {
+        const vinText = `VIN Number: ${data.customerInfo.vinNumber || "17 Alpha Digits"}`;
+        const wrappedVinLines = getWrappedText(vinText, itemDescriptionWidth, times, 10);
+        lines.push(...wrappedVinLines);
+    }
+    
+    const numLines = lines.length;
+
+    // --- Dynamic Height with Padding ---
+   // --- Dynamic Height with Padding ---
+const productDescriptionHeight = (numLines * lineHeight) + (verticalPadding * 2);
+const rowY = startY - productDescriptionHeight;
+
+// Draw gray background for the product row
+page.drawRectangle({
+  x: 40,
+  y: rowY,
+  width: width - 80,
+  height: productDescriptionHeight,
+  color: rgb(0.9, 0.9, 0.9),
+});
+
+// ✅ Draw each line starting after equal top padding
+let currentDescriptionY = startY - verticalPadding - lineHeight;
+
+for (const line of lines) {
+  page.drawText(line, {
+    x: 50,
+    y: currentDescriptionY,
+    size: 10,
+    font: times,
+    color: rgb(0.07, 0.15, 0.3),
+  });
+  currentDescriptionY -= lineHeight;
+}
+
+    // --- Price, QTY, and Total Alignment ---
+    const centerY = rowY + (productDescriptionHeight / 2);
+
+    const numericPrice = +data.customerInfo.partPrice;
+    const formattedPrice = !isNaN(numericPrice) ? numericPrice.toFixed(2) : "0.00";
+    
+    const numericTotal = +data.customerInfo.totalSellingPrice;
+    const formattedTotal = !isNaN(numericTotal) ? numericTotal.toFixed(2) : "0.00";
+
+    const priceHeaderX = 250;
+    const qtyHeaderX = 400;
+    const totalHeaderX = 500;
+
+    page.drawText(`$${formattedPrice}`, {
+      x: priceHeaderX,
+      y: centerY - 5,
       size: 10,
       font: times,
+      color: rgb(0.07, 0.15, 0.3),
     });
+
+    page.drawText("1", {
+      x: qtyHeaderX,
+      y: centerY - 5,
+      size: 10,
+      font: times,
+      color: rgb(0.07, 0.15, 0.3),
+    });
+
+    page.drawText(`$${formattedTotal}`, {
+      x: totalHeaderX,
+      y: centerY - 5,
+      size: 10,
+      font: times,
+      color: rgb(0.07, 0.15, 0.3),
+    });
+    
+    y = rowY - 10;
   }
+}
 
-  page.drawText(
-    `$${data.customerInfo.partPrice || "0.00"}
-(TP:$${data.customerInfo.taxesPrice || "0.00"},HP:$${
-      data.customerInfo.handlingPrice || "0.00"
-    },
-CP:$${data.customerInfo.corePrice || "0.00"},PP:$${
-      data.customerInfo.processingPrice || "0.00"
-    })
-    `,
-    {
-      x: 250,
-      y: y + 5,
-      size: 10,
-      font: times,
-    }
-  );
+// // Notes section with VIN number
+// y -= 15;
+// const notesY = y;
+// const notesHeight = 30;
+// page.drawRectangle({
+//   x: 40,
+//   y: notesY - notesHeight,
+//   width: width - 80,
+//   height: notesHeight,
+//   color: rgb(0.9, 0.9, 0.9), // Light gray color
+// });
 
-  page.drawText("1", {
-    x: 400,
-    y: y + 5,
-    size: 10,
-    font: times,
-  });
+// const notesText = `Notes : ${data.customerInfo.vinNumber ? `VIN Number: ${data.customerInfo.vinNumber || "17 Alpha Digits"}` : "No Notes"}`;
+// page.drawText(notesText, {
+//   x: 50,
+//   y: notesY - 15,
+//   size: 10,
+//   font: times,
+//   color: rgb(0.07, 0.15, 0.3),
+// });
 
-  page.drawText(`$${data.customerInfo.totalSellingPrice || "0.00"}`, {
-    x: 500,
-    y: y + 5,
-    size: 10,
-    font: times,
-  });
+// y = notesY - notesHeight - 15; // Spacing before the fee section
 
-  y -= 40;
+// ---------------- FEES ----------------
+// A helper function to get the text width
+const textWidth = (text: string, size: number, font: any): number => font.widthOfTextAtSize(text, size);
 
-  // ---------------- TOTAL ----------------
-  y -= 25;
-  page.drawRectangle({
-    x: 420,
-    y,
-    width: 150,
-    height: 30,
-    color: rgb(0.9, 0.9, 0.95),
-  });
-  page.drawText(`TOTAL: $${data.customerInfo.totalSellingPrice || "0.00"}`, {
-    x: 450,
-    y: y + 10,
-    size: 14,
-    font: bold,
-    color: rgb(0, 0, 0.8),
-  });
+const numericTotal = +data.customerInfo.totalSellingPrice;
+    const formattedTotal = !isNaN(numericTotal) ? numericTotal.toFixed(2) : "0.00";
 
-  page.drawText(`Notes:`, {
+
+y -= 20;
+const feesY = y;
+const feeColor = rgb(0.07, 0.15, 0.3);
+
+// --- Dynamically calculate horizontal spacing for fees ---
+const padding = 20; // Consistent padding between fee blocks
+// Move the starting X position to the right
+let currentX = 160; 
+
+// Core
+const coreText = `Core: $${data.customerInfo.corePrice || "0.00"}`;
+page.drawText(coreText, {
+  x: currentX,
+  y: feesY,
+  size: 10,
+  font: bold,
+  color: feeColor,
+});
+currentX += textWidth(coreText, 10, bold) + padding;
+
+// Tax
+const taxText = `Tax: $${data.customerInfo.taxesPrice || "0.00"}`;
+page.drawText(`|`, { x: currentX, y: feesY, size: 10, font: bold, color: feeColor });
+currentX += 10; // Space for the separator
+page.drawText(taxText, {
+  x: currentX,
+  y: feesY,
+  size: 10,
+  font: bold,
+  color: feeColor,
+});
+currentX += textWidth(taxText, 10, bold) + padding;
+
+// Handling Fee
+const handlingText = `Handling Fee: $${data.customerInfo.handlingPrice || "0.00"}`;
+page.drawText(`|`, { x: currentX, y: feesY, size: 10, font: bold, color: feeColor });
+currentX += 10;
+page.drawText(handlingText, {
+  x: currentX,
+  y: feesY,
+  size: 10,
+  font: bold,
+  color: feeColor,
+});
+currentX += textWidth(handlingText, 10, bold) + padding;
+
+// Processing Fee
+const processingText = `Processing Fee: $${data.customerInfo.processingPrice || "0.00"}`;
+page.drawText(`|`, { x: currentX, y: feesY, size: 10, font: bold, color: feeColor });
+currentX += 10;
+page.drawText(processingText, {
+  x: currentX,
+  y: feesY,
+  size: 10,
+  font: bold,
+  color: feeColor,
+});
+
+// --- Dynamically size the TOTAL box and place it below fees ---
+const totalText = `TOTAL: $${formattedTotal || "0.00"}`;
+const totalTextWidth = textWidth(totalText, 12, bold);
+const totalBoxPadding = 20;
+const totalBoxWidth = totalTextWidth + totalBoxPadding;
+
+// Position the total box below the fees
+const totalBoxY = feesY - 40; 
+// Align the total box to the right side of the page
+const totalBoxX = width - 40 - totalBoxWidth; 
+const totalBoxHeight = 30;
+
+// Draw the TOTAL box
+page.drawRectangle({
+  x: totalBoxX,
+  y: totalBoxY,
+  width: totalBoxWidth,
+  height: totalBoxHeight,
+  color: rgb(0.07, 0.15, 0.3),
+});
+
+// Draw TOTAL text centered vertically and horizontally within the box
+const textY = totalBoxY + (totalBoxHeight / 2) - (12 / 2);
+const textX = totalBoxX + (totalBoxWidth / 2) - (totalTextWidth / 2);
+page.drawText(totalText, {
+  x: textX,
+  y: textY,
+  size: 12,
+  font: bold,
+  color: rgb(1, 1, 1),
+});
+
+// Update y for next section
+y = totalBoxY - 20;
+
+// Notes section with rectangle
+y -= 0;
+const notesY = y;
+const notesHeight = 40; // increased to fit Notes + Warranty
+page.drawRectangle({
+  x: 40,
+  y: notesY - notesHeight,
+  width: width - 80,
+  height: notesHeight,
+  color: rgb(0.9, 0.9, 0.9), // Light gray color
+});
+
+// Notes text
+const notesText = `Notes: ${data.customerInfo.notes || "No Notes"}`;
+page.drawText(notesText, {
+  x: 50,
+  y: notesY - 15,
+  size: 10,
+  font: times,
+  color: rgb(0.07, 0.15, 0.3),
+});
+
+// Warranty text (inside same block, below notes)
+const warrantyText = `${data.paymentInfo.warranty || ""} Warranty. NO LABOUR. Will be Delivered in 8-9 Business Days`;
+page.drawText(warrantyText, {
+  x: 50,
+  y: notesY - 30, // slightly below Notes
+  size: 10,
+  font: times,
+  color: rgb(0.07, 0.15, 0.3),
+});
+
+// Move Y down for next section after gray block
+y = notesY - notesHeight - 15;
+
+// ---------------- NOTE BLOCK ----------------
+page.drawText("Shipping Disclaimer:", {
     x: 40,
     y: y - 10,
-    size: 14,
-    font: bold,
-    color: rgb(0, 0, 0.8),
-  });
-
-  page.drawText(`${data.customerInfo.notes || ""}`, {
-    x: 100,
-    y: y - 10,
-    size: 14,
-    font: times,
-    color: rgb(0, 0, 0.8),
-  });
-  y -= 25;
-  page.drawText(
-    `${
-      data.paymentInfo.warranty || ""
-    } Warranty. NO LABOUR. Will be Delivered in 8-9 Business Days`,
-    {
-      x: 40,
-      y,
-      size: 10,
-      font: times,
-      color: rgb(0, 0, 0.8),
-    }
-  );
-
-  // ---------------- FOOTER & NOTE (PAGE 1) ----------------
-  y -= 80;
-  page.drawText("Shipping Disclaimer:", {
-    x: 40,
-    y,
     size: 12,
     font: bold,
     color: rgb(0, 0, 0.8),
-  });
+});
 
-  y -= 20;
-  page.drawText(
-    'Shipment without Lift gate (forklift) at the shipping address will be charged extra as per the transporting carriers for freight parts. I authorize Parts Central LLC to charge my Debit/Credit card listed above & agree for terms & conditions upon purchases including merchandise & shipping charges by signing the invoice or replying to the email. Signatures: This contract may be signed electronically or in hard copy. If signed in hard copy, it must be printed out, signed, scanned and returned to the Email - support@partscentral.us or a valid record. Electronic signatures count as original for all purposes. By typing their names as signatures and replying to this same email typing - "Approved/ authorized", both parties agree to the terms and provisions of this agreement.',
-    {
-      x: 40,
-      y,
-      size: 9,
-      font: times,
-      maxWidth: 520,
-      color: rgb(0, 0, 0.8),
-    }
-  );
+y -= 30;
+const noteText = 'Shipment without Lift gate (forklift) at the shipping address will be charged extra as per the transporting carriers for freight parts. I authorize Parts Central LLC to charge my Debit/Credit card listed above & agree for terms & conditions upon purchases including merchandise & shipping charges by signing the invoice or replying to the email. Signatures: This contract may be signed electronically or in hard copy. If signed in hard copy, it must be printed out, signed, scanned and returned to the Email - support@partscentral.us or a valid record. Electronic signatures count as original for all purposes. By typing their names as signatures and replying to this same email typing - "Approved/ authorized", both parties agree to the terms and provisions of this agreement. ' +
+    ` ${data.paymentInfo.warranty || ""} Warranty. NO LABOUR. Will be Delivered in 8-9 Business Days.`;
 
-  // Payment details section
-  y -= 150;
-  page.drawText("PAYMENT DETAILS :", {
+y = drawWrappedText(page, noteText, 40, y, {
+    fontSize: 10,
+    font: times,
+    maxWidth: 520,
+    lineHeight: 12,
+    color: rgb(0, 0, 0.8),
+});
+
+y -= 30;
+
+// ---------------- PAYMENT AND SHIPPING DETAILS ----------------
+// Payment details section
+const paymentY = y;
+page.drawText("PAYMENT DETAILS :", {
     x: 40,
-    y,
+    y: paymentY,
     size: 11,
     font: bold,
     color: rgb(0, 0, 0.8),
-  });
+});
 
-  y -= 15;
-  if (data.paymentInfo.cardHolderName) {
+let paymentContentY = paymentY - 15;
+if (data.paymentInfo.cardHolderName) {
     page.drawText(`Name: ${data.paymentInfo.cardHolderName}`, {
-      x: 40,
-      y,
-      size: 10,
-      font: times,
-      color: rgb(0, 0, 0.8),
-    });
-  }
-
-  if (data.paymentInfo.cardNumber) {
-    page.drawText(
-      `Method: **** **** **** ${data.paymentInfo.cardNumber.slice(-4)}`,
-      {
         x: 40,
-        y: y - 15,
+        y: paymentContentY,
         size: 10,
         font: times,
         color: rgb(0, 0, 0.8),
-      }
-    );
-  }
-  // shipping details section
-  page.drawText("Shipping DETAILS :", {
-    x: 300,
-    y: y + 15,
-    size: 11,
-    font: bold,
-    color: rgb(0, 0, 0.8),
-  });
+    });
+}
 
+if (data.paymentInfo.cardNumber) {
+    page.drawText(`Payment Mode: Card: **** **** **** ${data.paymentInfo.cardNumber.slice(-4)}`, {
+        x: 40,
+        y: paymentContentY - 15,
+        size: 10,
+        font: times,
+        color: rgb(0, 0, 0.8),
+    });
+}
+
+// Shipping details section
+const shippingX = 380; // shifted right from 300
+const shippingY = y;
+let shippingContentY = shippingY - 15;
+
+page.drawText("Shipping Address:", {
+  x: shippingX,
+  y: shippingY,
+  size: 11,
+  font: bold,
+  color: rgb(0, 0, 0.8),
+});
+
+if (data.customerInfo.shippingAddressType !== "Residential") {
   page.drawText(`(${data.customerInfo.shippingAddressType})`, {
-    x: 410,
-    y: y + 15,
+    x: shippingX + 110, // keep same relative spacing as before
+    y: shippingY,
     size: 10,
     font: times,
     color: rgb(0, 0, 0.8),
   });
+}
 
-  y -= 15;
-  if (data.customerInfo.company) {
-    page.drawText(`company name: ${data.customerInfo.company}`, {
-      x: 410,
-      y: y + 10,
-      size: 10,
+if (
+  data.customerInfo.shippingAddressType === "Commercial" &&
+  data.customerInfo.company
+) {
+  page.drawText(`Company Name: ${data.customerInfo.company}`, {
+    x: shippingX,
+    y: shippingContentY,
+    size: 10,
+    font: times,
+    color: rgb(0, 0, 0.8),
+  });
+  shippingContentY -= 15;
+}
+
+if (data.customerInfo.shippingAddressType === "Terminal") {
+  page.drawText("Shipping to nearest terminal", {
+    x: shippingX,
+    y: shippingContentY,
+    size: 10,
+    font: times,
+    color: rgb(0, 0, 0.8),
+  });
+  shippingContentY -= 15;
+}
+
+if (data.customerInfo.shippingAddress) {
+  const shippingAddress = data.customerInfo.shippingAddress;
+  const maxWidth = 150; // adjust width for wrapping
+  const fontSize = 10;
+
+  function splitTextIntoLines(text: string, font: any, fontSize: number, maxWidth: number) {
+    const words = text.split(" ");
+    const lines: string[] = [];
+    let currentLine = "";
+
+    for (const word of words) {
+      const testLine = currentLine ? currentLine + " " + word : word;
+      const textWidth = font.widthOfTextAtSize(testLine, fontSize);
+
+      if (textWidth > maxWidth) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    }
+    if (currentLine) lines.push(currentLine);
+
+    return lines;
+  }
+
+  const addressLines = splitTextIntoLines(shippingAddress, times, fontSize, maxWidth);
+
+  addressLines.forEach((line, i) => {
+    page.drawText(line, {
+      x: shippingX,
+      y: shippingContentY - (i * (fontSize + 4)), // move down line by line
+      size: fontSize,
       font: times,
       color: rgb(0, 0, 0.8),
     });
-  }
-  if (data.customerInfo.shippingAddress) {
-    page.drawText(` ${data.customerInfo.shippingAddress}`, {
-      x: 410,
-      y: y - 5,
-      size: 10,
-      font: times,
-      color: rgb(0, 0, 0.8),
-    });
-  }
+  });
 
-  if (data.customerInfo.shippingAddressType == "Terminal") {
-    page.drawText("Shipping to nearest terminal", {
-      x: 410,
-      y: y - 15,
-      size: 10,
-      font: times,
-      color: rgb(0, 0, 0.8),
-    });
-  }
+  // update Y if you need to continue drawing below the address
+  shippingContentY -= addressLines.length * (fontSize + 4);
+}
 
-  page.drawText("Authorize Signature", {
+
+// Authorize Signature
+page.drawText("Authorize Signature", {
     x: 450,
-    y: y - 150,
+    y: y - 100,
     size: 11,
     font: bold,
     color: rgb(0, 0, 0.8),
-  });
-
+});
+      
+  if (backgroundImage) {
+    page.drawImage(backgroundImage, {
+      x: 0,
+      y: 0,
+      width: width,
+      height: 100,
+    });
+  } else {
+    // Fallback to solid color if image loading fails
+    page.drawRectangle({
+      x: 0,
+      y: 0,
+      width,
+      height: 100,
+      color: rgb(0.07, 0.15, 0.3), // dark blue header
+    });
+  }
+  
   // --- PAGE 2: Full Disclaimer & Policies ---
   const page2 = pdfDoc.addPage([600, 800]);
   const { height: page2Height } = page2.getSize();
   let y2 = page2Height - 40;
+  const margin = 36;
 
   // ---------------- HEADER BAR (PAGE 2) ----------------
   const backgroundImage2 = await loadBackgroundImage(pdfDoc);
@@ -666,189 +1020,260 @@ CP:$${data.customerInfo.corePrice || "0.00"},PP:$${
 
   // ---------------- CONTACT INFO (PAGE 2) ----------------
 
-  page2.drawText("Location:", {
-    x: 30,
-    y: page2Height - 60,
-    size: 9,
-    font: bold,
-    color: rgb(1, 1, 1),
-  });
-  page2.drawText("76 Imperial Dr Suite E Evanston, WY 82930, USA", {
-    x: 80,
-    y: page2Height - 60,
-    size: 9,
-    font: times,
-    color: rgb(1, 1, 1),
-  });
+  // Resolve path to public folder
+  const locationBytes = fs.readFileSync(path.join(process.cwd(), "public", "location.png"));
+  const websiteBytes  = fs.readFileSync(path.join(process.cwd(), "public", "website.png"));
+  const phoneBytes    = fs.readFileSync(path.join(process.cwd(), "public", "phone.png"));
+  // const emailBytes    = fs.readFileSync(path.join(process.cwd(), "public", "email.png"));
+  // const taxBytes      = fs.readFileSync(path.join(process.cwd(), "public", "sales.png"));
+  
+  const locationIcon = await pdfDoc.embedPng(locationBytes);
+  const websiteIcon  = await pdfDoc.embedPng(websiteBytes);
+  const phoneIcon    = await pdfDoc.embedPng(phoneBytes);
+  // const emailIcon    = await pdfDoc.embedPng(emailBytes);
+  // const taxIcon      = await pdfDoc.embedPng(taxBytes);
+  
+  // --- Now draw them with labels + values ---
+  const iconSize = 10;   // icon width/height
+  let iconHeight = 98
 
-  page2.drawText("Website:", {
-    x: 30,
-    y: page2Height - 75,
-    size: 9,
-    font: bold,
-    color: rgb(1, 1, 1),
-  });
-  page2.drawText("https://partscentral.us", {
-    x: 80,
-    y: page2Height - 75,
-    size: 9,
-    font: times,
-    color: rgb(1, 1, 1),
-  });
+  for ( let j=1; j<data.productInfo.length; j++) {
+    iconHeight += 70;
+  }
 
-  page2.drawText("Phone:", {
-    x: 30,
-    y: page2Height - 90,
-    size: 9,
-    font: bold,
-    color: rgb(1, 1, 1),
-  });
-  page2.drawText("(888) 338-2540", {
-    x: 80,
-    y: page2Height - 90,
-    size: 9,
-    font: times,
-    color: rgb(1, 1, 1),
-  });
+  y = height - iconHeight;
 
+     // starting Y for first row
+  
+  const infoRows = [
+    { icon: locationIcon, label: "Location:", value: "76 Imperial Dr Suite E Evanston, WY 82930, USA" },
+    { icon: websiteIcon,  label: "Website:",  value: "https://partscentral.us" },
+    { icon: phoneIcon,    label: "Phone:",    value: "(888) 338-2540" },
+    // { icon: emailIcon,    label: "Email:",    value: "purchase@partscentral.us" },
+    // { icon: taxIcon,      label: "Sales Tax ID:", value: "271-4444-3598" },
+  ];
+  
+  
+  for (const row of infoRows) {
+    // Draw icon
+    page2.drawImage(row.icon, {
+      x: margin,
+      y: y - 2, // tweak for vertical alignment
+      width: iconSize,
+      height: iconSize,
+    });
+  
+    // Draw label
+    page2.drawText(row.label, {
+      x: margin + iconSize + 4,
+      y,
+      size: 10,
+      font: bold,
+      color: rgb(1, 1, 1),
+    });
+  
+    // Draw value
+    page2.drawText(row.value, {
+      x: margin + 70, // align values nicely
+      y,
+      size: 10,
+      font: times,
+      color: rgb(1, 1, 1),
+    });
+  
+    y -= 20; // move down for next row
+  }
   // ---------------- DISCLAIMER SECTIONS (PAGE 2) ----------------
-  y2 -= 100;
 
-  // Disclaimer Engine
-  page2.drawText("Disclaimer Engine:", {
+ y2 = 100;
+// Function to calculate the height of a text block
+// A function to wrap and draw text with custom line spacing
+  function drawWrappedText(page: any, text: string, x: number, y: number, options: {
+    fontSize: number;
+    font: any;
+    maxWidth: number;
+    lineHeight: number;
+    color?: any;
+  }) {
+    const { fontSize, font, maxWidth, lineHeight } = options;
+
+    const words = text.split(' ');
+    let line = '';
+    let currentY = y;
+
+    for (let i = 0; i < words.length; i++) {
+        const testLine = line + words[i] + ' ';
+        const testWidth = font.widthOfTextAtSize(testLine, fontSize);
+
+        if (testWidth > maxWidth && i > 0) {
+            page.drawText(line.trim(), {
+                x: x,
+                y: currentY,
+                size: fontSize,
+                font: font,
+                color: options.color,
+            });
+            currentY -= lineHeight;
+            line = words[i] + ' ';
+        } else {
+            line = testLine;
+        }
+    }
+
+    if (line.trim().length > 0) {
+        page.drawText(line.trim(), {
+            x: x,
+            y: currentY,
+            size: fontSize,
+            font: font,
+            color: options.color,
+        });
+    }
+
+    // Return the final Y position
+    return currentY;
+}
+
+// Set the initial y2 value
+ y2 = 650;
+
+// Disclaimer Engine
+page2.drawText("Disclaimer Engine:", {
     x: 40,
     y: y2,
-    size: 12,
+    size: 14,
     font: bold,
     color: rgb(1, 0, 0),
-  });
+});
 
-  y2 -= 15;
-  page2.drawText(
-    "Engines are sold as an assemblies with manifolds, timing cover, belts, oil pan, fuel injectors or carburetors, pulleys and other accessories. Due to warranty only on the long block, all accessories like manifolds, timing cover, belts, oil pan, fuel injectors or carburetors, pulleys, and other accessories are sold as is (NO WARRANTY APPLICABLE).",
-    {
-      x: 40,
-      y: y2,
-      size: 9,
-      font: times,
-      maxWidth: 520,
-    }
-  );
+y2 -= 23;
+const engineText = "Engines are sold as an assemblies with manifolds, timing cover, belts, oil pan, fuel injectors or carburetors, pulleys and other accessories. Due to warranty only on the long block, all accessories like manifolds, timing cover, belts, oil pan, fuel injectors or carburetors, pulleys, and other accessories are sold as is (NO WARRANTY APPLICABLE).";
+y2 = drawWrappedText(page2, engineText, 40, y2, {
+    fontSize: 10,
+    font: times,
+    maxWidth: 520,
+    lineHeight: 12, // This controls the space between lines. Adjust as needed.
+});
 
-  y2 -= 80;
+// Calculate space for the next heading
+y2 -= 40;
 
-  // Disclaimer Transmission
-  page2.drawText("Disclaimer Transmission:", {
+// Disclaimer Transmission
+page2.drawText("Disclaimer Transmission:", {
     x: 40,
     y: y2,
-    size: 12,
+    size: 14,
     font: bold,
     color: rgb(1, 0, 0),
-  });
+});
 
-  y2 -= 15;
-  page2.drawText(
-    "The transmission is guaranteed to shift gears and bearings to be good. The oil pan and oil filter needs to be replaced before installation. Flush out all the liquid and from test cooler lines. The torque convertor needs to be fully engaged to the front pump. For manual transmission a new clutch needs to be installed along with the pressure plate and slave cylinder. The flywheel must be turned once before installation.",
-    {
-      x: 40,
-      y: y2,
-      size: 9,
-      font: times,
-      maxWidth: 520,
-    }
-  );
+y2 -= 23;
+const transmissionText = "The transmission is guaranteed to shift gears and bearings to be good. The oil pan and oil filter needs to be replaced before installation. Flush out all the liquid and from test cooler lines. The torque convertor needs to be fully engaged to the front pump. For manual transmission a new clutch needs to be installed along with the pressure plate and slave cylinder. The flywheel must be turned once before installation.";
+y2 = drawWrappedText(page2, transmissionText, 40, y2, {
+    fontSize: 10,
+    font: times,
+    maxWidth: 520,
+    lineHeight: 12,
+});
 
-  y2 -= 80;
+y2 -= 40;
 
-  // Installation
-  page2.drawText("Installation:", {
+// Installation
+page2.drawText("Installation:", {
     x: 40,
     y: y2,
-    size: 12,
+    size: 14,
     font: bold,
     color: rgb(1, 0, 0),
-  });
+});
 
-  y2 -= 15;
-  page2.drawText(
-    "Part needs to be installed within 10 days from the date of delivery.",
-    {
-      x: 40,
-      y: y2,
-      size: 9,
-      font: times,
-      maxWidth: 520,
-    }
-  );
+y2 -= 23;
+const installationText = "Part needs to be installed within 10 days from the date of delivery.";
+y2 = drawWrappedText(page2, installationText, 40, y2, {
+    fontSize: 10,
+    font: times,
+    maxWidth: 520,
+    lineHeight: 12,
+});
 
-  y2 -= 50;
+y2 -= 40;
 
-  // Cancellation
-  page2.drawText("Cancellation:", {
+// Cancellation
+page2.drawText("Cancellation:", {
     x: 40,
     y: y2,
-    size: 12,
+    size: 14,
     font: bold,
     color: rgb(1, 0, 0),
-  });
+});
 
-  y2 -= 15;
-  page2.drawText(
-    "After placing an order, if the customer wants-to cancel the order, he/she should do so within 24 hours and a charge of 30% restocking fee and one-way shipping cost will be deducted from the paid amount. Any Cancellations of orders should be validated via E-mail and Call to customer service is mandatory.",
-    {
-      x: 40,
-      y: y2,
-      size: 9,
-      font: times,
-      maxWidth: 520,
-    }
-  );
+y2 -= 23;
+const cancellationText = "After placing an order, if the customer wants-to cancel the order, he/she should do so within 24 hours and a charge of 30% restocking fee and one-way shipping cost will be deducted from the paid amount. Any Cancellations of orders should be validated via E-mail and Call to customer service is mandatory.";
+y2 = drawWrappedText(page2, cancellationText, 40, y2, {
+    fontSize: 10,
+    font: times,
+    maxWidth: 520,
+    lineHeight: 12,
+});
 
-  y2 -= 80;
+y2 -= 40;
 
-  // Return Policy
-  page2.drawText("Return Policy:", {
+// Return Policy
+page2.drawText("Return Policy:", {
     x: 40,
     y: y2,
-    size: 12,
+    size: 14,
     font: bold,
     color: rgb(1, 0, 0),
-  });
+});
 
-  y2 -= 15;
-  page2.drawText(
-    "If in case of damaged or defective returns will be accepted within 10 calendar days from the date of delivery for mechanical parts and 7 calendar days for body parts. Parts ordered for testing or trial purposes will not be available for return. If the customer received the part and if it is damaged, defective or if the shipping is delayed, the customer has to contact Parts Central LLC before disputing the charges.",
-    {
-      x: 40,
-      y: y2,
-      size: 9,
-      font: times,
-      maxWidth: 520,
-    }
-  );
+y2 -= 23;
+const returnText = "If in case of damaged or defective returns will be accepted within 10 calendar days from the date of delivery for mechanical parts and 7 calendar days for body parts. Parts ordered for testing or trial purposes will not be available for return. If the customer received the part and if it is damaged, defective or if the shipping is delayed, the customer has to contact Parts Central LLC before disputing the charges.";
+y2 = drawWrappedText(page2, returnText, 40, y2, {
+    fontSize: 10,
+    font: times,
+    maxWidth: 520,
+    lineHeight: 12,
+});
 
-  y2 -= 80;
+y2 -= 40;
 
-  // Refund Policy
-  page2.drawText("Refund Policy:", {
+// Refund Policy
+page2.drawText("Refund Policy:", {
     x: 40,
     y: y2,
-    size: 12,
+    size: 14,
     font: bold,
     color: rgb(1, 0, 0),
-  });
+});
 
-  y2 -= 15;
-  page2.drawText(
-    "Parts must be returned within 7 business days from the date of delivery for a full refund. However, shipping & handling is non-refundable. Return shipping charges must be covered at the customer's expense. Customers have to provide a registered/certified mechanic's detailed report to prove the same for mechanical parts, which shall be investigated further before processing a refund. Once the part is returned, we will be happy to send a replacement or issue a refund within 5-7 business days.",
-    {
-      x: 40,
-      y: y2,
-      size: 9,
-      font: times,
-      maxWidth: 520,
-    }
-  );
+y2 -= 23;
+const refundText = "Parts must be returned within 7 business days from the date of delivery for a full refund. However, shipping & handling is non-refundable. Return shipping charges must be covered at the customer's expense. Customers have to provide a registered/certified mechanic's detailed report to prove the same for mechanical parts, which shall be investigated further before processing a refund. Once the part is returned, we will be happy to send a replacement or issue a refund within 5-7 business days.";
+y2 = drawWrappedText(page2, refundText, 40, y2, {
+    fontSize: 10,
+    font: times,
+    maxWidth: 520,
+    lineHeight: 12,
+});
+
+// ... (your existing footer code)
+  if (backgroundImage2) {
+    page2.drawImage(backgroundImage2, {
+      x: 0,
+      y: 0,
+      width: width,
+      height: 100,
+    });
+  } else {
+    // Fallback to solid color if image loading fails
+    page2.drawRectangle({
+      x: 0,
+      y: 0,
+      width,
+      height: 100,
+      color: rgb(0.07, 0.15, 0.3), // dark blue header
+    });
+  }
 
   // Serialize the PDFDocument to bytes (a Uint8Array)
   const pdfBytes = await pdfDoc.save();
