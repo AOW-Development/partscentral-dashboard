@@ -4,6 +4,7 @@ import ProtectRoute from "@/app/components/ProtectRoute";
 import Sidebar from "@/app/components/Sidebar";
 import { useParams, usePathname } from "next/navigation";
 import { ChevronDown, X, Plus, Minus, Calendar } from "lucide-react";
+import { toast } from "react-toastify";
 
 import Image from "next/image";
 declare global {
@@ -81,6 +82,9 @@ export type OrderFormData = {
   invoiceStatus: string;
   invoiceSentAt: string;
   invoiceConfirmedAt: string;
+  poStatus: string;
+  poSentAt: string;
+  poConfirmedAt: string;
   vinNumber: string;
   notes: string;
   ownShippingInfo: {
@@ -116,12 +120,18 @@ import Notes from "@/app/components/Notes";
 
 const mapPrismaEnumToWarranty = (enumValue: string): string => {
   switch (enumValue) {
-    case 'WARRANTY_30_DAYS': return '30 Days';
-    case 'WARRANTY_60_DAYS': return '60 Days';
-    case 'WARRANTY_90_DAYS': return '90 Days';
-    case 'WARRANTY_6_MONTHS': return '6 Months';
-    case 'WARRANTY_1_YEAR': return '1 Year';
-    default: return '';
+    case "WARRANTY_30_DAYS":
+      return "30 Days";
+    case "WARRANTY_60_DAYS":
+      return "60 Days";
+    case "WARRANTY_90_DAYS":
+      return "90 Days";
+    case "WARRANTY_6_MONTHS":
+      return "6 Months";
+    case "WARRANTY_1_YEAR":
+      return "1 Year";
+    default:
+      return "";
   }
 };
 
@@ -205,15 +215,17 @@ const OrderDetails = () => {
           setPreviousYards(yardHistory);
 
           const payments = Array.isArray(data.payments) ? data.payments : [];
-          const mappedPaymentEntries = payments.map((p: any, index: number) => ({
-            id: p.id || Date.now() + index,
-            merchantMethod: p.method || "",
-            totalPrice: p.amount || "",
-            approvalCode: p.approvelCode || "",
-            entity: p.entity || "",
-            charged: p.charged || (p.status === "SUCCEEDED" ? "Yes" : "No"),
-            chargeClicked: p.status === "SUCCEEDED",
-          }));
+          const mappedPaymentEntries = payments.map(
+            (p: any, index: number) => ({
+              id: p.id || Date.now() + index,
+              merchantMethod: p.method || "",
+              totalPrice: p.amount || "",
+              approvalCode: p.approvelCode || "",
+              entity: p.entity || "",
+              charged: p.charged || (p.status === "SUCCEEDED" ? "Yes" : "No"),
+              chargeClicked: p.status === "SUCCEEDED",
+            })
+          );
 
           if (mappedPaymentEntries.length > 0) {
             setPaymentEntries(mappedPaymentEntries);
@@ -514,6 +526,9 @@ const OrderDetails = () => {
     invoiceStatus: "",
     invoiceSentAt: "",
     invoiceConfirmedAt: "",
+    poStatus: "",
+    poSentAt: "",
+    poConfirmedAt: "",
     vinNumber: "",
     notes: "",
     warranty: "",
@@ -566,18 +581,26 @@ const OrderDetails = () => {
 
   // Remove this useEffect - we don't want to show popup immediately when changes are detected
   // The popup should only show when user tries to navigate away
-
+  const [saveState, setSaveState] = useState(false);
   // Handle save changes for unsaved changes popup
   const handleSaveChanges = async (): Promise<boolean> => {
     try {
       // Call the existing handleSave function
-      await handleSave();
-      setHasUnsavedChanges(false);
-      // Update initial data to current data after successful save
-      setInitialFormData(JSON.parse(JSON.stringify(formData)));
-      return true;
+      if (saveState) {
+        setHasUnsavedChanges(false);
+        // Update initial data to current data after successful save
+        setInitialFormData(JSON.parse(JSON.stringify(formData)));
+        return true;
+      } else {
+        await handleSave();
+        setHasUnsavedChanges(false);
+        // Update initial data to current data after successful save
+        setInitialFormData(JSON.parse(JSON.stringify(formData)));
+        return true;
+      }
     } catch (error) {
       console.error("Error saving changes:", error);
+      toast.error("Error saving changes");
       return false;
     }
   };
@@ -856,6 +879,7 @@ const OrderDetails = () => {
   const [showOwnShipping, setShowOwnShipping] = useState(false);
   const [showYardShippingCost, setShowYardShippingCost] = useState(false);
   const [invoiceButtonState, setInvoiceButtonState] = useState(false);
+  const [poButtonState, setPoButtonState] = useState(false);
   const [productEntry, setProductEntry] = useState<{ count: number }[]>([
     { count: 1 },
   ]);
@@ -1162,6 +1186,7 @@ const OrderDetails = () => {
     }
   };
   let TIME = new Date();
+  let TIME1 = new Date();
 
   // Validate all required fields
   const validateAllFields = () => {
@@ -1235,14 +1260,17 @@ const OrderDetails = () => {
     return !hasErrors;
   };
   const [invoiceDate, setInvoiceData] = useState(false);
+  const [poDate, setPoData] = useState(false);
   // Send invoice function
   const handleSendInvoice = async () => {
     if (!validateAllFields()) {
+      toast.error("Please fill all the fields");
       return;
     }
 
     setIsLoading(true);
     setMessage(null);
+    // toast.success("Invoice sent successfully! Check the email for the invoice.");
     setInvoiceData(true);
     TIME = new Date();
 
@@ -1333,10 +1361,13 @@ const OrderDetails = () => {
       const result = await response.json();
 
       if (response.ok) {
-        setMessage({
-          type: "success",
-          text: "Invoice sent successfully! Check the email for the invoice.",
-        });
+        // setMessage({
+        //   type: "success",
+        //   text: "Invoice sent successfully! Check the email for the invoice.",
+        // });
+        toast.success(
+          "Invoice sent successfully!"
+        );
         // Update invoice status
         setIsProcessing(false);
         // Notes
@@ -1349,29 +1380,36 @@ const OrderDetails = () => {
           "By BillingAutomation"
         );
       } else {
+        toast.error("Failed to send invoice");
         throw new Error(result.message || "Failed to send invoice");
       }
     } catch (error) {
-      setMessage({
-        type: "error",
-        text:
-          error instanceof Error
-            ? error.message
-            : "Failed to send invoice. Please try again.",
-      });
+      // setMessage({
+      //   type: "error",
+      //   text:
+      //     error instanceof Error
+      //       ? error.message
+      //       : "Failed to send invoice. Please try again.",
+      // });
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to send invoice. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
   };
   const handleSendPO = async () => {
     if (!validateAllFields()) {
+      toast.error("Please fill all the fields");
       return;
     }
 
     setIsLoading(true);
     setMessage(null);
-    setInvoiceData(true);
-    TIME = new Date();
+    setPoData(true);
+    TIME1 = new Date();
 
     try {
       // Prepare invoice data
@@ -1454,10 +1492,12 @@ const OrderDetails = () => {
       const result = await response.json();
 
       if (response.ok) {
-        setMessage({
-          type: "success",
-          text: "PO sent successfully! Check the email for the PO.",
-        });
+        // setMessage({
+        //   type: "success",
+        //   text: "PO sent successfully! Check the email for the PO.",
+        //   });
+        // });
+        toast.success("PO sent successfully! Check the email for the PO.");
         // Update invoice status
         setIsProcessing(false);
         // Notes
@@ -1473,18 +1513,24 @@ const OrderDetails = () => {
         throw new Error(result.message || "Failed to send PO");
       }
     } catch (error) {
-      setMessage({
-        type: "error",
-        text:
-          error instanceof Error
-            ? error.message
-            : "Failed to send PO. Please try again.",
-      });
+      // setMessage({
+      //   type: "error",
+      //   text:
+      //     error instanceof Error
+      //       ? error.message
+      //       : "Failed to send PO. Please try again.",
+      // });
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to send PO. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
   };
   const handleSave = async () => {
+    setSaveState(true);
     if (orderId && orderId !== "create" && orderId !== "new") {
       await handleUpdateOrder();
     } else {
@@ -1494,6 +1540,7 @@ const OrderDetails = () => {
 
   const handleUpdateOrder = async () => {
     if (!validateAllFields()) {
+      toast.error("Please fill all the fields");
       return;
     }
     setIsLoading(true);
@@ -1535,20 +1582,26 @@ const OrderDetails = () => {
         },
       };
       const result = await updateOrderFromAdmin(orderId, payload, cartItems);
-      setMessage({
-        type: "success",
-        text: "Order updated successfully!",
-      });
+      // setMessage({
+      //   type: "success",
+      //   text: "Order updated successfully!",
+      // });
+      toast.success("Order updated successfully");
       setIsProcessing(false);
       console.log("Order updated:", result);
     } catch (error) {
-      setMessage({
-        type: "error",
-        text:
-          error instanceof Error
-            ? error.message
-            : "Failed to update order. Please try again.",
-      });
+      // setMessage({
+      //   type: "error",
+      //   text:
+      //     error instanceof Error
+      //       ? error.message
+      //       : "Failed to update order. Please try again.",
+      // });
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update order. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -1556,6 +1609,7 @@ const OrderDetails = () => {
 
   const handleCreateOrder = async () => {
     if (!validateAllFields()) {
+      toast.error("Please fill all the fields");
       return;
     }
 
@@ -1591,7 +1645,7 @@ const OrderDetails = () => {
           pictureStatus: item.pictureStatus || "PENDING",
         }))
         .filter((item) => !!item.id); // Ensure SKU is present
-        console.log("Cart items:", cartItems);
+      console.log("Cart items:", cartItems);
 
       // Get the first payment entry (or use default values if none exists)
       const paymentEntry = paymentEntries[0] || {};
@@ -1614,20 +1668,26 @@ const OrderDetails = () => {
       };
       const result = await createOrderFromAdmin(updatedFormData, cartItems);
 
-      setMessage({
-        type: "success",
-        text: "Order created successfully!",
-      });
+      // setMessage({
+      //   type: "success",
+      //   text: "Order created successfully!",
+      // });
+      toast.success("Order created successfully");
       setIsProcessing(false);
       console.log("Order created:", result);
     } catch (error) {
-      setMessage({
-        type: "error",
-        text:
-          error instanceof Error
-            ? error.message
-            : "Failed to create order. Please try again.",
-      });
+      // setMessage({
+      //   type: "error",
+      //   text:
+      //     error instanceof Error
+      //       ? error.message
+      //       : "Failed to create order. Please try again.",
+      // });
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to create order. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -1765,9 +1825,9 @@ const OrderDetails = () => {
     };
     setCustomerNotes((prev) => {
       const updatedNotes = [newNote, ...prev];
-      setFormData(prevData => ({
+      setFormData((prevData) => ({
         ...prevData,
-        customerNotes: updatedNotes
+        customerNotes: updatedNotes,
       }));
       return updatedNotes;
     });
@@ -1784,9 +1844,9 @@ const OrderDetails = () => {
     };
     setYardNotes((prev) => {
       const updatedNotes = [newNote, ...prev];
-      setFormData(prevData => ({
+      setFormData((prevData) => ({
         ...prevData,
-        yardNotes: updatedNotes
+        yardNotes: updatedNotes,
       }));
       return updatedNotes;
     });
@@ -3327,16 +3387,21 @@ const OrderDetails = () => {
                 orderId={String(params.id)}
                 onYardMoved={handleYardMoved}
               />
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-4">
                 <button
                   onClick={handleSendPO}
-                  className="bg-[#006BA9] hover:bg-[#006BA9]/90 cursor-pointer mt-8 w-40 h-10 px-2 py-1 text-white  rounded-lg font-medium transition-colors"
+                  className={` mt-8 w-40 h-10 px-2 py-1 rounded-lg font-medium transition-colors ${
+                    isLoading || poButtonState
+                      ? "bg-gray-500 cursor-not-allowed"
+                      : "bg-[#006BA9] hover:bg-[#006BA9]/90 cursor-pointer"
+                  } text-white`}
+                  disabled={isLoading || poButtonState}
                 >
                   {isLoading ? "Sending PO..." : "Send PO"}
                 </button>
                 {/* PO Status & Approval/Sales */}
                 <div>
-                  <label className="block text-white/60 text-sm mb-2">
+                  {/* <label className="block text-white/60 text-sm mb-2">
                     PO Status
                   </label>
                   <div className="space-y-2">
@@ -3351,6 +3416,66 @@ const OrderDetails = () => {
                       <span className="text-white/60 text-xs">
                         28Jun25 7:11pm
                       </span>
+                    </div>
+                  </div> */}
+                  <select
+                    className="bg-[#0a1929] py-3 text-green-400 outline-none"
+                    value={formData.poStatus}
+                    onChange={(e) => {
+                      handleInputChange("poStatus", e.target.value);
+                      if (e.target.value == "no") {
+                        setPoButtonState(false);
+                      } else if (e.target.value == "yes") {
+                        setPoButtonState(true);
+                      } else {
+                        setPoButtonState(false);
+                      }
+                    }}
+                  >
+                    <option value="">PO Sent Status</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                  </select>
+                  <div className="space-y-2">
+                    {!poButtonState && (
+                      <div className="flex items-center justify-between bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3">
+                        <span className="text-green-400 text-sm">PO Sent</span>
+
+                        <span className="text-white/60 text-xs">
+                          {/* 27Jun25 7:11pm */}
+                          {poDate && `${formatDay(TIME1)} ${formatTime(TIME1)}`}
+                        </span>
+                      </div>
+                    )}
+                    {poButtonState && (
+                      <div className="flex items-center justify-between bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3">
+                        <span className="text-green-400 text-sm">PO Sent</span>
+
+                        <div className="relative">
+                          <input
+                            type="date"
+                            className="text-white text-sm placeholder:text-white"
+                            value={formData.poSentAt}
+                            onChange={(e) =>
+                              handleInputChange("poSentAt", e.target.value)
+                            }
+                          />
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between gap-0.5 bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 mb-2">
+                      <span className="text-green-400 text-sm">PO Confirm</span>
+                      {/* <span className="text-white/60 text-xs">
+                          28Jun25 7:11pm
+                        </span> */}
+                      <input
+                        type="date"
+                        className="text-white text-sm ml-2 placeholder:text-white"
+                        value={formData.poConfirmedAt}
+                        onChange={(e) =>
+                          handleInputChange("poConfirmedAt", e.target.value)
+                        }
+                      />
                     </div>
                   </div>
                 </div>
@@ -3512,7 +3637,7 @@ const OrderDetails = () => {
           </main>
         </div>
       </div>
-      
+
       <SaveChangesPopUp
         hasUnsavedChanges={hasUnsavedChanges}
         onSave={handleSaveChanges}
