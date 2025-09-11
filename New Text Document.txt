@@ -1,9 +1,75 @@
-Move Logic to 
-YardInfo
-:
-Handle the entire flow (API call + state update) in one place
-Pass a callback to update the parent's state after successful API call
-Or Coordinate with Promises:
-Make the API call first
-Only update local state if the API call succeeds
-Handle errors appropriately
+err while updating order : 
+Invalid `tx.productVariant_1.findUnique()` invocation in
+C:\Users\Intern\Desktop\partsCentral\database\src\services\updateOrderService.ts:109:60
+
+  106   });
+  107 } else {
+  108   // Create new item only if it doesn't exist
+→ 109   const productVariant = await tx.productVariant_1.findUnique({
+          where: {
+            sku: undefined,
+        ?   id?: Int,
+        ?   AND?: ProductVariant_1WhereInput | ProductVariant_1WhereInput[],
+        ?   OR?: ProductVariant_1WhereInput[],
+        ?   NOT?: ProductVariant_1WhereInput | ProductVariant_1WhereInput[],
+        ?   productId?: IntFilter | Int,
+        ?   miles?: StringNullableFilter | String | Null,
+        ?   actualprice?: FloatNullableFilter | Float | Null,
+        ?   discountedPrice?: FloatNullableFilter | Float | Null,
+        ?   inStock?: BoolFilter | Boolean,
+        ?   product?: ProductScalarRelationFilter | ProductWhereInput,
+        ?   orderItems?: OrderItemListRelationFilter
+          },
+          include: {
+            product: {
+              include: {
+                modelYear: {
+                  include: {
+                    model: {
+                      include: {
+                        make: true
+                      }
+                    },
+                    year: true
+                  }
+                },
+                partType: true
+              }
+            }
+          }
+        })
+
+Argument `where` of type ProductVariant_1WhereUniqueInput needs at least one of `id` or `sku` arguments. Available options are marked with ?.
+    at throwValidationException (C:\Users\Intern\Desktop\partsCentral\database\node_modules\@prisma\client\src\runtime\core\errorRendering\throwValidationException.ts:45:9)
+    at ri.handleRequestError (C:\Users\Intern\Desktop\partsCentral\database\node_modules\@prisma\client\src\runtime\RequestHandler.ts:202:7)
+    at ri.handleAndLogRequestError (C:\Users\Intern\Desktop\partsCentral\database\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+    at ri.request (C:\Users\Intern\Desktop\partsCentral\database\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+    at async l (C:\Users\Intern\Desktop\partsCentral\database\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:862:24)
+    at async C:\Users\Intern\Desktop\partsCentral\database\src\services\updateOrderService.ts:109:34
+    at async Proxy._transactionWithCallback (C:\Users\Intern\Desktop\partsCentral\database\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:732:18)    
+    at async updateOrder (C:\Users\Intern\Desktop\partsCentral\database\src\controllers\orderController.ts:79:26) {
+  clientVersion: '6.12.0'
+}
+
+check updateOrderService.ts and updateOrderController.ts .
+partscentral-dashboard\utils\updateOrderApi.ts
+
+so basically this err is not sending productVariantId / productVariantsku ?? 
+check partscentral-dashboard\app\orders\[id]\page.tsx cause while creating a fresh order we do send productVariantId / productVariantsku ?? so how do we procedd here with at this point this relation(check order and orderItem table in database\prisma\schema.prisma ) .
+
+
+so should we just drop this relation where no relation with cartItem and productVarint 's product Id .
+
+cause in ideal case i want relation with cartItem and productVarint 's product Id as well as i should be able to store  a product that is not available in inventory .
+
+is my understanding correct ??
+what is your plan ? approach ??
+
+also fix OrderUpdate from end-to-end fields mapping / missing fields adding ? 
+take OrderDetails useEffect as insperation , every feild is must .
+for order update check handleUpdateOrder,handleSave,handleCreateOrder in orders/[id]/page.tsx file .
+
+MAKE MINIMUM CHANGES YOU CAN TO ACHIVE THIS . DONT BREAK ANY EXISTING FUNCTIONALITY .
+CAUSE CODE IS WRITTEN BEDLY AND I WANT TO JUST FIX ORDERupdate issue.
+avoid writing in partscentral-dashboard\app\orders\[id]\page.tsx cause this is big file 4000+ lines try to write as much as outside it 
+
