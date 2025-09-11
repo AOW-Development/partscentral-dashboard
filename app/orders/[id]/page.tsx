@@ -330,7 +330,7 @@ const OrderDetails = () => {
             yardAddress: yard.yardAddress || "",
             yardEmail: yard.yardEmail || "",
             yardPrice: yard.yardPrice || "",
-            yardWarranty: yard.yardWarranty || "",
+            yardWarranty: mapPrismaEnumToWarranty(yard.yardWarranty || ""),
             yardMiles: yard.yardMiles || "",
             yardShipping: yard.yardShippingType || "",
             yardCost: yard.yardShippingCost || "",
@@ -1515,6 +1515,7 @@ const OrderDetails = () => {
       // Ensure invoice fields are ISO strings or empty
       const payload = {
         ...formData,
+        // warranty: mapWarrantyToPrismaEnum(formData.warranty),
         invoiceSentAt: formData.invoiceSentAt
           ? new Date(formData.invoiceSentAt).toISOString()
           : null,
@@ -1596,6 +1597,7 @@ const OrderDetails = () => {
 
       const updatedFormData = {
         ...formData,
+        // warranty: mapWarrantyToPrismaEnum(formData.warranty),
         status: formData.status || "NA",
         customerNotes: customerNotes,
         yardNotes: yardNotes,
