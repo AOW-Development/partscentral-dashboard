@@ -2270,7 +2270,11 @@ const OrderDetails = () => {
                   {/* Row 1 */}
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
+<<<<<<< HEAD
                       Email *
+=======
+                      Email (required and unique) 
+>>>>>>> 60733140bb687462fe308ec0478d20d62ce92b42
                     </label>
                     <input
                       type="email"
@@ -2295,7 +2299,11 @@ const OrderDetails = () => {
                   </div>
                   <div className="relative">
                     <label className="block text-white/60 text-sm mb-2">
+<<<<<<< HEAD
                       Mobile *
+=======
+                      Mobile (required) 
+>>>>>>> 60733140bb687462fe308ec0478d20d62ce92b42
                     </label>
                     <div className="relative" ref={priceOptionsRef}>
                       <input
