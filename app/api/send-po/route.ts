@@ -7,8 +7,9 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 // Utility function to load background image
 async function loadBackgroundImage(pdfDoc: PDFDocument) {
   try {
-    const backgroundPath = path.join(process.cwd(), "public", "smtpHeader.jpg");
+    const backgroundPath = path.join(process.cwd(), "public", "smtpHead.jpg");
     const backgroundBytes = fs.readFileSync(backgroundPath);
+    console.log("Background image loaded successfully, size:", backgroundPath);
     return await pdfDoc.embedJpg(backgroundBytes);
   } catch (error) {
     console.error("Error loading background image:", error);
@@ -62,6 +63,7 @@ interface InvoiceData {
   };
   yardInfo: {
     name: string;
+    attnName: string;
     mobile: string;
     address: string;
     email: string;
@@ -134,7 +136,7 @@ function generateInvoiceHTML(data: InvoiceData) {
     </head>
     <body>
       <div>
-      <h3 >Hello ${data.yardInfo.name},</h3>
+      <h3 >Hello ${data.yardInfo.attnName},</h3>
       <p style= "font-weight: bold;" >Please Find the attached PO.</p>
         <p style= "font-weight: bold;"> Requesting pictures before you wrap up the part for shipping.</p>
         <p style= "font-weight: bold;">${data.productInfo
@@ -222,19 +224,19 @@ async function generatePOPDF(data: InvoiceData) {
 
   // Resolve path to public folder
   const locationBytes = fs.readFileSync(
-    path.join(process.cwd(), "public", "location.png")
+    path.join(process.cwd(), "public", "loc.png")
   );
   const websiteBytes = fs.readFileSync(
-    path.join(process.cwd(), "public", "website.png")
+    path.join(process.cwd(), "public", "web.png")
   );
   const phoneBytes = fs.readFileSync(
-    path.join(process.cwd(), "public", "phone.png")
+    path.join(process.cwd(), "public", "pbone1.png")
   );
   const emailBytes = fs.readFileSync(
-    path.join(process.cwd(), "public", "email.png")
+    path.join(process.cwd(), "public", "mail.png")
   );
   const taxBytes = fs.readFileSync(
-    path.join(process.cwd(), "public", "sales.png")
+    path.join(process.cwd(), "public", "tax.png")
   );
 
   const locationIcon = await pdfDoc.embedPng(locationBytes);
@@ -244,7 +246,7 @@ async function generatePOPDF(data: InvoiceData) {
   const taxIcon = await pdfDoc.embedPng(taxBytes);
 
   // --- Now draw them with labels + values ---
-  const iconSize = 8; // icon width/height
+  const iconSize = 6; // icon width/height
   y = height - 50; // starting Y for first row
 
   const infoRows = [
@@ -272,21 +274,21 @@ async function generatePOPDF(data: InvoiceData) {
     page.drawText(row.label, {
       x: margin + iconSize + 4,
       y,
-      size: 9,
+      size: 7,
       font: bold,
       color: rgb(1, 1, 1),
     });
 
     // Draw value
     page.drawText(row.value, {
-      x: margin + 80, // align values nicely
+      x: margin + 60, // align values nicely
       y,
-      size: 9,
+      size: 7,
       font: times,
       color: rgb(1, 1, 1),
     });
 
-    y -= 10; // move down for next row
+    y -= 11; // move down for next row
   }
 
   page.drawText("Purchase Order", {
@@ -321,7 +323,7 @@ async function generatePOPDF(data: InvoiceData) {
     color: rgb(0, 0, 0.8),
   });
 
-  page.drawText(`Attn: ${data.yardInfo.name}`, {
+  page.drawText(`Attn: ${data.yardInfo.attnName}`, {
     x: margin,
     y: y - 60,
     size: 12,
@@ -392,7 +394,7 @@ async function generatePOPDF(data: InvoiceData) {
     { label: `Shipping Address`, text: shippingText },
     { 
     label: "Warranty", 
-    text: `${data.yardInfo.warranty}\nPlease send Pictures Before Shipping Out the Part to the\nEmail: purchase@partscentral.us or Ph: 888-338-2540` 
+    text: `${data.yardInfo.warranty}\nPlease send Pictures Before Shipping Out the Part to the\nEmail: purchase@partscentral.us or Ph: 307-200-2571` 
   },
   ];
 
@@ -494,8 +496,8 @@ async function generatePOPDF(data: InvoiceData) {
   // --- Footer Section (your note) ---
 
   const textContent = [
-    "I hereby Chuck & Eddie's Used Auto Parts to charge the order as described above on the Card.",
-    "PLEASE SHIP THE PART BLIND-NO PAPERWORK, NO MILES FOR ENGINES AND",
+    `I hereby approve ${data.yardInfo.name} to charge the order as described above on the Card.`,
+    "PLEASE SHIP THE PART BLIND-NO PAPERWORK, NO MILES FOR ENGINES AND TRANSMISSIONS.",
     "SEND THE PICTURE OF THE PART BEFORE YOU SHIP IT.",
     "YOU CAN EMAIL OR FAX THE INVOICE BACK TO US",
     "", // This empty string creates a line break

@@ -65,6 +65,7 @@ export type OrderFormData = {
   charged: string;
   saleMadeBy: string;
   yardName: string;
+  attnName: string;
   yardMobile: string;
   yardAddress: string;
   yardEmail: string;
@@ -138,6 +139,7 @@ const mapPrismaEnumToWarranty = (enumValue: string): string => {
 // Import the PreviousYard type from YardInfo
 type PreviousYard = {
   yardName: string;
+  attnName: string;
   yardAddress: string;
   yardMobile: string;
   yardEmail: string;
@@ -198,6 +200,7 @@ const OrderDetails = () => {
           const yardHistory = Array.isArray(data.yardHistory)
             ? data.yardHistory.map((item: any) => ({
                 yardName: item.yardName || "",
+                attnName: item.attnName || "",
                 yardAddress: item.yardAddress || "",
                 yardMobile: item.yardMobile || "",
                 yardEmail: item.yardEmail || "",
@@ -509,6 +512,7 @@ const OrderDetails = () => {
     charged: "",
     saleMadeBy: "",
     yardName: "",
+    attnName: "",
     yardMobile: "",
     yardAddress: "",
     yardEmail: "",
@@ -550,6 +554,7 @@ const OrderDetails = () => {
 
     const currentYard = {
       yardName: formData.yardName,
+      attnName: formData.attnName,
       yardAddress: formData.yardAddress,
       yardMobile: formData.yardMobile,
       yardEmail: formData.yardEmail,
@@ -937,14 +942,17 @@ const OrderDetails = () => {
       Number(formData.taxesPrice) +
       Number(formData.processingPrice);
 
-    if (Number(formData.totalPrice) !== newTotalPrice) {
-      setFormData((prev) => ({
-        ...prev,
-        totalSellingPrice: newTotalPrice.toString(),
-        totalPrice: newTotalPrice.toString(),
-      }));
-    }
-  }, [
+     // format with two decimals
+  const formattedTotal = newTotalPrice.toFixed(2);
+
+  if (formData.totalPrice !== formattedTotal) {
+    setFormData((prev) => ({
+      ...prev,
+      totalSellingPrice: formattedTotal,
+      totalPrice: formattedTotal,
+    }));
+  }
+}, [
     formData.partPrice,
     formData.handlingPrice,
     formData.corePrice,
@@ -1323,6 +1331,7 @@ const OrderDetails = () => {
         })),
         yardInfo: {
           name: formData.yardName,
+          attnName: formData.attnName,
           mobile: formData.yardMobile,
           address: formData.yardAddress,
           email: formData.yardEmail,
@@ -1456,6 +1465,7 @@ const OrderDetails = () => {
         })),
         yardInfo: {
           name: formData.yardName,
+          attnName: formData.attnName,
           mobile: formData.yardMobile,
           address: formData.yardAddress,
           email: formData.yardEmail,
@@ -2193,7 +2203,7 @@ const OrderDetails = () => {
                   {showAlternateMobileNumber && (
                     <div className="relative">
                       <label className="block text-white/60 text-sm mb-2">
-                        Alternate Mobile *
+                        Alternate Mobile
                       </label>
                       <div className="relative">
                         <input
@@ -2241,11 +2251,15 @@ const OrderDetails = () => {
                             ? "border-red-500 focus:border-red-500"
                             : "border-gray-600 focus:border-blue-500"
                         }`}
-                        placeholder="Enter price"
+                        placeholder="00.00"
                         value={formData.partPrice}
                         onChange={(e) =>
-                          handleInputChange("partPrice", e.target.value)
-                        }
+                          handleInputChange("partPrice", e.target.value)}
+                          onBlur={(e) => {
+                            const rawValue = e.target.value || "0"; // always string
+                            const value = parseFloat(rawValue).toFixed(2); // value is string
+                            handleInputChange("partPrice", value);
+                          }}
                       />
                       <button
                         type="button"
@@ -2341,7 +2355,7 @@ const OrderDetails = () => {
                         </button>
                       )}
                       <label className="block text-white/60 text-sm mb-2">
-                        Taxes Price
+                        Taxes Price 
                       </label>
                       <input
                         type="number"
@@ -2350,11 +2364,16 @@ const OrderDetails = () => {
                             ? "border-red-500 focus:border-red-500"
                             : "border-gray-600 focus:border-blue-500"
                         }`}
-                        placeholder="Enter price"
+                        placeholder="00.00"
                         value={formData.taxesPrice}
                         onChange={(e) =>
                           handleInputChange("taxesPrice", e.target.value)
                         }
+                        onBlur={(e) => {
+                            const rawValue = e.target.value || "0"; // always string
+                            const value = parseFloat(rawValue).toFixed(2); // value is string
+                            handleInputChange("taxesPrice", value);
+                          }}
                       />
                       {fieldErrors.taxesPrice && (
                         <p className="text-red-400 text-xs mt-1">
@@ -2391,11 +2410,16 @@ const OrderDetails = () => {
                             ? "border-red-500 focus:border-red-500"
                             : "border-gray-600 focus:border-blue-500"
                         }`}
-                        placeholder="Enter price"
+                        placeholder="00.00"
                         value={formData.handlingPrice}
                         onChange={(e) =>
                           handleInputChange("handlingPrice", e.target.value)
                         }
+                        onBlur={(e) => {
+                            const rawValue = e.target.value || "0"; // always string
+                            const value = parseFloat(rawValue).toFixed(2); // value is string
+                            handleInputChange("handlingPrice", value);
+                          }}
                       />
                       {fieldErrors.handlingPrice && (
                         <p className="text-red-400 text-xs mt-1">
@@ -2432,11 +2456,16 @@ const OrderDetails = () => {
                             ? "border-red-500 focus:border-red-500"
                             : "border-gray-600 focus:border-blue-500"
                         }`}
-                        placeholder="Enter price"
+                        placeholder="00.00"
                         value={formData.processingPrice}
                         onChange={(e) =>
                           handleInputChange("processingPrice", e.target.value)
                         }
+                        onBlur={(e) => {
+                            const rawValue = e.target.value || "0"; // always string
+                            const value = parseFloat(rawValue).toFixed(2); // value is string
+                            handleInputChange("processingPrice", value);
+                          }}
                       />
                       {fieldErrors.processingPrice && (
                         <p className="text-red-400 text-xs mt-1">
@@ -2473,11 +2502,16 @@ const OrderDetails = () => {
                             ? "border-red-500 focus:border-red-500"
                             : "border-gray-600 focus:border-blue-500"
                         }`}
-                        placeholder="Enter price"
+                        placeholder="00.00"
                         value={formData.corePrice}
                         onChange={(e) =>
                           handleInputChange("corePrice", e.target.value)
                         }
+                        onBlur={(e) => {
+                            const rawValue = e.target.value || "0"; // always string
+                            const value = parseFloat(rawValue).toFixed(2); // value is string
+                            handleInputChange("corePrice", value);
+                          }}
                       />
                       {fieldErrors.corePrice && (
                         <p className="text-red-400 text-xs mt-1">
@@ -2545,7 +2579,7 @@ const OrderDetails = () => {
                 </div>
                 <div>
                   <label className="block text-white/60 text-sm mb-2">
-                    Shipping Address *
+                    Shipping Address 
                   </label>
                   <textarea
                     className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none h-20 resize-none ${
@@ -2895,7 +2929,7 @@ const OrderDetails = () => {
                 </div>
                 <div>
                   <label className="block text-white/60 text-sm mb-2">
-                    Warranty
+                    Warranty *
                   </label>
                   <div className="relative">
                     <select
@@ -2920,7 +2954,7 @@ const OrderDetails = () => {
                 </div>
                 <div>
                   <label className="block text-white/60 text-sm mb-2">
-                    Sale Made By
+                    Sale Made By *
                   </label>
                   <div className="relative">
                     <select
@@ -2969,7 +3003,7 @@ const OrderDetails = () => {
                   )}
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
-                      Make *
+                      Make 
                     </label>
                     <div className="relative">
                       <select
@@ -3011,7 +3045,7 @@ const OrderDetails = () => {
                   </div>
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
-                      Model *
+                      Model 
                     </label>
                     <div className="relative">
                       <select
@@ -3053,7 +3087,7 @@ const OrderDetails = () => {
                   </div>
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
-                      Year *
+                      Year 
                     </label>
                     <div className="relative">
                       <select
@@ -3102,7 +3136,7 @@ const OrderDetails = () => {
                   </div>
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
-                      Parts *
+                      Parts 
                     </label>
                     <div className="relative">
                       <select
@@ -3140,7 +3174,7 @@ const OrderDetails = () => {
                   </div>
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
-                      Specification *
+                      Specification 
                     </label>
                     <div className="relative">
                       <select
@@ -3366,6 +3400,7 @@ const OrderDetails = () => {
               <YardInfo
                 formData={{
                   yardName: formData.yardName,
+                  attnName: formData.attnName,
                   yardAddress: formData.yardAddress,
                   yardMobile: formData.yardMobile,
                   yardEmail: formData.yardEmail,

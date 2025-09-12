@@ -5,6 +5,7 @@ import axios from "axios";
 
 interface PreviousYard {
   yardName: string;
+  attnName: string;
   yardAddress: string;
   yardMobile: string;
   yardEmail: string;
@@ -17,7 +18,8 @@ interface PreviousYard {
 }
 
 interface FormData {
-  yardName: string;
+  yardName: string; 
+  attnName: string;
   yardAddress: string;
   yardMobile: string;
   yardEmail: string;
@@ -127,7 +129,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
             )}
           </div>
 
-          <div className=" grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className=" grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-white/60 text-xs mb-1">
                 Yard Name
@@ -136,6 +138,17 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 type="text"
                 className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
                 value={previousYards[selectedPrevYardIdx]?.yardName || ""}
+                disabled
+              />
+            </div>
+            <div>
+              <label className="block text-white/60 text-xs mb-1">
+                Attn. Name
+              </label>
+              <input
+                type="text"
+                className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                value={previousYards[selectedPrevYardIdx]?.attnName || ""}
                 disabled
               />
             </div>
@@ -253,6 +266,16 @@ const YardInfo: React.FC<YardInfoProps> = ({
             onChange={(e) => handleInputChange("yardName", e.target.value)}
           />
         </div>
+        <div>
+          <label className="block text-white/60 text-sm mb-2">Attn. Name</label>
+          <input
+            type="text"
+            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+            placeholder="Enter name"
+            value={formData.attnName}
+            onChange={(e) => handleInputChange("attnName", e.target.value)}
+          />
+        </div>
         {/* Address */}
         <div>
           <label className="block text-white/60 text-sm mb-2">Address</label>
@@ -298,6 +321,11 @@ const YardInfo: React.FC<YardInfoProps> = ({
             placeholder="Enter price"
             value={formData.yardPrice}
             onChange={(e) => handleInputChange("yardPrice", e.target.value)}
+               onBlur={(e) => {
+                            const rawValue = e.target.value || "0"; // always string
+                            const value = parseFloat(rawValue).toFixed(2); // value is string
+                            handleInputChange("yardPrice", value);
+                          }}
           />
         </div>
 
@@ -370,6 +398,11 @@ const YardInfo: React.FC<YardInfoProps> = ({
               placeholder="Enter yard cost"
               value={formData.yardCost}
               onChange={(e) => handleInputChange("yardCost", e.target.value)}
+                 onBlur={(e) => {
+                            const rawValue = e.target.value || "0"; // always string
+                            const value = parseFloat(rawValue).toFixed(2); // value is string
+                            handleInputChange("yardCost", value);
+                          }}
             />
           </div>
         )}
