@@ -330,11 +330,21 @@ export default function Orders() {
                   onChange={(e) => setStatus(e.target.value)}
                 >
                   <option>Order Status</option>
-                  <option>Processing</option>
-                  <option>Shipped</option>
-                  <option>Paid</option>
-                  <option>Cancelled</option>
-                  <option>Refunded</option>
+                  <option>order created</option>
+                  <option>invoice sent</option>
+                  <option>invoice confirmed</option>
+                  <option>unpaid</option>
+                  <option>paid</option>
+                  <option>balance due</option>
+                  <option>po sent</option>
+                  <option>po confirmed</option>
+                  <option>picture sent</option>
+                  <option>tracking sent</option>
+                  <option>get w/d</option>
+                  <option>create bol</option>
+                  <option>send bol</option>
+                  <option>confirm bol</option>
+                  <option>cx picked the part</option>
                 </select>
 
                 {/* Right-aligned custom arrow, after the text */}
