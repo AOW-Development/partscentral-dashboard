@@ -82,10 +82,12 @@ export default function Orders() {
   const date = value instanceof Date ? value.getDate() : null;
 
   const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
+        setLoading(true);
         const response = await fetch(`${API_URL}/orders`);
         if (response.ok) {
           const data = await response.json();
@@ -107,6 +109,9 @@ export default function Orders() {
       } catch (error) {
         console.error('Error fetching orders:', error);
       }
+      finally {
+      setLoading(false); // 👈 stop loader
+    }
     };
 
     fetchOrders();
@@ -425,6 +430,12 @@ export default function Orders() {
                 </Link>
               </div>
               {/* <p className="text-gray-400 mb-6">This is the orders page.</p> */}
+              {loading ? (
+  // 👇 Loader
+              <div className="flex justify-center items-center py-20">
+                <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : (
 
               <div className="overflow-x-auto rounded-lg shadow-lg ">
                 <table className="min-w-full text-lg text-left">
@@ -543,6 +554,7 @@ export default function Orders() {
                   </tbody>
                 </table>
               </div>
+            )}
             </div>
             <div className="pb-6">
               {/* Your content here */}

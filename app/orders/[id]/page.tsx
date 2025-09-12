@@ -2166,7 +2166,7 @@ const OrderDetails = () => {
                   {/* Row 1 */}
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
-                      Email (required and unique)
+                      Email (required and unique) 
                     </label>
                     <input
                       type="email"
@@ -2191,7 +2191,7 @@ const OrderDetails = () => {
                   </div>
                   <div className="relative">
                     <label className="block text-white/60 text-sm mb-2">
-                      Mobile (required)
+                      Mobile (required) 
                     </label>
                     <div className="relative" ref={priceOptionsRef}>
                       <input
