@@ -69,7 +69,7 @@ export type OrderFormData = {
   yardMobile: string;
   yardAddress: string;
   yardEmail: string;
-  yardPrice: string | number;
+  yardPrice: String | number;
   yardWarranty: string;
   yardMiles: string | number;
   yardShipping: string;
@@ -357,6 +357,7 @@ const OrderDetails = () => {
             yardName: yard.yardName || "",
             yardMobile: yard.yardMobile || "",
             yardAddress: yard.yardAddress || "",
+            attnName: yard.attnName || "",
             yardEmail: yard.yardEmail || "",
             yardPrice: yard.yardPrice || "",
             yardWarranty: mapPrismaEnumToWarranty(yard.yardWarranty || ""),
@@ -760,18 +761,38 @@ const OrderDetails = () => {
     handleProductInputChange(index, "milesPromised", selectedMiles);
 
     if (product.selectedSubpart) {
+      // Try to find a variant matching the entered miles
       const variant = product.selectedSubpart.variants.find(
         (v) => v.miles === selectedMiles
       );
       if (variant) {
+        // Exact match found, use that SKU/price
         handleProductInputChange(index, "variantSku", variant.sku);
         handleProductInputChange(
           index,
           "partPrice",
           variant.discountedPrice?.toString() || variant.actualprice.toString()
         );
+      } else if (product.selectedSubpart.variants.length > 0) {
+        // No exact match: use first variant for SKU/price, but keep custom miles
+        const fallbackVariant = product.selectedSubpart.variants[0];
+        handleProductInputChange(index, "variantSku", fallbackVariant.sku);
+        handleProductInputChange(
+          index,
+          "partPrice",
+          fallbackVariant.discountedPrice?.toString() || fallbackVariant.actualprice.toString()
+        );
+      } else {
+        // No variants at all, clear SKU/price
+        handleProductInputChange(index, "variantSku", "");
+        handleProductInputChange(index, "partPrice", "");
       }
+    } else {
+      // No subpart selected, clear SKU/price
+      handleProductInputChange(index, "variantSku", "");
+      handleProductInputChange(index, "partPrice", "");
     }
+  
   };
 
   // Handle specification selection
@@ -1583,52 +1604,134 @@ const OrderDetails = () => {
           name: `${item.make} ${item.model} ${item.year} ${item.parts}`,
           price: parseFloat(String(item.partPrice)) || 0,
           quantity: item.quantity || 1,
-          // warranty: item.warranty,
           milesPromised: item.milesPromised,
           specification: item.specification,
           pictureUrl: item.pictureUrl || "",
           pictureStatus: item.pictureStatus || "PENDING",
         }))
-        .filter((item) => !!item.id); // Ensure SKU is present
+        .filter((item) => !!item.id);
 
-      // Ensure invoice fields are ISO strings or empty
+      // Build payload to match createOrder structure
       const payload = {
-        ...formData,
-        // warranty: mapWarrantyToPrismaEnum(formData.warranty),
-        invoiceSentAt: formData.invoiceSentAt
-          ? new Date(formData.invoiceSentAt).toISOString()
-          : null,
-        invoiceConfirmedAt: formData.invoiceConfirmedAt
-          ? new Date(formData.invoiceConfirmedAt).toISOString()
-          : null,
+        billingInfo: {
+          firstName: formData.cardHolderName?.split(" ")[0] || "Unknown",
+          lastName: formData.cardHolderName?.split(" ").slice(1).join(" ") || "",
+          address: formData.billingAddress || formData.shippingAddress || "Unknown",
+          // city: formData.billingCity || formData.shippingCity || "Unknown",
+          // state: formData.billingState || formData.shippingState || "CA",
+          // postalCode: formData.billingPostalCode || formData.shippingPostalCode || "00000",
+          country: "US",
+          phone: formData.mobile || "000-000-0000",
+          email: formData.email || "no-email@example.com",
+          company: formData.company || null,
+          addressType: formData.shippingAddressType || "RESIDENTIAL",
+        },
+        shippingInfo: {
+          firstName: formData.cardHolderName?.split(" ")[0] || "Unknown",
+          lastName: formData.cardHolderName?.split(" ").slice(1).join(" ") || "",
+          address: formData.shippingAddress || "Unknown",
+          // city: formData.shippingCity || "Unknown",
+          // state: formData.shippingState || "CA",
+          // postalCode: formData.shippingPostalCode || "00000",
+          country: "US",
+          phone: formData.mobile || "000-000-0000",
+          email: formData.email || "no-email@example.com",
+          company: formData.company || null,
+          addressType: formData.shippingAddressType || "RESIDENTIAL",
+        },
+        customerInfo: {
+          email: formData.email || "no-email@example.com",
+          phone: formData.mobile || "000-000-0000",
+          alternativePhone: formData.alternateMobile,
+          firstName: formData.customerName || formData.cardHolderName?.split(" ")[0] || "Unknown",
+          lastName: formData.cardHolderName?.split(" ").slice(1).join(" ") || "",
+          company: formData.company || null,
+          address: formData.shippingAddress || "Unknown",
+          // city: formData.shippingCity || "Unknown",
+          // state: formData.shippingState || "CA",
+          // postalCode: formData.shippingPostalCode || "00000",
+          country: "US",
+          type: formData.shippingAddressType || "RESIDENTIAL",
+        },
+        cartItems,
         paymentInfo: {
-          paymentMethod: formData.merchantMethod || "",
-          amount: parseFloat(formData.totalPrice as string) || 0,
+          paymentMethod: formData.merchantMethod || '',
+          status: 'PENDING',
+          amount: formData.totalPrice || 0,
+          currency: 'USD',
+          provider: 'STRIPE',
+          entity: formData.entity || null,
           approvelCode: formData.approvalCode,
           charged: formData.charged,
-          entity: formData.entity,
+          cardData: formData.cardNumber ? {
+            cardNumber: formData.cardNumber,
+            cardholderName: formData.cardHolderName,
+            expirationDate: formData.cardDate,
+            securityCode: formData.cardCvv,
+            last4: formData.cardNumber.slice(-4),
+            brand: formData.cardNumber.startsWith('4') ? 'Visa' : 'Mastercard',
+          } : null,
+          alternateCardData: formData.alternateCardNumber ? {
+            cardNumber: formData.alternateCardNumber,
+            cardholderName: formData.alternateCardHolderName,
+            expirationDate: formData.alternateCardDate,
+            securityCode: formData.alternateCardCvv,
+            last4: formData.alternateCardNumber.slice(-4),
+            brand: formData.alternateCardNumber.startsWith('4') ? 'Visa' : 'Mastercard',
+          } : null,
         },
-        ownShippingInfo: formData.ownShippingInfo && {
-          ...formData.ownShippingInfo,
-          variance: formData.ownShippingInfo.variance || "",
-        },
+        totalAmount: formData.totalPrice || 0,
+        subtotal: formData.partPrice || 0,
+        orderNumber: formData.id,
+        carrierName: formData.carrierName || 'UNKNOWN',
+        trackingNumber: formData.trackingNumber || `TRK-${Date.now()}`,
+        saleMadeBy: formData.saleMadeBy || 'Admin',
+        taxesAmount: formData.taxesPrice || 0,
+        shippingAmount: formData.yardCost || 0,
+        handlingFee: formData.handlingPrice || 0,
+        processingFee: formData.processingPrice || 0,
+        corePrice: formData.corePrice || 0,
+        customerNotes: formData.customerNotes,
+        yardNotes: formData.yardNotes,
+        // year: formData.year,
+        shippingAddress: formData.shippingAddress,
+        billingAddress: formData.billingAddress,
+        companyName: formData.company,
+        source: formData.source,
+        status: formData.status,
+        vinNumber: formData.vinNumber,
+        notes: formData.notes,
+        warranty: formData.warranty,
+        invoiceSentAt: formData.invoiceSentAt ? new Date(formData.invoiceSentAt).toISOString() : null,
+        invoiceStatus: formData.invoiceStatus,
+        invoiceConfirmedAt: formData.invoiceConfirmedAt ? new Date(formData.invoiceConfirmedAt).toISOString() : null,
+        poSentAt: formData.poSentAt ? new Date(formData.poSentAt).toISOString() : null,
+        poStatus: formData.poStatus,
+        poConfirmAt: formData.poConfirmedAt ? new Date(formData.poConfirmedAt).toISOString() : null,
+        orderDate: formData.date ? new Date(formData.date).toISOString() : new Date().toISOString(),
+        addressType: formData.shippingAddressType,
+        ...(formData.yardName && {
+          yardInfo: {
+            yardName: formData.yardName,
+            attnName: formData.attnName,
+            yardAddress: formData.yardAddress || 'Unknown',
+            yardMobile: formData.yardMobile || '000-000-0000',
+            yardEmail: formData.yardEmail || 'no-email@example.com',
+            yardPrice: formData.yardPrice || 0,
+            yardWarranty: formData.yardWarranty,
+            yardMiles: formData.yardMiles || 0,
+            yardShippingType: formData.yardShipping || 'OWN_SHIPPING',
+            yardShippingCost: parseFloat(formData.yardCost) || 0,
+            //reason: formData.reason || 'No reason provided',
+            ...(formData.yardShipping === 'Own Shipping' && formData.ownShippingInfo ? { yardOwnShippingInfo: formData.ownShippingInfo } : {})
+          }
+        })
       };
       const result = await updateOrderFromAdmin(orderId, payload, cartItems);
-      // setMessage({
-      //   type: "success",
-      //   text: "Order updated successfully!",
-      // });
       toast.success("Order updated successfully");
       setIsProcessing(false);
       console.log("Order updated:", result);
     } catch (error) {
-      // setMessage({
-      //   type: "error",
-      //   text:
-      //     error instanceof Error
-      //       ? error.message
-      //       : "Failed to update order. Please try again.",
-      // });
       toast.error(
         error instanceof Error
           ? error.message
@@ -1638,6 +1741,7 @@ const OrderDetails = () => {
       setIsLoading(false);
     }
   };
+
 
   const handleCreateOrder = async () => {
     if (!validateAllFields()) {
@@ -2166,7 +2270,7 @@ const OrderDetails = () => {
                   {/* Row 1 */}
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
-                      Email (required and unique)
+                      Email *
                     </label>
                     <input
                       type="email"
@@ -2191,7 +2295,7 @@ const OrderDetails = () => {
                   </div>
                   <div className="relative">
                     <label className="block text-white/60 text-sm mb-2">
-                      Mobile (required)
+                      Mobile *
                     </label>
                     <div className="relative" ref={priceOptionsRef}>
                       <input
@@ -3249,6 +3353,8 @@ const OrderDetails = () => {
                         onChange={(e) => handleMileageChange(e, index)}
                         placeholder="Enter miles or select from dropdown"
                         list={`miles-suggestions-${index}`}
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                       />
                       <ChevronDown
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 pointer-events-none"
@@ -3427,7 +3533,8 @@ const OrderDetails = () => {
                   yardAddress: formData.yardAddress,
                   yardMobile: formData.yardMobile,
                   yardEmail: formData.yardEmail,
-                  yardPrice: formData.yardPrice,
+                  // yardPrice: formData.yardPrice,
+                  yardPrice: formData.yardPrice ? parseFloat(formData.yardPrice as string) : 0,
                   yardWarranty: formData.yardWarranty,
                   yardMiles: formData.yardMiles,
                   yardShipping: formData.yardShipping,

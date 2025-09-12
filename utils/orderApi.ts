@@ -25,6 +25,7 @@ const mapWarrantyToPrismaEnum = (warranty: string): string => {
   }
 };
 
+
 export const createOrderFromAdmin = async (formData: any, cartItems: CartItem[]) => {
   // Debug: log ownShippingInfo and yardShipping before constructing orderData
   console.log('DEBUG ownShippingInfo:', formData.ownShippingInfo);
@@ -42,8 +43,8 @@ export const createOrderFromAdmin = async (formData: any, cartItems: CartItem[])
     warranty: item.warranty,
     milesPromised: item.milesPromised,
     specification: item.specification,
-    pictureUrl: formData.pictureUrl || "",
-    pictureStatus: formData.pictureStatus || 'PENDING',
+    // pictureUrl: formData.pictureUrl || "",
+    // pictureStatus: formData.pictureStatus || 'PENDING',
     source: 'ADMIN',
   }));
 
@@ -79,7 +80,7 @@ const orderData = {
     email: formData.email || 'no-email@example.com',
     phone: formData.mobile || '000-000-0000',
     alternativePhone: formData.alternateMobile,
-    firstName: formData.customerName,
+    firstName: formData.customerName || "unknown name provided",
     // lastName: formData.cardHolderName?.split(' ').slice(1).join(' ') || '',
     company: formData.company || null,
     address: formData.shippingAddress || 'Unknown',
@@ -104,14 +105,14 @@ const orderData = {
       milesPromised: item.milesPromised,
       specification: item.specification || '',
       productVariantId: sku,
-pictureUrl: item.pictureUrl || formData.pictureUrl || '',
-      pictureStatus: item.pictureStatus || formData.pictureStatus || 'PENDING',
+// pictureUrl: item.pictureUrl || formData.pictureUrl || '',
+      // pictureStatus: item.pictureStatus || formData.pictureStatus || 'PENDING',
     };
   }),
   paymentInfo: {
     paymentMethod: formData.merchantMethod || '',
     status: 'PENDING',
-    amount: parseFloat(formData.totalPrice) || 0,
+    amount: formData.totalPrice || 0,
     currency: 'USD',
     provider: 'STRIPE',
     entity: formData.entity || null,
@@ -134,20 +135,20 @@ pictureUrl: item.pictureUrl || formData.pictureUrl || '',
     approvelCode: formData.approvalCode,
     charged: formData.charged,
   },
-  totalAmount: parseFloat(formData.totalPrice) || 0,
-  subtotal: parseFloat(formData.partPrice) || 0,
+  totalAmount: parseFloat(formData.totalPrice as string) || 0,
+  subtotal: parseFloat(formData.partPrice as string) || 0,
   orderNumber: formData.id,
   carrierName: formData.carrierName || 'UNKNOWN',
   trackingNumber: formData.trackingNumber || `TRK-${Date.now()}`,
   saleMadeBy: formData.saleMadeBy || 'Admin',
-  taxesAmount: parseFloat(formData.taxesPrice) || 0,
-  shippingAmount: parseFloat(formData.yardCost) || 0,
-  handlingFee: parseFloat(formData.handlingPrice) || 0,
-  processingFee: parseFloat(formData.processingPrice) || 0,
-  corePrice: parseFloat(formData.corePrice) || 0,
+  taxesAmount: parseFloat(formData.taxesPrice as string) || 0,
+  shippingAmount: parseFloat(formData.yardCost as string) || 0,
+  handlingFee: parseFloat(formData.handlingPrice as string) || 0,
+  processingFee: parseFloat(formData.processingPrice as string) || 0,
+  corePrice: parseFloat(formData.corePrice as string) || 0,
   customerNotes: formData.customerNotes,
   yardNotes: formData.yardNotes,
-  year: parseInt(formData.year, 10),
+  year: formData.year,
   shippingAddress: formData.shippingAddress,
   billingAddress: formData.billingAddress,
   companyName: formData.company,
@@ -171,14 +172,15 @@ pictureUrl: item.pictureUrl || formData.pictureUrl || '',
   ...(formData.yardName && {
     yardInfo: {
       yardName: formData.yardName,
+      attnName: formData.attnName,
       yardAddress: formData.yardAddress || 'Unknown',
       yardMobile: formData.yardMobile || '000-000-0000',
       yardEmail: formData.yardEmail || 'no-email@example.com',
-      yardPrice: parseFloat(formData.yardPrice) || 0,
+      yardPrice: formData.yardPrice || 0,
       yardWarranty: mapWarrantyToPrismaEnum(formData.yardWarranty || '30 Days'),
-      yardMiles: parseFloat(formData.yardMiles) || 0,
+      yardMiles: formData.yardMiles || 0,
       yardShippingType: formData.yardShipping || 'OWN_SHIPPING',
-      yardShippingCost: parseFloat(formData.yardCost) || 0,
+      yardShippingCost: formData.yardCost || 0,
       reason: formData.reason || 'No reason provided',
       ...(formData.yardShipping === 'Own Shipping' && formData.ownShippingInfo ? { yardOwnShippingInfo: formData.ownShippingInfo } : {})
     }

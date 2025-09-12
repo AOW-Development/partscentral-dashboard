@@ -25,6 +25,7 @@ const mapWarrantyToPrismaEnum = (warranty: string): string => {
   }
 };
 
+
 export const updateOrderFromAdmin = async (orderId: string, formData: any, cartItems: CartItem[]) => {
   const orderData: any = {
     billingInfo: {
@@ -89,16 +90,16 @@ export const updateOrderFromAdmin = async (orderId: string, formData: any, cartI
     
     // Order fields
     orderNumber: formData.id,
-    totalAmount: parseFloat(formData.totalPrice) || 0,
-    subtotal: parseFloat(formData.partPrice) || 0,
+    totalAmount: formData.totalPrice || 0,
+    subtotal: formData.partPrice || 0,
     source: formData.source,
     status: formData.status,
-    year: parseInt(formData.year, 10) || null,
+    year: formData.year,
     warranty: mapWarrantyToPrismaEnum(formData.warranty || '30 Days'),
-    taxesAmount: parseFloat(formData.taxesPrice) || 0,
-    handlingFee: parseFloat(formData.handlingPrice) || 0,
-    processingFee: parseFloat(formData.processingPrice) || 0,
-    corePrice: parseFloat(formData.corePrice) || 0,
+    taxesAmount: formData.taxesPrice || 0,
+    handlingFee: formData.handlingPrice || 0,
+    processingFee: formData.processingPrice || 0,
+    corePrice: formData.corePrice || 0,
     // totalAmount: parseFloat(formData.totalSellingPrice) || 0,
     companyName: formData.company,
     shippingAddress: formData.shippingAddress,
@@ -119,26 +120,10 @@ export const updateOrderFromAdmin = async (orderId: string, formData: any, cartI
         alternativePhone: formData.alternateMobile
       }
     } : {}),
-    ...(formData.paymentInfo ? {
-      paymentInfo: {
-        method: formData.merchantMethod,
-        approvelCode: formData.approvalCode,
-        charged: formData.charged,
-        entity: formData.entity,
-        cardHolderName: formData.cardHolderName,
-        cardNumber: formData.cardNumber,
-        cardCvv: formData.cardCvv,
-        cardDate: formData.cardDate,
-        alternateCardHolderName: formData.alternateCardHolderName,
-        alternateCardNumber: formData.alternateCardNumber,
-        alternateCardDate: formData.alternateCardDate,
-        alternateCardCvv: formData.alternateCardCvv,
-      }
-    } : {}),
     paymentInfo: {
       paymentMethod: formData.merchantMethod || '',
       status: 'PENDING',
-      amount: parseFloat(formData.totalSellingPrice) || 0,
+      amount: formData.totalPrice || 0,
       currency: 'USD',
       provider: 'STRIPE',
       entity: formData.entity || null,
@@ -151,6 +136,14 @@ export const updateOrderFromAdmin = async (orderId: string, formData: any, cartI
         securityCode: formData.cardCvv,
         last4: formData.cardNumber.slice(-4),
         brand: formData.cardNumber.startsWith('4') ? 'Visa' : 'Mastercard'
+      } : null,
+      alternateCardData: formData.alternateCardNumber ? {
+        cardNumber: formData.alternateCardNumber,
+        cardholderName: formData.alternateCardHolderName,
+        expirationDate: formData.alternateCardDate,
+        securityCode: formData.alternateCardCvv,
+        last4: formData.alternateCardNumber.slice(-4),
+        brand: formData.alternateCardNumber.startsWith('4') ? 'Visa' : 'Mastercard'
       } : null
     },
   };
@@ -158,14 +151,15 @@ export const updateOrderFromAdmin = async (orderId: string, formData: any, cartI
   if (formData.yardName) {
     orderData.yardInfo = {
       yardName: formData.yardName,
+      attnName: formData.attnName,
       yardAddress: formData.yardAddress || 'Unknown',
       yardMobile: formData.yardMobile || '000-000-0000',
       yardEmail: formData.yardEmail || 'no-email@example.com',
-      yardPrice: parseFloat(formData.yardPrice) || 0,
+      yardPrice: parseFloat(formData.yardPrice as string) || 0,
       yardWarranty: mapWarrantyToPrismaEnum(formData.yardWarranty || '30 Days'),
-      yardMiles: parseFloat(formData.yardMiles) || 0,
+      yardMiles: parseFloat(formData.yardMiles as string) || 0,
       yardShippingType: formData.yardShipping || 'OWN_SHIPPING',
-      yardShippingCost: parseFloat(formData.yardCost) || 0,
+      yardShippingCost: parseFloat(formData.yardCost as string) || 0,
       reason: formData.reason || 'No reason provided',
       ...(formData.yardShipping === 'Own Shipping' && formData.ownShippingInfo ? { yardOwnShippingInfo: formData.ownShippingInfo } : {})
     };
