@@ -1611,123 +1611,9 @@ const OrderDetails = () => {
         }))
         .filter((item) => !!item.id);
 
-      // Build payload to match createOrder structure
-      const payload = {
-        billingInfo: {
-          firstName: formData.cardHolderName?.split(" ")[0] || "Unknown",
-          lastName: formData.cardHolderName?.split(" ").slice(1).join(" ") || "",
-          address: formData.billingAddress || formData.shippingAddress || "Unknown",
-          // city: formData.billingCity || formData.shippingCity || "Unknown",
-          // state: formData.billingState || formData.shippingState || "CA",
-          // postalCode: formData.billingPostalCode || formData.shippingPostalCode || "00000",
-          country: "US",
-          phone: formData.mobile || "000-000-0000",
-          email: formData.email || "no-email@example.com",
-          company: formData.company || null,
-          addressType: formData.shippingAddressType || "RESIDENTIAL",
-        },
-        shippingInfo: {
-          firstName: formData.cardHolderName?.split(" ")[0] || "Unknown",
-          lastName: formData.cardHolderName?.split(" ").slice(1).join(" ") || "",
-          address: formData.shippingAddress || "Unknown",
-          // city: formData.shippingCity || "Unknown",
-          // state: formData.shippingState || "CA",
-          // postalCode: formData.shippingPostalCode || "00000",
-          country: "US",
-          phone: formData.mobile || "000-000-0000",
-          email: formData.email || "no-email@example.com",
-          company: formData.company || null,
-          addressType: formData.shippingAddressType || "RESIDENTIAL",
-        },
-        customerInfo: {
-          email: formData.email || "no-email@example.com",
-          phone: formData.mobile || "000-000-0000",
-          alternativePhone: formData.alternateMobile,
-          firstName: formData.customerName || formData.cardHolderName?.split(" ")[0] || "Unknown",
-          lastName: formData.cardHolderName?.split(" ").slice(1).join(" ") || "",
-          company: formData.company || null,
-          address: formData.shippingAddress || "Unknown",
-          // city: formData.shippingCity || "Unknown",
-          // state: formData.shippingState || "CA",
-          // postalCode: formData.shippingPostalCode || "00000",
-          country: "US",
-          type: formData.shippingAddressType || "RESIDENTIAL",
-        },
-        cartItems,
-        paymentInfo: {
-          paymentMethod: formData.merchantMethod || '',
-          status: 'PENDING',
-          amount: formData.totalPrice || 0,
-          currency: 'USD',
-          provider: 'STRIPE',
-          entity: formData.entity || null,
-          approvelCode: formData.approvalCode,
-          charged: formData.charged,
-          cardData: formData.cardNumber ? {
-            cardNumber: formData.cardNumber,
-            cardholderName: formData.cardHolderName,
-            expirationDate: formData.cardDate,
-            securityCode: formData.cardCvv,
-            last4: formData.cardNumber.slice(-4),
-            brand: formData.cardNumber.startsWith('4') ? 'Visa' : 'Mastercard',
-          } : null,
-          alternateCardData: formData.alternateCardNumber ? {
-            cardNumber: formData.alternateCardNumber,
-            cardholderName: formData.alternateCardHolderName,
-            expirationDate: formData.alternateCardDate,
-            securityCode: formData.alternateCardCvv,
-            last4: formData.alternateCardNumber.slice(-4),
-            brand: formData.alternateCardNumber.startsWith('4') ? 'Visa' : 'Mastercard',
-          } : null,
-        },
-        totalAmount: formData.totalPrice || 0,
-        subtotal: formData.partPrice || 0,
-        orderNumber: formData.id,
-        carrierName: formData.carrierName || 'UNKNOWN',
-        trackingNumber: formData.trackingNumber || `TRK-${Date.now()}`,
-        saleMadeBy: formData.saleMadeBy || 'Admin',
-        taxesAmount: formData.taxesPrice || 0,
-        shippingAmount: formData.yardCost || 0,
-        handlingFee: formData.handlingPrice || 0,
-        processingFee: formData.processingPrice || 0,
-        corePrice: formData.corePrice || 0,
-        customerNotes: formData.customerNotes,
-        yardNotes: formData.yardNotes,
-        // year: formData.year,
-        shippingAddress: formData.shippingAddress,
-        billingAddress: formData.billingAddress,
-        companyName: formData.company,
-        source: formData.source,
-        status: formData.status,
-        vinNumber: formData.vinNumber,
-        notes: formData.notes,
-        warranty: formData.warranty,
-        invoiceSentAt: formData.invoiceSentAt ? new Date(formData.invoiceSentAt).toISOString() : null,
-        invoiceStatus: formData.invoiceStatus,
-        invoiceConfirmedAt: formData.invoiceConfirmedAt ? new Date(formData.invoiceConfirmedAt).toISOString() : null,
-        poSentAt: formData.poSentAt ? new Date(formData.poSentAt).toISOString() : null,
-        poStatus: formData.poStatus,
-        poConfirmAt: formData.poConfirmedAt ? new Date(formData.poConfirmedAt).toISOString() : null,
-        orderDate: formData.date ? new Date(formData.date).toISOString() : new Date().toISOString(),
-        addressType: formData.shippingAddressType,
-        ...(formData.yardName && {
-          yardInfo: {
-            yardName: formData.yardName,
-            attnName: formData.attnName,
-            yardAddress: formData.yardAddress || 'Unknown',
-            yardMobile: formData.yardMobile || '000-000-0000',
-            yardEmail: formData.yardEmail || 'no-email@example.com',
-            yardPrice: formData.yardPrice || 0,
-            yardWarranty: formData.yardWarranty,
-            yardMiles: formData.yardMiles || 0,
-            yardShippingType: formData.yardShipping || 'OWN_SHIPPING',
-            yardShippingCost: parseFloat(formData.yardCost) || 0,
-            //reason: formData.reason || 'No reason provided',
-            ...(formData.yardShipping === 'Own Shipping' && formData.ownShippingInfo ? { yardOwnShippingInfo: formData.ownShippingInfo } : {})
-          }
-        })
-      };
-      const result = await updateOrderFromAdmin(orderId, payload, cartItems);
+      // Pass formData directly, which contains all the latest updates from the state
+      const result = await updateOrderFromAdmin(orderId, formData, cartItems);
+
       toast.success("Order updated successfully");
       setIsProcessing(false);
       console.log("Order updated:", result);
@@ -2270,11 +2156,11 @@ const OrderDetails = () => {
                   {/* Row 1 */}
                   <div>
                     <label className="block text-white/60 text-sm mb-2">
-<<<<<<< HEAD
+
                       Email *
-=======
-                      Email (required and unique) 
->>>>>>> 60733140bb687462fe308ec0478d20d62ce92b42
+
+                      
+
                     </label>
                     <input
                       type="email"
@@ -2299,11 +2185,7 @@ const OrderDetails = () => {
                   </div>
                   <div className="relative">
                     <label className="block text-white/60 text-sm mb-2">
-<<<<<<< HEAD
                       Mobile *
-=======
-                      Mobile (required) 
->>>>>>> 60733140bb687462fe308ec0478d20d62ce92b42
                     </label>
                     <div className="relative" ref={priceOptionsRef}>
                       <input

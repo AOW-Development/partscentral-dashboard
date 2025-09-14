@@ -27,7 +27,7 @@ const mapWarrantyToPrismaEnum = (warranty: string): string => {
 
 
 export const updateOrderFromAdmin = async (orderId: string, formData: any, cartItems: CartItem[]) => {
-  const orderData: any = {
+  const orderData = {
     billingInfo: {
       firstName: formData.cardHolderName?.split(' ')[0] || 'Unknown',
       lastName: formData.cardHolderName?.split(' ').slice(1).join(' ') || '',
@@ -57,8 +57,8 @@ export const updateOrderFromAdmin = async (orderId: string, formData: any, cartI
     customerInfo: {
       email: formData.email || 'no-email@example.com',
       phone: formData.mobile || '000-000-0000',
-      firstName: formData.cardHolderName?.split(' ')[0] || 'Unknown',
-      lastName: formData.cardHolderName?.split(' ').slice(1).join(' ') || '',
+      alternativePhone: formData.alternateMobile,
+      firstName: formData.customerName || "unknown name provided",
       company: formData.company || null,
       address: formData.shippingAddress || 'Unknown',
       city: formData.shippingCity || 'Unknown',
@@ -79,47 +79,13 @@ export const updateOrderFromAdmin = async (orderId: string, formData: any, cartI
         quantity: item.quantity || 1,
         price: item.price,
         name: `Engine for ${sku.split('-').slice(0, 3).join(' ')}`,
-        warranty: item.warranty || '30 Days',
         milesPromised: item.milesPromised,
         specification: item.specification || '',
+        productVariantId: sku,
         pictureUrl: item.pictureUrl || '',
         pictureStatus: item.pictureStatus || 'PENDING',
-        productVariantId: sku
       };
     }),
-    
-    // Order fields
-    orderNumber: formData.id,
-    totalAmount: formData.totalPrice || 0,
-    subtotal: formData.partPrice || 0,
-    source: formData.source,
-    status: formData.status,
-    year: formData.year,
-    warranty: mapWarrantyToPrismaEnum(formData.warranty || '30 Days'),
-    taxesAmount: formData.taxesPrice || 0,
-    handlingFee: formData.handlingPrice || 0,
-    processingFee: formData.processingPrice || 0,
-    corePrice: formData.corePrice || 0,
-    // totalAmount: parseFloat(formData.totalSellingPrice) || 0,
-    companyName: formData.company,
-    shippingAddress: formData.shippingAddress,
-    billingAddress: formData.billingAddress,
-    notes: formData.notes,
-    vinNumber: formData.vinNumber,
-    orderDate: formData.date ? new Date(formData.date).toISOString() : null,
-    carrierName: formData.carrierName,
-    trackingNumber: formData.trackingNumber,
-    invoiceStatus: formData.invoiceStatus,
-    invoiceSentAt: formData.invoiceSentAt ? new Date(formData.invoiceSentAt).toISOString() : null,
-    invoiceConfirmedAt: formData.invoiceConfirmedAt ? new Date(formData.invoiceConfirmedAt).toISOString() : null,
-    customerNotes: formData.customerNotes,
-    yardNotes: formData.yardNotes,
-    ...(formData.products && formData.products.length > 0 ? { cartItems: formData.products } : {}),
-    ...(formData.alternateMobile ? {
-      customerInfo: {
-        alternativePhone: formData.alternateMobile
-      }
-    } : {}),
     paymentInfo: {
       paymentMethod: formData.merchantMethod || '',
       status: 'PENDING',
@@ -127,8 +93,6 @@ export const updateOrderFromAdmin = async (orderId: string, formData: any, cartI
       currency: 'USD',
       provider: 'STRIPE',
       entity: formData.entity || null,
-      approvelCode: formData.approvalCode,
-      charged: formData.charged,
       cardData: formData.cardNumber ? {
         cardNumber: formData.cardNumber,
         cardholderName: formData.cardHolderName,
@@ -144,26 +108,57 @@ export const updateOrderFromAdmin = async (orderId: string, formData: any, cartI
         securityCode: formData.alternateCardCvv,
         last4: formData.alternateCardNumber.slice(-4),
         brand: formData.alternateCardNumber.startsWith('4') ? 'Visa' : 'Mastercard'
-      } : null
+      } : null,
+      approvelCode: formData.approvalCode,
+      charged: formData.charged,
     },
+    totalAmount: parseFloat(formData.totalPrice as string) || 0,
+    subtotal: parseFloat(formData.partPrice as string) || 0,
+    orderNumber: formData.id,
+    carrierName: formData.carrierName || 'UNKNOWN',
+    trackingNumber: formData.trackingNumber || `TRK-${Date.now()}`,
+    saleMadeBy: formData.saleMadeBy || 'Admin',
+    taxesAmount: parseFloat(formData.taxesPrice as string) || 0,
+    shippingAmount: parseFloat(formData.yardCost as string) || 0,
+    handlingFee: parseFloat(formData.handlingPrice as string) || 0,
+    processingFee: parseFloat(formData.processingPrice as string) || 0,
+    corePrice: parseFloat(formData.corePrice as string) || 0,
+    customerNotes: formData.customerNotes,
+    yardNotes: formData.yardNotes,
+    year: formData.year,
+    shippingAddress: formData.shippingAddress,
+    billingAddress: formData.billingAddress,
+    companyName: formData.company,
+    source: formData.source,
+    status: formData.status,
+    vinNumber: formData.vinNumber,
+    notes: formData.notes,
+    warranty: mapWarrantyToPrismaEnum(formData.warranty || '30 Days'),
+    invoiceSentAt: formData.invoiceSentAt ? new Date(formData.invoiceSentAt).toISOString() : null,
+    invoiceStatus: formData.invoiceStatus,
+    invoiceConfirmedAt: formData.invoiceConfirmedAt ? new Date(formData.invoiceConfirmedAt).toISOString() : null,
+    poSentAt: formData.poSentAt ? new Date(formData.poSentAt).toISOString() : null,
+    poStatus: formData.poStatus,
+    poConfirmAt: formData.poConfirmedAt ? new Date(formData.poConfirmedAt).toISOString() : null,
+    orderDate: formData.date ? new Date(formData.date).toISOString() : new Date().toISOString(),
+    addressType: formData.shippingAddressType,
+    ...(formData.yardName && {
+      yardInfo: {
+        yardName: formData.yardName,
+        attnName: formData.attnName,
+        yardAddress: formData.yardAddress || 'Unknown',
+        yardMobile: formData.yardMobile || '000-000-0000',
+        yardEmail: formData.yardEmail || 'no-email@example.com',
+        yardPrice: parseFloat(formData.yardPrice as string) || 0,
+        yardWarranty: mapWarrantyToPrismaEnum(formData.yardWarranty || '30 Days'),
+        yardMiles: parseFloat(formData.yardMiles as string) || 0,
+        yardShippingType: formData.yardShipping || 'OWN_SHIPPING',
+        yardShippingCost: parseFloat(formData.yardCost as string) || 0,
+        reason: formData.reason || 'No reason provided',
+        ...(formData.yardShipping === 'Own Shipping' && formData.ownShippingInfo ? { yardOwnShippingInfo: formData.ownShippingInfo } : {})
+      }
+    })
   };
-
-  if (formData.yardName) {
-    orderData.yardInfo = {
-      yardName: formData.yardName,
-      attnName: formData.attnName,
-      yardAddress: formData.yardAddress || 'Unknown',
-      yardMobile: formData.yardMobile || '000-000-0000',
-      yardEmail: formData.yardEmail || 'no-email@example.com',
-      yardPrice: parseFloat(formData.yardPrice as string) || 0,
-      yardWarranty: mapWarrantyToPrismaEnum(formData.yardWarranty || '30 Days'),
-      yardMiles: parseFloat(formData.yardMiles as string) || 0,
-      yardShippingType: formData.yardShipping || 'OWN_SHIPPING',
-      yardShippingCost: parseFloat(formData.yardCost as string) || 0,
-      reason: formData.reason || 'No reason provided',
-      ...(formData.yardShipping === 'Own Shipping' && formData.ownShippingInfo ? { yardOwnShippingInfo: formData.ownShippingInfo } : {})
-    };
-  }
 
   try {
     const response = await fetch(`${API_URL}/orders/${orderId}`, {
