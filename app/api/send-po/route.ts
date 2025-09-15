@@ -610,8 +610,8 @@ async function sendPOEmail(
       port: 587,
       secure: false,
       auth: {
-        user: "purchase@partscentral.us",
-        pass: "mzgccnzjtvbdgdpl",
+        user: process.env.PO_SMTP_USERNAME,
+        pass: process.env.PO_SMTP_PASSWORD,
       },
       tls: {
         ciphers: "SSLv3",
@@ -619,7 +619,7 @@ async function sendPOEmail(
     });
 
     const mailOptions = {
-      from: "purchase@partscentral.us",
+      from: process.env.PO_SMTP_USERNAME,
       to: toEmail,
       subject: `Purchase Order For PC#${orderId}`,
       html: htmlContent,

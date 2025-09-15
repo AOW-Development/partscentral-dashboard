@@ -247,6 +247,14 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 disabled
               />
             </div>
+            <div className="md:col-span-3">
+              <label className="block text-white/60 text-xs mb-1">yard charge</label>
+              <textarea
+                className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                value={previousYards[selectedPrevYardIdx]?.yardCharge || ""}
+                disabled
+              />
+            </div>
           </div>
         </div>
       )}

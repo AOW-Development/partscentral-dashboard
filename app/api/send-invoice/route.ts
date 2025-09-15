@@ -1307,8 +1307,8 @@ async function sendInvoiceEmail(
       port: 587,
       secure: false, // use STARTTLS
       auth: {
-        user: "support@partscentral.us", // full email
-        pass: "hbcwjmyhqblyddvf",
+        user: process.env.SMTP_USERNAME, // full email
+        pass: process.env.SMTP_PASSWORD,
       },
       tls: {
         ciphers: "SSLv3",
@@ -1317,7 +1317,7 @@ async function sendInvoiceEmail(
 
     const mailOptions = {
       // from: "leadspartscentral.us@gmail.com",
-      from: "support@partscentral.us",
+      from: process.env.SMTP_USERNAME,
       to: toEmail,
       subject: `Invoice for Order - PC#${orderId}`,
       html: htmlContent,
