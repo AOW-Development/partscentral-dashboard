@@ -248,6 +248,7 @@ async function generatePOPDF(data: InvoiceData) {
   // --- Now draw them with labels + values ---
   const iconSize = 6; // icon width/height
   y = height - 50; // starting Y for first row
+  
 
   const infoRows = [
     {
@@ -261,35 +262,42 @@ async function generatePOPDF(data: InvoiceData) {
     { icon: taxIcon, label: "Sales Tax ID:", value: "271-4444-3598" },
   ];
 
-  for (const row of infoRows) {
-    // Draw icon
-    page.drawImage(row.icon, {
-      x: margin,
-      y: y - 2, // tweak for vertical alignment
-      width: iconSize,
-      height: iconSize,
-    });
+ for (const row of infoRows) {
+  const isRightSide = row.label === "Email:" || row.label === "Sales Tax ID:";
 
-    // Draw label
-    page.drawText(row.label, {
-      x: margin + iconSize + 4,
-      y,
-      size: 7,
-      font: bold,
-      color: rgb(1, 1, 1),
-    });
+  // X positions
+  const iconX = isRightSide ? width - margin - 180 : margin; // shift right column
+  const labelX = iconX + iconSize + 4;
+  const valueX = isRightSide ? width - margin - 180 : margin + 60;
 
-    // Draw value
-    page.drawText(row.value, {
-      x: margin + 60, // align values nicely
-      y,
-      size: 7,
-      font: times,
-      color: rgb(1, 1, 1),
-    });
+  // Draw icon
+  page.drawImage(row.icon, {
+    x: iconX,
+    y: y - 2,
+    width: iconSize,
+    height: iconSize,
+  });
 
-    y -= 11; // move down for next row
-  }
+  // Draw label
+  page.drawText(row.label, {
+    x: labelX,
+    y,
+    size: 12,
+    font: bold,
+    color: rgb(1, 1, 1),
+  });
+
+  // Draw value
+  page.drawText(row.value, {
+    x: valueX,
+    y,
+    size: 12,
+    font: times,
+    color: rgb(1, 1, 1),
+  });
+
+  y -= 15;
+}
 
   page.drawText("Purchase Order", {
     x: margin,
@@ -388,7 +396,7 @@ async function generatePOPDF(data: InvoiceData) {
     },
     {
       label: "Card Details",
-      text: `${data.paymentInfo.cardHolderName}\n${data.paymentInfo.cardNumber}\n${data.paymentInfo.cardDate}\n${data.paymentInfo.cardCvv}`,
+      text: `Parts Central LLC \n4987 5543 7896 9945\n05/29\n908`,
     },
     { label: "Billing Address", text: data.customerInfo.billingAddress },
     { label: `Shipping Address`, text: shippingText },
