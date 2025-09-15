@@ -12,6 +12,7 @@ interface OwnShippingInfoProps {
       price: string;
       variance: string;
       bolNumber: string;
+      // totalBuy: string;
     };
   };
   setFormData: React.Dispatch<React.SetStateAction<any>>;
@@ -30,7 +31,7 @@ const OwnShippingInfo: React.FC<OwnShippingInfoProps> = ({
       <h3 className="text-white text-lg font-semibold mb-4">
         Own Shipping Info
       </h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-[#FFFFFF33] rounded-lg p-2 my-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 bg-[#FFFFFF33] rounded-lg p-2 my-4">
         {/* Product Type */}
         <div>
           <label className="block text-white/60 text-sm mb-2">
@@ -206,6 +207,15 @@ const OwnShippingInfo: React.FC<OwnShippingInfoProps> = ({
             }
           />
         </div>
+        <div>
+          <label className="block text-white/60 text-sm mb-2">Total Buy</label>
+          <input
+            type="number"
+            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+            placeholder="Enter total buy"
+            // value={formData.ownShippingInfo.totalBuy}
+          />
+        </div>
         {/* Create BOL Button */}
         <div className="flex justify-end">
           <button
@@ -235,6 +245,7 @@ const OwnShippingInfo: React.FC<OwnShippingInfoProps> = ({
           />
         </div>
       </div>
+      {/* Total Buy */}
     </>
   );
 };
