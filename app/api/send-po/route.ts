@@ -246,50 +246,78 @@ async function generatePOPDF(data: InvoiceData) {
   const taxIcon = await pdfDoc.embedPng(taxBytes);
 
   // --- Now draw them with labels + values ---
-  const iconSize = 6; // icon width/height
-  y = height - 50; // starting Y for first row
+ const iconSize = 10;
+ y = height - 50;
+const rowSpacing = 16;
+const labelFontSize = 10;
+const valueFontSize = 10;
 
-  const infoRows = [
-    {
-      icon: locationIcon,
-      label: "Location:",
-      value: "76 Imperial Dr Suite E Evanston, WY 82930, USA",
-    },
-    { icon: websiteIcon, label: "Website:", value: "https://partscentral.us" },
-    { icon: phoneIcon, label: "Phone:", value: "(888) 338-2540" },
-    { icon: emailIcon, label: "Email:", value: "purchase@partscentral.us" },
-    { icon: taxIcon, label: "Sales Tax ID:", value: "271-4444-3598" },
-  ];
+// Define left and right margin for two columns
+const leftX = margin;
+const rightX = width / 2 + 20; // adjust 20px for spacing from middle
 
-  for (const row of infoRows) {
-    // Draw icon
+const infoRows = [
+  { icon: locationIcon, label: "Location:", value: "76 Imperial Dr Suite E Evanston, WY 82930, USA", alignRight: false },
+  { icon: websiteIcon, label: "Website:", value: "https://partscentral.us", alignRight: false },
+  { icon: phoneIcon, label: "Phone:", value: "(888) 338-2540", alignRight: false },
+  { icon: emailIcon, label: "Email:", value: "purchase@partscentral.us", alignRight: true },
+  { icon: taxIcon, label: "Sales Tax ID:", value: "271-4444-3598", alignRight: true },
+];
+
+for (const row of infoRows) {
+  if (row.alignRight) {
+    // Right column
     page.drawImage(row.icon, {
-      x: margin,
-      y: y - 2, // tweak for vertical alignment
+      x: rightX,
+      y: y - 2,
       width: iconSize,
       height: iconSize,
     });
 
-    // Draw label
     page.drawText(row.label, {
-      x: margin + iconSize + 4,
+      x: rightX + iconSize + 6,
       y,
-      size: 7,
+      size: labelFontSize,
       font: bold,
       color: rgb(1, 1, 1),
     });
 
-    // Draw value
     page.drawText(row.value, {
-      x: margin + 60, // align values nicely
+      x: rightX + 50, // similar spacing as left column
       y,
-      size: 7,
+      size: valueFontSize,
       font: times,
       color: rgb(1, 1, 1),
     });
+  } else {
+    // Left column
+    page.drawImage(row.icon, {
+      x: leftX,
+      y: y - 2,
+      width: iconSize,
+      height: iconSize,
+    });
 
-    y -= 11; // move down for next row
+    page.drawText(row.label, {
+      x: leftX + iconSize + 6,
+      y,
+      size: labelFontSize,
+      font: bold,
+      color: rgb(1, 1, 1),
+    });
+
+    page.drawText(row.value, {
+      x: leftX + 80,
+      y,
+      size: valueFontSize,
+      font: times,
+      color: rgb(1, 1, 1),
+    });
   }
+
+  y -= rowSpacing; // same spacing for both columns
+}
+
 
   page.drawText("Purchase Order", {
     x: margin,
@@ -388,7 +416,7 @@ async function generatePOPDF(data: InvoiceData) {
     },
     {
       label: "Card Details",
-      text: `${data.paymentInfo.cardHolderName}\n${data.paymentInfo.cardNumber}\n${data.paymentInfo.cardDate}\n${data.paymentInfo.cardCvv}`,
+      text: `Parts Central LLC\n4987 5543 7896 9945\n05/29\n908`,
     },
     { label: "Billing Address", text: data.customerInfo.billingAddress },
     { label: `Shipping Address`, text: shippingText },

@@ -22,12 +22,14 @@ type Value = ValuePiece | [ValuePiece, ValuePiece];
 
 interface Order {
   id: string;
+  orderNumber:string;
   name: string;
   orderDate: string;
   sum: string;
   email: string;
   mobile: string;
   status: string;
+  raw?: any; 
 }
 
 interface RawOrder {
@@ -92,7 +94,8 @@ export default function Orders() {
         if (response.ok) {
           const data = await response.json();
           const mappedOrders = data.map((order: RawOrder) => ({
-            id: order.id,
+             id: order.id, // keep backend id for routing/actions
+            orderNumber: order.orderNumber, // show this in the UI
             name: order.customer.full_name,
             orderDate: order.orderDate 
               ? new Date(order.orderDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).replace(/ /g, ' ')
@@ -101,6 +104,7 @@ export default function Orders() {
             email: order.customer.email,
             mobile: order.shippingSnapshot?.phone || order.billingSnapshot?.phone || '',
             status: order.status,
+            raw: order,
           }));
           setOrders(mappedOrders);
         } else {
@@ -120,20 +124,25 @@ export default function Orders() {
   useEffect(() => {
     const socket = getSocket();
 
+   
     socket.on('new_order', (data) => {
+      // Safely extract fields from incoming socket payload (with fallbacks)
+      const incoming = data.order || data;
+      const incomingOrderNumber = incoming.orderNumber ?? incoming.orderNo ?? incoming.id ?? "";
+      const incomingDate = incoming.orderDate ?? incoming.createdAt ?? null;
+      const formattedDate = incomingDate
+        ? new Date(incomingDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).replace(/ /g, ' ')
+        : "";
+
       const newOrder: Order = {
-        id: data.order.id,
-        // name: data.order.customer.full_name,
-        name: data.order.customerName ,
-        orderDate: data.order.orderDate,
-        // ordate: new Date(data.order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).replace(/ /g, ' '),
-        sum: `${data.order.total}`,
-        email: data.order.customer_email,
-        mobile: data.order.mobile,
-        // sum: `${data.order.totalAmount}`,
-        // email: data.order.customer.email,
-        // mobile: data.order.shippingSnapshot?.phone || data.order.billingSnapshot?.phone || '',
-        status: data.order.status,
+        id: String(incoming.id ?? ""), // routing id
+        orderNumber: String(incomingOrderNumber),
+        name: incoming.customerName ?? incoming.customer?.full_name ?? "",
+        orderDate: formattedDate || (incoming.orderDate ?? ""),
+        sum: String(incoming.total ?? incoming.totalAmount ?? ""),
+        email: incoming.customer_email ?? incoming.customer?.email ?? "",
+        mobile: incoming.mobile ?? "",
+        status: incoming.status ?? "",
       };
       setOrders((prevOrders) => [newOrder, ...prevOrders]);
     });
@@ -142,6 +151,7 @@ export default function Orders() {
       socket.off('new_order');
     };
   }, []);
+  
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [dateRange, setDateRange] = useState({ from: "", to: "" });
@@ -195,58 +205,52 @@ export default function Orders() {
   }, [openActionMenu]);
 
   // Filtering logic (now in useEffect)
-  useEffect(() => {
-    let filtered = [...orders];
+// Filtering logic (now in useEffect)
+useEffect(() => {
+  let filtered = [...orders];
 
-    if (search.trim()) {
-      filtered = filtered.filter(
-        (order) =>
-          order.id.toLowerCase().includes(search.toLowerCase()) ||
-          order.name.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-    if (status && status !== "Order Status") {
-      filtered = filtered.filter((order) => order.status === status);
-    }
-    if (dateRange.from && dateRange.to) {
-      filtered = filtered.filter(
-        (order) => order.orderDate >= dateRange.from && order.orderDate <= dateRange.to
-      );
-    }
-    // Dropdown Status
-    // if (dropdownStatus) {
-    //   filtered = filtered.filter(
-    //     (order) => order.status.toLowerCase() === dropdownStatus.toLowerCase()
-    //   );
-    // }
-    // Dropdown Qty
-    // Removed qty filter since qty field is not needed
-    // Dropdown Part
-    // if (dropdownPart) {
-    // if (dropdownPart === "Engines") {
-    //     filtered = filtered.filter((order) =>
-    //     order.name.toLowerCase().includes("engine")
-    //   );
-    // } else if (dropdownPart === "Transmission") {
-    //   filtered = filtered.filter((order) =>
-    //     order.name.toLowerCase().includes("transmission")
-    //   );
-    // }
-    // }
-    const startIndex = (currentPage - 1) * 50;
-    const endIndex = startIndex + 50;
-    filtered = filtered.slice(startIndex, endIndex);
-    setFilteredOrders(filtered);
-  }, [
-    search,
-    status,
-    dateRange,
-    orders,
-    // dropdownStatus,
-    dropdownQty,
-    currentPage,
-    // dropdownPart,
-  ]);
+  if (search.trim()) {
+    const query = search.toLowerCase();
+
+    // helper to flatten nested objects into a single string
+    const flattenObject = (obj: any): string => {
+      let result = "";
+      for (const key in obj) {
+        if (!obj.hasOwnProperty(key)) continue;
+
+        const val = obj[key];
+        if (val && typeof val === "object") {
+          result += " " + flattenObject(val);
+        } else {
+          result += " " + String(val || "");
+        }
+      }
+      return result.toLowerCase();
+    };
+
+    filtered = filtered.filter((order) =>
+    (flattenObject(order) + flattenObject(order.raw || {})).includes(query)
+     );
+  }
+
+  if (status && status !== "Order Status") {
+    filtered = filtered.filter((order) => order.status === status);
+  }
+
+  if (dateRange.from && dateRange.to) {
+    filtered = filtered.filter(
+      (order) =>
+        order.orderDate >= dateRange.from && order.orderDate <= dateRange.to
+    );
+  }
+
+  const startIndex = (currentPage - 1) * 50;
+  const endIndex = startIndex + 50;
+  filtered = filtered.slice(startIndex, endIndex);
+
+  setFilteredOrders(filtered);
+}, [search, status, dateRange, orders, dropdownQty, currentPage]);
+
 
   // Handle date range change from calendar
   const handleDateRangeChange = (
@@ -431,7 +435,7 @@ export default function Orders() {
               </div>
               {/* <p className="text-gray-400 mb-6">This is the orders page.</p> */}
               {loading ? (
-  // 👇 Loader
+               // 👇 Loader
               <div className="flex justify-center items-center py-20">
                 <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
               </div>
@@ -447,9 +451,9 @@ export default function Orders() {
                       <th className="px-4 py-3 font-semibold">ID</th>
                       <th className="px-4 py-3 font-semibold">Name</th>
                       <th className="px-4 py-3 font-semibold">Date</th>
-                      <th className="px-4 py-3 font-semibold">Email</th>
+                      {/* <th className="px-4 py-3 font-semibold">Email</th> */}
                       <th className="px-4 py-3 font-semibold">Mobile</th>
-                      <th className="px-4 py-3 font-semibold">Amount</th>
+                      <th className="px-4 py-3 font-semibold">Selling Price</th>
                       <th className="px-4 py-3 font-semibold">Status</th>
                       <th className="px-4 py-3 font-semibold">Action</th>
                     </tr>
@@ -463,10 +467,10 @@ export default function Orders() {
                         <td className="px-4 py-3">
                           <input type="checkbox" />
                         </td>
-                        <td className="px-4 py-6">{order.id}</td>
+                        <td className="px-4 py-6">{order.orderNumber}</td>
                         <td className="px-4 py-6">{order.name}</td>
                         <td className="px-4 py-6">{order.orderDate}</td>
-                        <td className="px-4 py-6">{order.email}</td>
+                        {/* <td className="px-4 py-6">{order.email}</td> */}
                         <td className="px-4 py-6">{order.mobile}</td>
                         <td className="px-4 py-6">{order.sum}</td>
                         <td className="px-4 py-6">
