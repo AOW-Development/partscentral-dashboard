@@ -19,13 +19,35 @@ interface OwnShippingInfoProps {
   handleCreateBOL: () => void;
   ChevronDown: React.ElementType;
 }
+const OwnShippingInfo: React.FC<OwnShippingInfoProps> = ({ formData, setFormData, handleCreateBOL, ChevronDown }) => {
+  const formatToTwoDecimals = (value: string): string => {
+    if (!value || value === "") return ""
+    const numValue = Number.parseFloat(value)
+    if (isNaN(numValue)) return value
+    return numValue.toFixed(2)
+  }
 
-const OwnShippingInfo: React.FC<OwnShippingInfoProps> = ({
-  formData,
-  setFormData,
-  handleCreateBOL,
-  ChevronDown,
-}) => {
+  // const handleNumericChange = (field: string, value: string) => {
+  //   // Allow typing decimal numbers but format on blur
+  //   setFormData((prev: any) => ({
+  //     ...prev,
+  //     ownShippingInfo: {
+  //       ...prev.ownShippingInfo,
+  //       [field]: value,
+  //     },
+  //   }))
+  // }
+
+  const handleNumericBlur = (field: string, value: string) => {
+    const formattedValue = formatToTwoDecimals(value)
+    setFormData((prev: any) => ({
+      ...prev,
+      ownShippingInfo: {
+        ...prev.ownShippingInfo,
+        [field]: formattedValue,
+      },
+    }))
+  }
   return (
     <>
       <h3 className="text-white text-lg font-semibold mb-4">
@@ -185,7 +207,10 @@ const OwnShippingInfo: React.FC<OwnShippingInfoProps> = ({
                   price: e.target.value,
                 },
               }))
+              
             }
+            onBlur={(e) => handleNumericBlur("price", e.target.value)}
+            
           />
         </div>
         {/* Variance */}
@@ -205,6 +230,7 @@ const OwnShippingInfo: React.FC<OwnShippingInfoProps> = ({
                 },
               }))
             }
+             onBlur={(e) => handleNumericBlur("variance", e.target.value)}
           />
         </div>
         <div>
@@ -215,6 +241,7 @@ const OwnShippingInfo: React.FC<OwnShippingInfoProps> = ({
             placeholder="Enter total buy"
             // value={formData.ownShippingInfo.totalBuy}
           />
+          
         </div>
         {/* Create BOL Button */}
         <div className="flex justify-end">
