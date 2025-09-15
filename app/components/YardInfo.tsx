@@ -15,10 +15,11 @@ interface PreviousYard {
   yardShipping: string;
   yardCost: string | number;
   reason?: string;
+  yardCharge?: string;
 }
 
 interface FormData {
-  yardName: string; 
+  yardName: string;
   attnName: string;
   yardAddress: string;
   yardMobile: string;
@@ -28,7 +29,9 @@ interface FormData {
   yardMiles: string | number;
   yardShipping: string;
   yardCost: string | number;
+  totalBuy: string | number;
   reason?: string;
+  yardCharge?: string;
 }
 
 interface YardInfoProps {
@@ -43,7 +46,7 @@ interface YardInfoProps {
   setStatusPopUp: React.Dispatch<React.SetStateAction<boolean>>;
   statusPopUp: boolean;
   orderId: string;
-  onYardMoved: (reason: string) => void;
+  onYardMoved: (reason: string, yardCharge: string) => void;
 }
 
 const YardInfo: React.FC<YardInfoProps> = ({
@@ -61,33 +64,36 @@ const YardInfo: React.FC<YardInfoProps> = ({
   onYardMoved,
 }) => {
   const [reason, setReason] = useState("");
+  const [yardCharge, setYardCharge] = useState("");
   const [submitReason, setSubmitReason] = useState(false);
 
   useEffect(() => {
-    if (submitReason && reason.trim()) {
+    if (submitReason && reason.trim() && yardCharge.trim()) {
       const moveYardToHistory = async () => {
         try {
-          const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+          const API_URL =
+            process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
           const response = await axios.post(
             `${API_URL}/yards/move-to-history/${orderId}`,
-            { reason: reason.trim() }
+            { reason: reason.trim(), yardCharge: yardCharge.trim() }
           );
           console.log("Successfully moved yard to history:", response.data);
 
           // Notify parent component that yard has been moved
-          onYardMoved(reason.trim());
+          onYardMoved(reason.trim(), yardCharge.trim());
         } catch (error) {
           console.error("Error moving yard to history:", error);
         } finally {
           // Reset state
           setReason("");
+          setYardCharge("");
           setSubmitReason(false);
         }
       };
 
       moveYardToHistory();
     }
-  }, [submitReason, reason, orderId, onYardMoved]);
+  }, [submitReason, reason, orderId, onYardMoved, yardCharge]);
 
   return (
     <div className=" relative p-2 mt-6">
@@ -95,6 +101,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
         <MoveYardPopUp
           setStatus={setStatusPopUp}
           setReason={setReason}
+          setYardCharge={setYardCharge}
           setSubmitReason={setSubmitReason}
         />
       )}
@@ -321,11 +328,11 @@ const YardInfo: React.FC<YardInfoProps> = ({
             placeholder="Enter price"
             value={formData.yardPrice}
             onChange={(e) => handleInputChange("yardPrice", e.target.value)}
-               onBlur={(e) => {
-                            const rawValue = e.target.value || "0"; // always string
-                            const value = parseFloat(rawValue).toFixed(2); // value is string
-                            handleInputChange("yardPrice", value);
-                          }}
+            onBlur={(e) => {
+              const rawValue = e.target.value || "0"; // always string
+              const value = parseFloat(rawValue).toFixed(2); // value is string
+              handleInputChange("yardPrice", value);
+            }}
           />
         </div>
 
@@ -388,23 +395,43 @@ const YardInfo: React.FC<YardInfoProps> = ({
           </div>
         </div>
         {showYardShippingCost && (
-          <div>
-            <label className="block text-white/60 text-sm mb-2">
-              Yard Shipping Cost
-            </label>
-            <input
-              type="number"
-              className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-              placeholder="Enter yard cost"
-              value={formData.yardCost}
-              onChange={(e) => handleInputChange("yardCost", e.target.value)}
-                 onBlur={(e) => {
-                            const rawValue = e.target.value || "0"; // always string
-                            const value = parseFloat(rawValue).toFixed(2); // value is string
-                            handleInputChange("yardCost", value);
-                          }}
-            />
-          </div>
+          <>
+            <div>
+              <label className="block text-white/60 text-sm mb-2">
+                Yard Shipping Cost
+              </label>
+              <input
+                type="number"
+                className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                placeholder="Enter yard cost"
+                value={formData.yardCost}
+                onChange={(e) => handleInputChange("yardCost", e.target.value)}
+                onBlur={(e) => {
+                  const rawValue = e.target.value || "0"; // always string
+                  const value = parseFloat(rawValue).toFixed(2); // value is string
+                  handleInputChange("yardCost", value);
+                }}
+              />
+            </div>
+            <div>
+              <label className="block text-white/60 text-sm mb-2">
+                Total Buy
+              </label>
+              <input
+                type="number"
+                className="w-full bg-[#0a1929] border cursor-not-allowed border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                placeholder="Enter total buy"
+                value={formData.totalBuy}
+                disabled
+                // onChange={(e) => handleInputChange("totalBuy", e.target.value)}
+                // onBlur={(e) => {
+                //   const rawValue = e.target.value || "0"; // always string
+                //   const value = parseFloat(rawValue).toFixed(2); // value is string
+                //   handleInputChange("totalBuy", value);
+                // }}
+              />
+            </div>
+          </>
         )}
       </div>
     </div>
