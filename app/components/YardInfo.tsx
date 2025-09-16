@@ -431,13 +431,18 @@ const YardInfo: React.FC<YardInfoProps> = ({
           <div className="relative" ref={yardPriceOptionsRef}>
             <input
               type="number"
-              className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 pr-12 text-white focus:outline-none ${
+              className={`
+                appearance-none
+                [appearance:textfield]
+                [&::-webkit-outer-spin-button]:appearance-none
+                [&::-webkit-inner-spin-button]:appearance-none
+                w-full bg-[#0a1929] border rounded-lg px-4 py-3 pr-12 text-white focus:outline-none ${
                 fieldErrors.yardPrice
                   ? "border-red-500 focus:border-red-500"
                   : "border-gray-600 focus:border-blue-500"
               }`}
               placeholder="00.00"
-              value={formData.yardPrice}
+              value={formData.yardPrice === 0 ? "" : formData.yardPrice}
               onChange={(e) => handleInputChange("yardPrice", e.target.value)}
               onBlur={(e) => handlePriceBlur("yardPrice", e.target.value)}
  

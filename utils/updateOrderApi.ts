@@ -155,6 +155,10 @@ export const updateOrderFromAdmin = async (orderId: string, formData: any, cartI
         yardShippingType: formData.yardShipping || 'OWN_SHIPPING',
         yardShippingCost: parseFloat(formData.yardCost as string) || 0,
         reason: formData.reason || 'No reason provided',
+        yardTaxesPrice: parseFloat(formData.taxesPrice as string) || 0,
+        yardHandlingFee: parseFloat(formData.handlingPrice as string) || 0,
+        yardProcessingFee: parseFloat(formData.processingPrice as string) || 0,
+        yardCorePrice: parseFloat(formData.corePrice as string) || 0,
         ...(formData.yardShipping === 'Own Shipping' && formData.ownShippingInfo ? { yardOwnShippingInfo: formData.ownShippingInfo } : {})
       }
     })

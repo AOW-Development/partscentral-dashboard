@@ -182,6 +182,11 @@ const orderData = {
       yardShippingType: formData.yardShipping || 'OWN_SHIPPING',
       yardShippingCost: formData.yardCost || 0,
       reason: formData.reason || 'No reason provided',
+
+      yardTaxesPrice: formData.taxesPrice || 0,
+      yardHandlingFee: formData.handlingPrice || 0,
+      yardProcessingFee: formData.processingPrice || 0,
+      yardCorePrice: formData.corePrice || 0,
       ...(formData.yardShipping === 'Own Shipping' && formData.ownShippingInfo ? { yardOwnShippingInfo: formData.ownShippingInfo } : {})
     }
   })
