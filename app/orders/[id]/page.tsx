@@ -169,6 +169,7 @@ const OrderDetails = () => {
   const orderId = params.id as string;
   const lastVariantKeys = useRef<{ [index: number]: string }>({});
   const [loadingOrder, setLoadingOrder] = useState(true);
+  const [grossProfit, setGrossProfit] = useState(0);
   const [showAlternateMobileNumber, setShowAlternateMobileNumber] =
     useState(false);
 
@@ -706,10 +707,21 @@ const OrderDetails = () => {
 
   // Helper function to handle any form field change
   const handleFormFieldChange = (field: keyof OrderFormData, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData((prev) => {
+      const newData = {
+        ...prev,
+        [field]: value,
+      };
+
+      // Update totalBuy when yardPrice or yardCost changes
+      if (field === "yardPrice" || field === "yardCost") {
+        const yardPrice = parseFloat(newData.yardPrice.toString()) || 0;
+        const yardCost = parseFloat(newData.yardCost.toString()) || 0;
+        newData.totalBuy = (yardPrice + yardCost).toFixed(2);
+      }
+
+      return newData;
+    });
   };
 
   const addProduct = () => {
@@ -1049,10 +1061,21 @@ const OrderDetails = () => {
 
   // Handle form field changes
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData((prev) => {
+      const newData = {
+        ...prev,
+        [field]: value,
+      };
+
+      // Update totalBuy when yardPrice or yardCost changes
+      if (field === "yardPrice" || field === "yardCost") {
+        const yardPrice = parseFloat(newData.yardPrice.toString()) || 0;
+        const yardCost = parseFloat(newData.yardCost.toString()) || 0;
+        newData.totalBuy = (yardPrice + yardCost).toFixed(2);
+      }
+
+      return newData;
+    });
 
     // Clear field error when user starts typing
     if (fieldErrors[field]) {
@@ -1994,6 +2017,14 @@ const OrderDetails = () => {
     );
   }, []);
 
+  useEffect(() => {
+    const selling = parseFloat(formData.totalSellingPrice.toString()) || 0;
+    const yardPrice = parseFloat(formData.yardPrice.toString()) || 0;
+    const yardCost = parseFloat(formData.yardCost.toString()) || 0;
+    const totalBuy = yardPrice + yardCost;
+    setGrossProfit(selling - totalBuy);
+  }, [formData.totalSellingPrice, formData.yardPrice, formData.yardCost]);
+
   return (
     <ProtectRoute>
       <div className="min-h-screen bg-main text-white font-exo py-2">
@@ -2087,6 +2118,9 @@ const OrderDetails = () => {
                   </div>
                 </div>
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between mt-2 gap-3">
+                  <h2 className="text-yellow-200 mr-10 mb-10">
+                    Gross Profit: ${grossProfit.toFixed(2)}
+                  </h2>
                   <input
                     type="date"
                     className="text-white/60 text-sm bg-transparent border-b border-gray-600 focus:outline-none focus:border-blue-500"
@@ -3434,7 +3468,7 @@ const OrderDetails = () => {
                   yardMiles: formData.yardMiles,
                   yardShipping: formData.yardShipping,
                   yardCost: formData.yardCost,
-                  totalBuy: formData.totalSellingPrice + formData.yardCost,
+                  totalBuy: formData.yardCost + formData.yardPrice,
                   // yardCharge: formData.yardCharge,
                 }}
                 handleInputChange={handleInputChange}

@@ -141,14 +141,14 @@ function generateInvoiceHTML(data: InvoiceData) {
         <p style= "font-weight: bold;"> Requesting pictures before you wrap up the part for shipping.</p>
         <p style= "font-weight: bold;">${data.productInfo
           .map(
-          (item) => `
+            (item) => `
             ${item.year} ${item.make} ${item.model}<br> 
             ${item.parts}<br>
             ${item.specification}<br>
             VIN # ${data.customerInfo.vinNumber}<br>
           `
-        )
-        .join("")}
+          )
+          .join("")}
       <p style="font-weight: bold;">
     ***Please Note this is a Blind Shipment, No Tags/Labels/Price Miles Not to be disclosed, except for the Shipping label to be attached.
     </p>
@@ -246,78 +246,102 @@ async function generatePOPDF(data: InvoiceData) {
   const taxIcon = await pdfDoc.embedPng(taxBytes);
 
   // --- Now draw them with labels + values ---
- const iconSize = 10;
- y = height - 50;
-const rowSpacing = 16;
-const labelFontSize = 10;
-const valueFontSize = 10;
+  const iconSize = 10;
+  y = height - 50;
+  const rowSpacing = 16;
+  const labelFontSize = 10;
+  const valueFontSize = 10;
 
-// Define left and right margin for two columns
-const leftX = margin;
-const rightX = width / 2 + 20; // adjust 20px for spacing from middle
+  // Define left and right margin for two columns
+  const leftX = margin;
+  const rightX = width / 2 + 20; // adjust 20px for spacing from middle
 
-const infoRows = [
-  { icon: locationIcon, label: "Location:", value: "76 Imperial Dr Suite E Evanston, WY 82930, USA", alignRight: false },
-  { icon: websiteIcon, label: "Website:", value: "https://partscentral.us", alignRight: false },
-  { icon: phoneIcon, label: "Phone:", value: "(888) 338-2540", alignRight: false },
-  { icon: emailIcon, label: "Email:", value: "purchase@partscentral.us", alignRight: true },
-  { icon: taxIcon, label: "Sales Tax ID:", value: "271-4444-3598", alignRight: true },
-];
+  const infoRows = [
+    {
+      icon: locationIcon,
+      label: "Location:",
+      value: "76 Imperial Dr Suite E Evanston, WY 82930, USA",
+      alignRight: false,
+    },
+    {
+      icon: websiteIcon,
+      label: "Website:",
+      value: "https://partscentral.us",
+      alignRight: false,
+    },
+    {
+      icon: phoneIcon,
+      label: "Phone:",
+      value: "(888) 338-2540",
+      alignRight: false,
+    },
+    {
+      icon: emailIcon,
+      label: "Email:",
+      value: "purchase@partscentral.us",
+      alignRight: true,
+    },
+    {
+      icon: taxIcon,
+      label: "Sales Tax ID:",
+      value: "271-4444-3598",
+      alignRight: true,
+    },
+  ];
 
-for (const row of infoRows) {
-  if (row.alignRight) {
-    // Right column
-    page.drawImage(row.icon, {
-      x: rightX,
-      y: y - 2,
-      width: iconSize,
-      height: iconSize,
-    });
+  for (const row of infoRows) {
+    if (row.alignRight) {
+      // Right column
+      page.drawImage(row.icon, {
+        x: rightX + 12,
+        y: y + 50,
+        width: iconSize,
+        height: iconSize,
+      });
 
-    page.drawText(row.label, {
-      x: rightX + iconSize + 6,
-      y,
-      size: labelFontSize,
-      font: bold,
-      color: rgb(1, 1, 1),
-    });
+      page.drawText(row.label, {
+        x: rightX + iconSize + 6 + 12,
+        y: y + 50,
+        size: labelFontSize,
+        font: bold,
+        color: rgb(1, 1, 1),
+      });
 
-    page.drawText(row.value, {
-      x: rightX + 50, // similar spacing as left column
-      y,
-      size: valueFontSize,
-      font: times,
-      color: rgb(1, 1, 1),
-    });
-  } else {
-    // Left column
-    page.drawImage(row.icon, {
-      x: leftX,
-      y: y - 2,
-      width: iconSize,
-      height: iconSize,
-    });
+      page.drawText(row.value, {
+        x: rightX + iconSize + 6 + 80, // similar spacing as left column
+        y: y + 50,
+        size: valueFontSize,
+        font: times,
+        color: rgb(1, 1, 1),
+      });
+    } else {
+      // Left column
+      page.drawImage(row.icon, {
+        x: leftX,
+        y: y - 2,
+        width: iconSize,
+        height: iconSize,
+      });
 
-    page.drawText(row.label, {
-      x: leftX + iconSize + 6,
-      y,
-      size: labelFontSize,
-      font: bold,
-      color: rgb(1, 1, 1),
-    });
+      page.drawText(row.label, {
+        x: leftX + iconSize + 6,
+        y,
+        size: labelFontSize,
+        font: bold,
+        color: rgb(1, 1, 1),
+      });
 
-    page.drawText(row.value, {
-      x: leftX + 80,
-      y,
-      size: valueFontSize,
-      font: times,
-      color: rgb(1, 1, 1),
-    });
+      page.drawText(row.value, {
+        x: leftX + 80,
+        y,
+        size: valueFontSize,
+        font: times,
+        color: rgb(1, 1, 1),
+      });
+    }
+
+    y -= rowSpacing; // same spacing for both columns
   }
-
-  y -= rowSpacing; // same spacing for both columns
-}
-
 
   page.drawText("Purchase Order", {
     x: margin,
@@ -420,10 +444,10 @@ for (const row of infoRows) {
     },
     { label: "Billing Address", text: data.customerInfo.billingAddress },
     { label: `Shipping Address`, text: shippingText },
-    { 
-    label: "Warranty", 
-    text: `${data.yardInfo.warranty}\nPlease send Pictures Before Shipping Out the Part to the\nEmail: purchase@partscentral.us or Ph: 307-200-2571` 
-  },
+    {
+      label: "Warranty",
+      text: `${data.yardInfo.warranty}\nPlease send Pictures Before Shipping Out the Part to the\nEmail: purchase@partscentral.us or Ph: 307-200-2571`,
+    },
   ];
 
   // ---

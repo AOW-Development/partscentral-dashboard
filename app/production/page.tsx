@@ -70,8 +70,8 @@ export default function ProductionPage() {
       image: "engine1.png",
     },
   ];
-  const startIndex = (currentPage - 1) * 6;
-  const endIndex = startIndex + 6;
+  const startIndex = (currentPage - 1) * 50;
+  const endIndex = startIndex + 50;
   const filtered = products.slice(startIndex, endIndex);
 
   const filteredProducts = filtered.filter((p) => {
@@ -195,107 +195,98 @@ export default function ProductionPage() {
             </div>
 
             <h1 className="text-2xl font-audiowide font-bold mb-8">Products</h1>
-            <div className="bg-[#091e36] rounded-xl p-4 sm:p-6 lg:p-10">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-                {filteredProducts.map((product, idx) => (
-                  <Link key={idx} href={"/production/" + product.id}>
-                    <div className="w-full cursor-pointer max-w-[437px] h-auto bg-gradient-to-br bg-main rounded-xl p-4 sm:p-6 flex flex-col shadow-lg relative border border-white hover:shadow-xl hover:scale-[1.01] transition duration-200 mx-auto">
-                      {/* Status badge */}
-                      <span
-                        className={`absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-semibold capitalize ${
-                          product.stock === "Outstock"
-                            ? "bg-[#f64e4e]"
-                            : "bg-[#1ecb4f]"
-                        }`}
+            <div className="bg-[#091e36] rounded-xl overflow-hidden">
+              {/* Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  {/* Table Header */}
+                  <thead className="bg-[#0a1f3a]">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-gray-300">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-600 bg-[#091e36] text-blue-600 focus:ring-blue-500"
+                        />
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-gray-300">
+                        ID
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-gray-300">
+                        Make
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-gray-300">
+                        Model
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-gray-300">
+                        Year
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-gray-300">
+                        Part
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-gray-300">
+                        Amount
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-gray-300">
+                        Status
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-gray-300">
+                        Action
+                      </th>
+                    </tr>
+                  </thead>
+                  {/* Table Body */}
+                  <tbody className="divide-y divide-gray-700">
+                    {filteredProducts.map((product, idx) => (
+                      <tr
+                        key={idx}
+                        className="hover:bg-[#0a1f3a] transition-colors"
                       >
-                        {product.stock}
-                      </span>
-
-                      {/* More icon */}
-                      <span className="absolute top-4 right-4 text-gray-400 cursor-pointer">
-                        <svg
-                          width="20"
-                          height="20"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle cx="12" cy="5" r="1.5" />
-                          <circle cx="12" cy="12" r="1.5" />
-                          <circle cx="12" cy="19" r="1.5" />
-                        </svg>
-                      </span>
-
-                      {/* Top section: Image + Info side-by-side (or stacked on small screens) */}
-                      <div className="flex flex-col sm:flex-row gap-4 items-start mb-4 mt-6">
-                        {/* Image with white glow gradient and larger width */}
-                        <div
-                          className="relative w-full sm:w-[280px] h-[149px] rounded-xl
-                       flex items-center justify-center before:absolute before:inset-0 before:rounded-xl
-                        before:bg-gradient-to-br before:from-white/20 before:via-white/10 before:to-transparent before:blur-lg "
-                        >
-                          <Image
-                            src={URL + product.image}
-                            alt={product.name}
-                            width={280}
-                            height={149}
-                            className="object-contain relative "
+                        <td className="px-6 py-4">
+                          <input
+                            type="checkbox"
+                            className="rounded border-gray-600 bg-[#091e36] text-blue-600 focus:ring-blue-500"
                           />
-                        </div>
-
-                        {/* Info beside image */}
-                        <div className="flex flex-col justify-start mt-6 text-white">
-                          <div className="text-lg font-bold font-audiowide tracking-wide">
-                            {product.name}
-                          </div>
-                          <div className="text-sm text-gray-400 mb-2">
-                            {product.type}
-                          </div>
-                          <div className="text-xl font-semibold tracking-tight">
-                            100
-                            <span className="text-white text-lg gap-1">$</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Description */}
-                      <div className="md:text-lg text-sm text-white mb-6 leading-relaxed">
-                        Get your favorite products delivered automatically,
-                        enjoy exclusive discounts, skip or cancel anytime.
-                        Convenience and savings in one click.
-                      </div>
-
-                      {/* Separator line - full bleed */}
-                      <div className="h-px bg-white/20 -mx-6 mb-4"></div>
-
-                      {/* Sales and Quantity */}
-                      <div className="flex items-center justify-between text-sm mb-2 text-white">
-                        <span>Sales</span>
-                        <span className="flex items-center gap-1 text-green-400 font-semibold">
-                          220
-                          <svg
-                            width="14"
-                            height="14"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            viewBox="0 0 24 24"
+                        </td>
+                        <td className="px-6 py-4 text-sm text-white">022705</td>
+                        <td className="px-6 py-4 text-sm text-white">Ford</td>
+                        <td className="px-6 py-4 text-sm text-white">Aspire</td>
+                        <td className="px-6 py-4 text-sm text-white">2019</td>
+                        <td className="px-6 py-4 text-sm text-white">
+                          {product.name}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-white">$500</td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
+                              product.stock === "Outstock"
+                                ? "bg-red-500 text-white"
+                                : "bg-green-500 text-white"
+                            }`}
                           >
-                            <path d="M6 15l6-6 6 6" />
-                          </svg>
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2 text-sm text-white">
-                        <span>Quantity</span>
-                        <div className="flex-1 h-2 bg-[#1a2b44] rounded-full overflow-hidden">
-                          <div className="h-2 bg-[#1ecb4f] w-3/4"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+                            {product.stock}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <Link href={"/production/" + product.id}>
+                            <button className="text-gray-400 hover:text-white transition-colors">
+                              <svg
+                                width="16"
+                                height="16"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                viewBox="0 0 24 24"
+                              >
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                              </svg>
+                            </button>
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
             <div className="pb-6">

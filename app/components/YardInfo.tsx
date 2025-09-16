@@ -704,9 +704,12 @@ const YardInfo: React.FC<YardInfoProps> = ({
               </label>
               <input
                 type="number"
-                className="w-full bg-[#0a1929] border cursor-not-allowed border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                className="w-full bg-[#0a1929] border  border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
                 placeholder="Enter total buy"
-                value={formData.totalBuy}
+                value={(
+                  parseFloat(formData.yardCost.toString()) +
+                  parseFloat(formData.yardPrice.toString())
+                ).toFixed(2)}
                 disabled
               />
             </div>
