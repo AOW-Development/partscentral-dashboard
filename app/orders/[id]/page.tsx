@@ -214,6 +214,10 @@ const OrderDetails = () => {
                 yardWarranty: item.yardWarranty || "",
                 yardMiles: item.yardMiles || "",
                 yardShipping: item.shipping || "",
+                yardTaxesPrice: item.yardTaxesPrice || "",
+                yardHandlingFee: item.yardHandlingFee || "",
+                yardProcessingFee: item.yardProcessingFee || "",
+                yardCorePrice: item.yardCorePrice || "",
                 yardCost:
                   item.shipping === "Own Shipping"
                     ? item.yardCost?.yardOwnShippingInfo?.price || "0"
