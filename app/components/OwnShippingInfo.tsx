@@ -12,9 +12,10 @@ interface OwnShippingInfoProps {
       price: string;
       variance: string;
       bolNumber: string;
-      // totalBuy: string;
+      totalBuy: string;
     };
   };
+  
   setFormData: React.Dispatch<React.SetStateAction<any>>;
   handleCreateBOL: () => void;
   ChevronDown: React.ElementType;
@@ -233,13 +234,13 @@ const OwnShippingInfo: React.FC<OwnShippingInfoProps> = ({ formData, setFormData
              onBlur={(e) => handleNumericBlur("variance", e.target.value)}
           />
         </div>
-        <div>
+          <div>
           <label className="block text-white/60 text-sm mb-2">Total Buy</label>
           <input
             type="number"
             className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
             placeholder="Enter total buy"
-            // value={formData.ownShippingInfo.totalBuy}
+            value={formData.ownShippingInfo.totalBuy}
           />
           
         </div>

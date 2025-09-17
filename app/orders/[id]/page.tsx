@@ -99,6 +99,7 @@ export type OrderFormData = {
     price: string;
     variance: string;
     bolNumber: string;
+    totalBuy:string;
   };
 };
 // --- End strong types for cart mapping ---
@@ -119,6 +120,7 @@ import YardInfo from "@/app/components/YardInfo";
 import MerchantInfo from "@/app/components/MerchantInfo";
 import OwnShippingInfo from "@/app/components/OwnShippingInfo";
 import Notes from "@/app/components/Notes";
+import DamagedProductForm from "@/app/components/damagedProduct";
 
 const mapPrismaEnumToWarranty = (enumValue: string): string => {
   switch (enumValue) {
@@ -396,6 +398,8 @@ const OrderDetails = () => {
               price: ownShipping.price || "",
               variance: ownShipping.variance || "",
               bolNumber: ownShipping.bolNumber || "",
+              totalBuy: ownShipping.totalBuy || "",
+
             },
           });
           console.log("formData after loading order:", formData);
@@ -575,6 +579,7 @@ const OrderDetails = () => {
       price: "",
       variance: "",
       bolNumber: "",
+      totalBuy: "",
     },
   });
 
@@ -1060,31 +1065,48 @@ const OrderDetails = () => {
   ]);
 
   // Handle form field changes
+  // const handleInputChange = (field: string, value: string) => {
+  //   setFormData((prev) => {
+  //     const newData = {
+  //       ...prev,
+  //       [field]: value,
+  //     };
+
+  //     // Update totalBuy when yardPrice or yardCost changes
+  //     if (field === "yardPrice" || field === "yardCost") {
+  //       const yardPrice = parseFloat(newData.yardPrice.toString()) || 0;
+  //       const yardCost = parseFloat(newData.yardCost.toString()) || 0;
+  //       newData.totalBuy = (yardPrice + yardCost).toFixed(2);
+  //     }
+
+  //     return newData;
+  //   });
+
+  //   // Clear field error when user starts typing
+  //   if (fieldErrors[field]) {
+  //     setFieldErrors((prev) => ({
+  //       ...prev,
+  //       [field]: "",
+  //     }));
+  //   }
+  // };
+
+
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => {
-      const newData = {
-        ...prev,
-        [field]: value,
-      };
+  setFormData((prev) => ({
+    ...prev,
+    [field]: value,
+  }));
 
-      // Update totalBuy when yardPrice or yardCost changes
-      if (field === "yardPrice" || field === "yardCost") {
-        const yardPrice = parseFloat(newData.yardPrice.toString()) || 0;
-        const yardCost = parseFloat(newData.yardCost.toString()) || 0;
-        newData.totalBuy = (yardPrice + yardCost).toFixed(2);
-      }
+  // Clear field error when user starts typing
+  if (fieldErrors[field]) {
+    setFieldErrors((prev) => ({
+      ...prev,
+      [field]: "",
+    }));
+  }
+};
 
-      return newData;
-    });
-
-    // Clear field error when user starts typing
-    if (fieldErrors[field]) {
-      setFieldErrors((prev) => ({
-        ...prev,
-        [field]: "",
-      }));
-    }
-  };
 
   const handleOwnShippingInfoChange = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -2017,13 +2039,46 @@ const OrderDetails = () => {
     );
   }, []);
 
-  useEffect(() => {
-    const selling = parseFloat(formData.totalSellingPrice.toString()) || 0;
-    const yardPrice = parseFloat(formData.yardPrice.toString()) || 0;
-    const yardCost = parseFloat(formData.yardCost.toString()) || 0;
-    const totalBuy = yardPrice + yardCost;
-    setGrossProfit(selling - totalBuy);
-  }, [formData.totalSellingPrice, formData.yardPrice, formData.yardCost]);
+  // useEffect(() => {
+  //   const selling = parseFloat(formData.totalSellingPrice.toString()) || 0;
+  //   const yardPrice = parseFloat(formData.yardPrice.toString()) || 0;
+  //   const yardCost = parseFloat(formData.yardCost.toString()) || 0;
+  //   const totalBuy = yardPrice + yardCost;
+  //   setGrossProfit(selling - totalBuy);
+  // }, [formData.totalSellingPrice, formData.yardPrice, formData.yardCost]);
+// Function to calculate total buy
+const getTotalBuy = () => {
+  const yardPrice = parseFloat(formData.yardPrice?.toString() || "0");
+  const yardCost = parseFloat(formData.yardCost?.toString() || "0");
+  const ownPrice = parseFloat(formData.ownShippingInfo?.price?.toString() || "0");
+
+  if (formData.shippingAddressType === "yard") return yardPrice + yardCost;
+  if (formData.shippingAddressType === "own") return yardPrice + ownPrice;
+  return 0;
+};
+
+// Update totalBuy in formData whenever relevant fields change
+useEffect(() => {
+  const totalBuy = getTotalBuy();
+  setFormData(prev => ({
+    ...prev,
+    totalBuy: totalBuy.toString(),
+    ownShippingInfo: {
+      ...prev.ownShippingInfo,
+      totalBuy: totalBuy.toString(),
+    },
+  }));
+
+  const selling = parseFloat(formData.totalSellingPrice?.toString() || "0");
+  setGrossProfit(selling - totalBuy);
+}, [
+  formData.totalSellingPrice,
+  formData.yardPrice,
+  formData.yardCost,
+  formData.ownShippingInfo?.price,
+  formData.shippingAddressType,
+]);
+
 
   return (
     <ProtectRoute>
@@ -2118,7 +2173,7 @@ const OrderDetails = () => {
                   </div>
                 </div>
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between mt-2 gap-3">
-                  <h2 className="text-yellow-200 mr-10 mb-10">
+                  <h2 className="text-white mr-10 mb-10 mt-10">
                     Gross Profit: ${grossProfit.toFixed(2)}
                   </h2>
                   <input
@@ -3654,6 +3709,7 @@ const OrderDetails = () => {
                   setFormData={setFormData}
                   handleCreateBOL={handleCreateBOL}
                   ChevronDown={ChevronDown}
+                 
                 />
               )}
             </div>
@@ -3709,8 +3765,10 @@ const OrderDetails = () => {
               </button>
             </div>
 
+             <DamagedProductForm />
+
             {/* Notes Section */}
-            <div className="grid md:grid-cols-2 gap-10">
+            <div className="grid md:grid-cols-2 gap-10 md:mt-10">
               <Notes
                 title="Customer Notes"
                 noteInput={customerNoteInput}
@@ -3741,6 +3799,8 @@ const OrderDetails = () => {
         isOpen={isSaveDialogOpen}
         setIsOpen={setIsSaveDialogOpen}
       />
+
+     
     </ProtectRoute>
   );
 };
