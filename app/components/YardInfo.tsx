@@ -93,19 +93,17 @@ const YardInfo: React.FC<YardInfoProps> = ({
     setShowYardPriceOptions(false)
   }
 
-  const formatToTwoDecimals = (value: string | number): string => {
-    if (!value || value === "") return ""
-    const numValue = Number.parseFloat(value.toString())
-    if (isNaN(numValue)) return ""
-    return numValue.toFixed(2)
+// helper
+const handlePriceBlur = (field: keyof typeof formData, value: string | number) => {
+  if (value === "" || isNaN(Number(value))) {
+    handleInputChange(field, ""); 
+    return;
   }
+  const formatted = parseFloat(value.toString()).toFixed(2);
+  handleInputChange(field, formatted); // must store string, not number
+};
 
-  const handlePriceBlur = (field: keyof FormData, value: string) => {
-    const formattedValue = formatToTwoDecimals(value)
-    if (formattedValue !== value) {
-      handleInputChange(field, formattedValue)
-    }
-  }
+
 
   
   // const handleInputChange = (field: string, value: string) => {
@@ -430,7 +428,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
           <label className="block text-white/60 text-sm mb-2">Yard Price *</label>
           <div className="relative" ref={yardPriceOptionsRef}>
             <input
-              type="number"
+              type="text"
               className={`
                 appearance-none
                 [appearance:textfield]
@@ -444,7 +442,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
               placeholder="00.00"
               value={formData.yardPrice === 0 ? "" : formData.yardPrice}
               onChange={(e) => handleInputChange("yardPrice", e.target.value)}
-              onBlur={(e) => handlePriceBlur("yardPrice", e.target.value)}
+            
  
 
             />
@@ -621,7 +619,11 @@ const YardInfo: React.FC<YardInfoProps> = ({
               placeholder="00.00"
               value={formData.corePrice}
               onChange={(e) => handleInputChange("corePrice", e.target.value)}
-             onBlur={(e) => handlePriceBlur("corePrice", e.target.value)}
+              onBlur={(e) => {
+                  const rawValue = e.target.value || "0";
+                  const value = parseFloat(rawValue).toFixed(2);
+                  handleInputChange("corePrice", value);
+                }}
             />
           </div>
         )}

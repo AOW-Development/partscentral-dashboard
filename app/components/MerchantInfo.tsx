@@ -110,6 +110,14 @@ const MerchantInfo: React.FC<MerchantInfoProps> = ({
                     e.target.value
                   )
                 }
+                 onBlur={(e) => {
+              let value = e.target.value.trim();
+              if (value !== "" && !isNaN(Number(value))) {
+                // Format to 2 decimal places
+                const formatted = parseFloat(value).toFixed(2);
+                handlePaymentEntryChange(entry.id, "totalPrice", formatted);
+              }
+            }}
               />
             </div>
             <div>

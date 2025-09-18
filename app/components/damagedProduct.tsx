@@ -2,10 +2,11 @@
 import React, { ChangeEvent, FocusEvent } from "react";
 import { ChevronDown, Upload, Plus } from "lucide-react";
 import { useDamagedProductStore } from "@/store/damagedProductStore";
-// import ReplacementForm from "./replacement";
+import ReplacementForm from "./replacement";
 
 const DamagedProductForm: React.FC = () => {
-  const { formData, setField, resetForm } = useDamagedProductStore();
+  const { shared, formData, setField, setSharedField, resetForm } =
+    useDamagedProductStore();
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -14,24 +15,25 @@ const DamagedProductForm: React.FC = () => {
   };
 
   const handleSubmit = () => {
-    if (!formData.requestFromCustomer || !formData.customerRefund) {
-      alert("Please fill in required fields!");
+    if (!formData.requestFromCustomer) {
+      alert("Please select a request type!");
       return;
     }
     console.log("Submitting damaged product form:", formData);
     resetForm();
   };
 
-  const handlePriceBlur = (e: FocusEvent<HTMLInputElement>, field: keyof typeof formData) => {
+  const handlePriceBlur = (
+    e: FocusEvent<HTMLInputElement>,
+    field: keyof typeof formData
+  ) => {
     const value = e.target.value;
     const numberValue = parseFloat(value);
-    
-    // Check if the value is a valid number before formatting
+
     if (!isNaN(numberValue)) {
       const formattedValue = numberValue.toFixed(2);
       setField(field, formattedValue);
     } else if (value === "") {
-      // If the field is empty, set it to "0.00"
       setField(field, "0.00");
     }
   };
@@ -72,8 +74,11 @@ const DamagedProductForm: React.FC = () => {
 
   return (
     <div>
-      <h2 className="text-white text-lg font-semibold mb-4">Problematic Parts</h2>
+      <h2 className="text-white text-lg font-semibold mb-4">
+        Problematic Parts
+      </h2>
       <div className="bg-[#0a1929] p-6 rounded-lg shadow-lg relative">
+        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-white text-lg font-semibold">Damaged Product</h3>
           <div className="flex items-center gap-4">
@@ -107,25 +112,33 @@ const DamagedProductForm: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Request from Customer */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-white/60 text-sm mb-2">
-              Request From customer
+              Request From Customer
             </label>
             <div className="relative">
               <select
                 className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white appearance-none"
                 value={formData.requestFromCustomer}
-                onChange={(e) => setField("requestFromCustomer", e.target.value)}
+                onChange={(e) =>
+                  setField("requestFromCustomer", e.target.value)
+                }
               >
                 <option value="">Select</option>
                 <option value="Refund">Refund</option>
                 <option value="Replacement">Replacement</option>
               </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60" size={16} />
+              <ChevronDown
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60"
+                size={16}
+              />
             </div>
-            {/* {formData.requestFromCustomer === "Replacement" && <ReplacementForm />} */}
           </div>
+
+          {/* Return Shipping - common */}
           <div>
             <label className="block text-white/60 text-sm mb-2">
               Return Shipping
@@ -133,32 +146,41 @@ const DamagedProductForm: React.FC = () => {
             <div className="relative">
               <select
                 className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white appearance-none"
-                value={formData.returnShipping}
-                onChange={(e) => setField("returnShipping", e.target.value)}
+                value={shared.returnShipping}
+                onChange={(e) => setSharedField("returnShipping", e.target.value)}
               >
                 <option value="">Select</option>
                 <option value="not required">Not Required</option>
                 <option value="own shipping">Own Shipping</option>
                 <option value="yard shipping">Yard Shipping</option>
               </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60" size={16} />
+              <ChevronDown
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60"
+                size={16}
+              />
             </div>
           </div>
-          {formData.returnShipping === "own shipping" && (
+
+          {/* Shared return shipping extra fields */}
+          {shared.returnShipping !== "not required" && (
             <>
               {renderBolUpload()}
-              <div>
-                <label className="block text-white/60 text-sm mb-2">
-                  Return Shipping Price
-                </label>
-                <input
-                  type="number"
-                  className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white"
-                  value={formData.returnShippingPrice}
-                  onChange={(e) => setField("returnShippingPrice", e.target.value)}
-                  onBlur={(e) => handlePriceBlur(e, "returnShippingPrice")}
-                />
-              </div>
+              {shared.returnShipping === "own shipping" && (
+                <div>
+                  <label className="block text-white/60 text-sm mb-2">
+                    Return Shipping Price
+                  </label>
+                  <input
+                    type="number"
+                    className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white"
+                    value={formData.returnShippingPrice}
+                    onChange={(e) =>
+                      setField("returnShippingPrice", e.target.value)
+                    }
+                    onBlur={(e) => handlePriceBlur(e, "returnShippingPrice")}
+                  />
+                </div>
+              )}
               <div>
                 <label className="block text-white/60 text-sm mb-2">
                   Product Returned
@@ -175,78 +197,76 @@ const DamagedProductForm: React.FC = () => {
               </div>
             </>
           )}
-          {formData.returnShipping === "yard shipping" && (
+
+          {/* Refund-specific */}
+          {formData.requestFromCustomer === "Refund" && (
             <>
-              {renderBolUpload()}
               <div>
                 <label className="block text-white/60 text-sm mb-2">
-                  Product Returned
+                  Customer Refund
                 </label>
                 <select
                   className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white"
-                  value={formData.productReturned}
-                  onChange={(e) => setField("productReturned", e.target.value)}
+                  value={formData.customerRefund}
+                  onChange={(e) => setField("customerRefund", e.target.value)}
                 >
-                  <option value="">Select</option>
+                  <option value="">select</option>
                   <option value="Yes">Yes</option>
                   <option value="No">No</option>
                 </select>
               </div>
+              {formData.customerRefund === "Yes" && (
+                <div>
+                  <label className="block text-white/60 text-sm mb-2">
+                    Amount
+                  </label>
+                  <input
+                    type="number"
+                    className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white"
+                    value={formData.amount}
+                    onChange={(e) => setField("amount", e.target.value)}
+                    onBlur={(e) => handlePriceBlur(e, "amount")}
+                  />
+                </div>
+              )}
+              <div>
+                <label className="block text-white/60 text-sm mb-2">
+                  Yard Refund
+                </label>
+                <select
+                  className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white"
+                  value={formData.yardRefund}
+                  onChange={(e) => setField("yardRefund", e.target.value)}
+                >
+                  <option value="">select</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
+              </div>
+              {formData.yardRefund === "Yes" && (
+                <div>
+                  <label className="block text-white/60 text-sm mb-2">
+                    Yard Amount
+                  </label>
+                  <input
+                    type="number"
+                    className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white"
+                    value={formData.yardAmount}
+                    onChange={(e) => setField("yardAmount", e.target.value)}
+                    onBlur={(e) => handlePriceBlur(e, "yardAmount")}
+                  />
+                </div>
+              )}
             </>
           )}
-          <div>
-            <label className="block text-white/60 text-sm mb-2">
-              Customer Refund
-            </label>
-            <select
-              className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white"
-              value={formData.customerRefund}
-              onChange={(e) => setField("customerRefund", e.target.value)}
-            >
-              <option value="">select</option>
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-            </select>
-          </div>
-          {formData.customerRefund === "Yes" && (
-            <div>
-              <label className="block text-white/60 text-sm mb-2">Amount</label>
-              <input
-                type="number"
-                className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white"
-                value={formData.amount}
-                onChange={(e) => setField("amount", e.target.value)}
-                onBlur={(e) => handlePriceBlur(e, "amount")}
-              />
-            </div>
-          )}
-          <div>
-            <label className="block text-white/60 text-sm mb-2">
-              Yard Refund
-            </label>
-            <select
-              className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white"
-              value={formData.yardRefund}
-              onChange={(e) => setField("yardRefund", e.target.value)}
-            >
-              <option value="">select</option>
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-            </select>
-          </div>
-          {formData.yardRefund === "Yes" && (
-            <div>
-              <label className="block text-white/60 text-sm mb-2">Yard Amount</label>
-              <input
-                type="number"
-                className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white"
-                value={formData.yardAmount}
-                onChange={(e) => setField("yardAmount", e.target.value)}
-                onBlur={(e) => handlePriceBlur(e, "yardAmount")}
-              />
-            </div>
+
+          {/* Replacement-specific */}
+          {formData.requestFromCustomer === "Replacement" && (
+            <ReplacementForm />
           )}
         </div>
+
+        {/* Footer */}
         <div className="mt-8 flex justify-end">
           <button
             onClick={handleSubmit}
