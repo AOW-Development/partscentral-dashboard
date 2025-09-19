@@ -2510,9 +2510,11 @@ const OrderDetails = () => {
                     </div>
                   )}
                   <div className="relative">
+                    
                     <label className="block text-white/60 text-sm mb-2">
                       Part Price *
                     </label>
+                    
                     <div className="relative" ref={priceOptionsRef}>
                       <input
                         type="number"

@@ -200,10 +200,13 @@ const OwnShippingInfo: React.FC<OwnShippingInfoProps> = ({ formData, setFormData
         </div>
         {/* Price */}
         <div>
-          <label className="block text-white/60 text-sm mb-2">Price</label>
+          <label className="block text-white/60 text-sm mb-2 pr-1">Price</label>
+            <div className="relative">
+             {/* Dollar sign on the left */}
+            <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
           <input
             type="number"
-            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-5 py-3 text-white focus:border-blue-500 focus:outline-none"
             placeholder="Enter price"
             value={formData.ownShippingInfo.price}
             onChange={(e) =>
@@ -219,6 +222,7 @@ const OwnShippingInfo: React.FC<OwnShippingInfoProps> = ({ formData, setFormData
             onBlur={(e) => handleNumericBlur("price", e.target.value)}
             
           />
+          </div>
         </div>
         {/* Variance */}
         <div>
@@ -242,9 +246,12 @@ const OwnShippingInfo: React.FC<OwnShippingInfoProps> = ({ formData, setFormData
         </div>
           <div>
           <label className="block text-white/60 text-sm mb-2">Total Buy</label>
+          <div className="relative">
+             {/* Dollar sign on the left */}
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-1">$</span>
           <input
             type="number"
-            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-5 py-3 text-white focus:border-blue-500 focus:outline-none"
             placeholder="Enter total buy"
            value={
                   (
@@ -258,7 +265,7 @@ const OwnShippingInfo: React.FC<OwnShippingInfoProps> = ({ formData, setFormData
                  ).toFixed(2)
                 }
           />
-          
+          </div>
         </div>
         {/* Create BOL Button */}
         <div className="flex justify-end">
