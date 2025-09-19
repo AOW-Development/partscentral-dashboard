@@ -601,15 +601,15 @@ const OrderDetails = () => {
   });
 
   // Auto-show alternate mobile field if data exists
-  useEffect(() => {
-    if (
-      !loadingOrder &&
-      formData.alternateMobile &&
-      formData.alternateMobile.trim() !== ""
-    ) {
-      setShowAlternateMobileNumber(true);
-    }
-  }, [formData.alternateMobile, loadingOrder]);
+  // useEffect(() => {
+  //   if (
+  //     !loadingOrder &&
+  //     formData.alternateMobile &&
+  //     formData.alternateMobile.trim() !== ""
+  //   ) {
+  //     setShowAlternateMobileNumber(true);
+  //   }
+  // }, [formData.alternateMobile, loadingOrder]);
 
   // Auto-show alternate card section if data exists
   useEffect(() => {
