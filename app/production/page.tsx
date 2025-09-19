@@ -7,6 +7,7 @@ import Pagination from "../components/Pagination";
 // import { useState } from "react";
 import ProtectRoute from "../components/ProtectRoute";
 import { URL } from "@/utils//imageUrl";
+import { Pencil } from "lucide-react";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -16,58 +17,88 @@ export default function ProductionPage() {
   const [search, setSearch] = useState("");
   const [engineType, setEngineType] = useState("All");
   const [stock, setStock] = useState("All");
+  const [openActionMenu, setOpenActionMenu] = useState<number | null>(null);
 
   // Demo data for filtering
   const products = [
     {
       id: 1,
-      type: "Engines",
-      stock: "Instock",
-      name: "GASOLINE",
-      image: "engine1.png",
+      make: "Ford",
+      model: "Aspire",
+      year: "2019",
+      part: "Engine",
+      specification:
+        "4.9L | from 2/3/91 (AIR inner manifold) | E4OD transmission",
+      amount: 500,
+      status: "Instock",
+
+      // image: "engine1.png",
     },
     {
       id: 2,
 
-      type: "Engines",
-      stock: "Instock",
-      name: "DIESEL",
-      image: "engine1.png",
+      make: "Ford",
+      model: "Aspire",
+      year: "2019",
+      part: "Engine",
+      specification:
+        "4.9L | from 2/3/91 (AIR inner manifold) | E4OD transmission",
+      amount: 500,
+      status: "Instock",
+
+      // image: "engine1.png",
     },
     {
       id: 3,
-      type: "Transmission",
-      stock: "Instock",
-      name: "AUTO",
-      image: "engine1.png",
+      make: "Ford",
+      model: "Aspire",
+      year: "2019",
+      part: "Engine",
+      specification:
+        "4.9L | from 2/3/91 (AIR inner manifold) | E4OD transmission",
+      amount: 500,
+      status: "Instock",
+
+      // image: "engine1.png",
     },
     {
       id: 4,
-      type: "Brakes",
-      stock: "Outstock",
-      name: "BRAKE KIT",
-      image: "engine1.png",
+      make: "Ford",
+      model: "Aspire",
+      year: "2019",
+      part: "Engine",
+      specification:
+        "4.9L | from 2/3/91 (AIR inner manifold) | E4OD transmission",
+      amount: 500,
+      status: "Outstock",
+
+      // image: "engine1.png",
     },
     {
       id: 5,
-      type: "Engines",
-      stock: "Outstock",
-      name: "GASOLINE",
-      image: "engine1.png",
+      make: "Ford",
+      model: "Aspire",
+      year: "2019",
+      part: "Trasmission",
+      specification:
+        "4.9L | from 2/3/91 (AIR inner manifold) | E4OD transmission",
+      amount: 500,
+      status: "Outstock",
+
+      // image: "engine1.png",
     },
     {
       id: 6,
-      type: "Transmission",
-      stock: "Instock",
-      name: "MANUAL",
-      image: "engine1.png",
-    },
-    {
-      id: 7,
-      type: "Transmission",
-      stock: "Instock",
-      name: "MANUAL",
-      image: "engine1.png",
+      make: "Ford",
+      model: "Aspire",
+      year: "2019",
+      part: "Transmission",
+      specification:
+        "4.9L | from 2/3/91 (AIR inner manifold) | E4OD transmission",
+      amount: 500,
+      status: "Instock",
+
+      // image: "engine1.png",
     },
   ];
   const startIndex = (currentPage - 1) * 50;
@@ -77,11 +108,33 @@ export default function ProductionPage() {
   const filteredProducts = filtered.filter((p) => {
     // Show all if default selected
     const engineMatch =
-      engineType === "" || engineType === "All" || p.type === engineType;
-    const stockMatch = stock === "" || stock === "All" || p.stock === stock;
-    const searchMatch = p.name.toLowerCase().includes(search.toLowerCase());
+      engineType === "" || engineType === "All" || p.make === engineType;
+    const stockMatch = stock === "" || stock === "All" || p.status === stock;
+    const searchMatch = p.part.toLowerCase().includes(search.toLowerCase());
     return engineMatch && stockMatch && searchMatch;
   });
+
+  // Handle delete product
+  const handleDeleteProduct = async (productId: number) => {
+    if (
+      !confirm(
+        "Are you sure you want to delete this product? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      // Add your delete product API call here
+      // await deleteProduct(productId);
+      console.log("Deleting product:", productId);
+      setOpenActionMenu(null);
+      alert("Product deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      alert("Failed to delete product. Please try again.");
+    }
+  };
 
   return (
     <ProtectRoute>
@@ -132,7 +185,7 @@ export default function ProductionPage() {
                   <option>All</option>
                   <option>Engines</option>
                   <option>Transmission</option>
-                  <option>Brakes</option>
+                  {/* <option>Brakes</option> */}
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white">
                   <svg
@@ -224,6 +277,9 @@ export default function ProductionPage() {
                         Part
                       </th>
                       <th className="px-6 py-4 text-left text-sm font-medium text-gray-300">
+                        Specification
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-gray-300">
                         Amount
                       </th>
                       <th className="px-6 py-4 text-left text-sm font-medium text-gray-300">
@@ -247,41 +303,81 @@ export default function ProductionPage() {
                             className="rounded border-gray-600 bg-[#091e36] text-blue-600 focus:ring-blue-500"
                           />
                         </td>
-                        <td className="px-6 py-4 text-sm text-white">022705</td>
-                        <td className="px-6 py-4 text-sm text-white">Ford</td>
-                        <td className="px-6 py-4 text-sm text-white">Aspire</td>
-                        <td className="px-6 py-4 text-sm text-white">2019</td>
                         <td className="px-6 py-4 text-sm text-white">
-                          {product.name}
+                          {product.id}
                         </td>
-                        <td className="px-6 py-4 text-sm text-white">$500</td>
+                        <td className="px-6 py-4 text-sm text-white">
+                          {product.make}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-white">
+                          {product.model}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-white">
+                          {product.year}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-white">
+                          {product.part}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-white">
+                          {product.specification}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-white">
+                          {product.amount}
+                        </td>
                         <td className="px-6 py-4">
                           <span
                             className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
-                              product.stock === "Outstock"
+                              product.status === "Outstock"
                                 ? "bg-red-500 text-white"
                                 : "bg-green-500 text-white"
                             }`}
                           >
-                            {product.stock}
+                            {product.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <Link href={"/production/" + product.id}>
-                            <button className="text-gray-400 hover:text-white transition-colors">
-                              <svg
-                                width="16"
-                                height="16"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                viewBox="0 0 24 24"
+                        <td className="px-6 py-4 relative">
+                          <button
+                            className="text-white hover:text-blue-400"
+                            onClick={() =>
+                              setOpenActionMenu(
+                                openActionMenu === idx ? null : idx
+                              )
+                            }
+                            type="button"
+                          >
+                            <Pencil className="w-5 h-4 ml-3 cursor-pointer" />
+                          </button>
+                          {openActionMenu === idx && (
+                            <div
+                              className="absolute right-8 top-1 z-50 bg-gray-300 rounded-lg shadow-lg border-2 border-blue-300 min-w-[160px] p-2 flex flex-col animate-fadeIn"
+                              style={{
+                                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                              }}
+                            >
+                              <Link
+                                href={`/production/${product.id}`}
+                                className="text-black text-base px-2 py-1 text-left rounded hover:bg-gray-200"
+                                onClick={() => setOpenActionMenu(null)}
+                                type="button"
                               >
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                              </svg>
-                            </button>
-                          </Link>
+                                Details
+                              </Link>
+                              <button
+                                className="text-red-600 text-base px-2 py-1 text-left rounded hover:bg-red-100"
+                                // onClick={() => handleDeleteProduct(product.id)}
+                                type="button"
+                              >
+                                Update Product
+                              </button>
+                              <button
+                                className="text-red-600 text-base px-2 py-1 text-left rounded hover:bg-red-100"
+                                onClick={() => handleDeleteProduct(product.id)}
+                                type="button"
+                              >
+                                Remove Product
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}
