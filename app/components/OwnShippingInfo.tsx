@@ -17,7 +17,7 @@ interface OwnShippingInfoProps {
       price: string;
       variance: string;
       bolNumber: string;
-      totalBuy: string;
+      owntotalBuy: string;
     };
   };
 

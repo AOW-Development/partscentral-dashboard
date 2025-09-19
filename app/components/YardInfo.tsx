@@ -37,7 +37,7 @@ interface FormData {
   yardMiles: string | number;
   yardShipping: string;
   yardCost: string | number;
-  totalBuy: string | number;
+  yardtotalBuy: string | number;
   reason?: string;
   yardCharge?: string;
 }
@@ -453,7 +453,6 @@ const handlePriceBlur = (field: keyof typeof formData, value: string | number) =
               value={formData.yardPrice === 0 ? "" : formData.yardPrice}
               onChange={(e) => handleInputChange("yardPrice", e.target.value)}
             
- 
 
             />
             <button

@@ -78,7 +78,7 @@ export type OrderFormData = {
   yardMiles: string | number;
   yardShipping: string;
   yardCost: string;
-  totalBuy: string | number;
+  yardtotalBuy: string | number;
   pictureStatus: string;
   pictureUrl: string;
   carrierName: string;
@@ -103,7 +103,7 @@ export type OrderFormData = {
     price: string;
     variance: string;
     bolNumber: string;
-    totalBuy: string;
+    owntotalBuy: string;
   };
 };
 // --- End strong types for cart mapping ---
@@ -161,7 +161,7 @@ type PreviousYard = {
   yardCost: string | number;
   reason?: string;
   yardCharge?: string;
-  totalBuy?: string | number;
+  yardtotalBuy?: string | number;
 };
 
 interface CartItem {
@@ -232,7 +232,7 @@ const OrderDetails = () => {
                     : item.yardCost?.yardShippingCost?.toString() || "0",
                 reason: item.reason || "",
                 yardCharge: item.yardCharge || "",
-                totalBuy: item.totalBuy || "",
+                yardtotalBuy: item.yardtotalBuy || "",
               }))
             : [];
           setPreviousYards(yardHistory);
@@ -410,7 +410,7 @@ const OrderDetails = () => {
               price: ownShipping.price || "",
               variance: ownShipping.variance || "",
               bolNumber: ownShipping.bolNumber || "",
-              totalBuy: ownShipping.totalBuy || "",
+              owntotalBuy: ownShipping.totalBuy || "",
             },
           });
           console.log("formData after loading order:", formData);
@@ -568,7 +568,7 @@ const OrderDetails = () => {
     yardMiles: "",
     yardShipping: "",
     yardCost: "",
-    totalBuy: "",
+    yardtotalBuy: "",
     pictureStatus: "",
     pictureUrl: "",
     carrierName: "",
@@ -594,7 +594,7 @@ const OrderDetails = () => {
       price: "",
       variance: "",
       bolNumber: "",
-      totalBuy: "",
+      owntotalBuy: "",
     },
   });
 
@@ -618,7 +618,7 @@ const OrderDetails = () => {
       yardCost: formData.yardCost.toString(),
       reason: reason.trim(),
       yardCharge: yardCharge.trim(),
-      totalBuy: formData.totalBuy.toString(),
+      yardtotalBuy: formData.yardtotalBuy.toString(),
     };
 
     if (currentYard.yardName && currentYard.yardAddress) {
@@ -636,7 +636,7 @@ const OrderDetails = () => {
       yardMiles: "",
       yardShipping: "",
       yardCost: "",
-      totalBuy: "",
+      yardtotalBuy: "",
     }));
   };
 
@@ -747,7 +747,7 @@ const OrderDetails = () => {
         const yardCost = parseFloat(newData.yardCost.toString()) || 0;
         const yardTaxesPrice =
           parseFloat(newData.taxesYardPrice.toString()) || 0;
-        newData.totalBuy = (yardPrice + yardCost).toFixed(2);
+        newData.yardtotalBuy = (yardPrice + yardCost).toFixed(2);
       }
 
       return newData;
@@ -1101,15 +1101,27 @@ const OrderDetails = () => {
       if (
         field === "yardPrice" ||
         field === "yardCost" ||
-        field === "taxesYardPrice"
+        field === "taxesYardPrice"||
+        field === "handlingYardPrice" ||
+        field === "processingYardPrice" ||
+        field === "coreYardPrice"
       ) {
         const yardPrice = parseFloat(newData.yardPrice?.toString() || "0");
         const yardCost = parseFloat(newData.yardCost?.toString() || "0");
         const taxesYardPrice = parseFloat(
           newData.taxesYardPrice?.toString() || "0"
         );
+         const handlingYardPrice = parseFloat(
+          newData.handlingYardPrice?.toString() || "0"
+        );
+         const processingYardPrice = parseFloat(
+          newData.processingYardPrice?.toString() || "0"
+        );
+         const coreYardPrice = parseFloat(
+          newData.coreYardPrice?.toString() || "0"
+        );
 
-        newData.totalBuy = (yardPrice + yardCost + taxesYardPrice).toFixed(2);
+        newData.yardtotalBuy = (yardPrice + yardCost + taxesYardPrice + handlingYardPrice + processingYardPrice +coreYardPrice).toFixed(2);
       }
 
       return newData;
@@ -2070,26 +2082,51 @@ const OrderDetails = () => {
     );
   }, []);
 
-  useEffect(() => {
-    const selling = parseFloat(formData.totalSellingPrice.toString()) || 0;
-    const yardPrice = parseFloat(formData.yardPrice.toString()) || 0;
-    const taxesYardPrice = parseFloat(formData.taxesYardPrice.toString()) || 0;
-    const processingYardPrice =
-      parseFloat(formData.processingYardPrice.toString()) || 0;
-    const handlingYardPrice =
-      parseFloat(formData.handlingYardPrice.toString()) || 0;
-    const coreYardPrice = parseFloat(formData.coreYardPrice.toString()) || 0;
+ useEffect(() => {
+  const selling = parseFloat(formData.totalSellingPrice?.toString() || "0");
+  const yardPrice = parseFloat(formData.yardPrice?.toString() || "0");
+  const taxesYardPrice = parseFloat(formData.taxesYardPrice?.toString() || "0");
+  const processingYardPrice = parseFloat(formData.processingYardPrice?.toString() || "0");
+  const handlingYardPrice = parseFloat(formData.handlingYardPrice?.toString() || "0");
+  const coreYardPrice = parseFloat(formData.coreYardPrice?.toString() || "0");
+  const yardCost = parseFloat(formData.yardCost?.toString() || "0");
+  const ownPrice = parseFloat(formData.ownShippingInfo?.price?.toString() || "0");
 
-    const yardCost = parseFloat(formData.yardCost.toString()) || 0;
-    const totalBuy =
-      yardPrice +
-      yardCost +
-      taxesYardPrice +
-      processingYardPrice +
-      handlingYardPrice +
-      coreYardPrice;
-    setGrossProfit(selling - totalBuy);
-  }, [formData.totalSellingPrice, formData.yardPrice, formData.yardCost]);
+  // total buy if shipping from yard
+  const yardtotalBuy =
+    yardPrice +
+    yardCost +
+    taxesYardPrice +
+    processingYardPrice +
+    handlingYardPrice +
+    coreYardPrice;
+
+  // total buy if own shipping
+  const owntotalBuy =
+    yardPrice +
+    taxesYardPrice +
+    processingYardPrice +
+    coreYardPrice +
+    ownPrice+
+    handlingYardPrice;
+
+  if (formData.yardShipping === "Yard Shipping") {
+    setGrossProfit(selling - yardtotalBuy);
+  } else if(formData.yardShipping === "Own Shipping") {
+    setGrossProfit(selling - owntotalBuy);
+  }
+}, [
+  formData.totalSellingPrice,
+  formData.yardPrice,
+  formData.yardCost,
+  formData.taxesYardPrice,
+  formData.processingYardPrice,
+  formData.handlingYardPrice,
+  formData.coreYardPrice,
+  formData.ownShippingInfo?.price,
+  formData.yardShipping,
+]);
+
   // Function to calculate total buy
   // const getTotalBuy = () => {
   //   const yardPrice = parseFloat(formData.yardPrice?.toString() || "0");
@@ -3592,7 +3629,7 @@ const OrderDetails = () => {
                   yardMiles: formData.yardMiles,
                   yardShipping: formData.yardShipping,
                   yardCost: formData.yardCost,
-                  totalBuy: formData.yardCost + formData.yardPrice,
+                  yardtotalBuy: formData.yardCost + formData.yardPrice + formData.processingYardPrice + formData.taxesYardPrice+formData.handlingYardPrice + formData.coreYardPrice,
                   // yardCharge: formData.yardCharge,
                 }}
                 handleInputChange={handleInputChange}

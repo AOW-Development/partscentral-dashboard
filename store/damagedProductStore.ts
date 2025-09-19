@@ -20,30 +20,30 @@ export interface DamagedProductForm {
 
 // --- Replacement form data ---
 export interface ReplacementFormData {
-  hasReplacement: string; // "Yes" | "No" | ""
-  carrierName: string; // Used for the 'Yes' option
-  trackingNumber: string; // Used for the 'Yes' option
-  eta: string; // Used for the 'Yes' option
-  yardName: string; // Used for the 'No' option
-  attnName: string; // Added to store the attention name
-  yardAddress: string; // Used for the 'No' option
-  yardPhone: string; // Used for the 'No' option
-  yardEmail: string; // Used for the 'No' option
-  warranty: string; // Used for the 'No' option
-  yardMiles: string; // Added to store the miles
-  shipping: string; // Renamed from 'offering' to match design, used for 'No'
+  hasReplacement: string; 
+  carrierName: string; 
+  trackingNumber: string; 
+  eta: string; 
+  yardName: string; 
+  attnName: string; 
+  yardAddress: string; 
+  yardPhone: string; 
+  yardEmail: string; 
+  warranty: string; 
+  yardMiles: string; 
+  shipping: string; 
   replacementPrice: string;
-  taxesPrice?: string; // Added new price field
-  handlingPrice?: string; // Added new price field
-  processingPrice?: string; // Added new price field
-  corePrice?: string; // Added new price field
-  yardCost?: string; // Added to store yard shipping cost
+  taxesPrice?: string; 
+  handlingPrice?: string; 
+  processingPrice?: string; 
+  corePrice?: string; 
+  yardCost?: string; 
   returnShippingPrice: string;
   productReturned: string;
-  pictureStatus: string; // New field for the 'No' option
-  redeliveryCarrierName: string; // New field for the 'No' option's tracking details
-  redeliveryTrackingNumber: string; // New field for the 'No' option's tracking details
-  poStatus: string; // New field to store PO status
+  pictureStatus: string;
+  redeliveryCarrierName: string; 
+  redeliveryTrackingNumber: string; 
+  poStatus: string; 
 }
 
 interface DamagedProductState {
