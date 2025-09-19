@@ -1832,7 +1832,7 @@ const OrderDetails = () => {
       const updatedFormData = {
         ...formData,
         // warranty: mapWarrantyToPrismaEnum(formData.warranty),
-        status: formData.status || "NA",
+        status: formData.status || "order created",
         customerNotes: customerNotes,
         yardNotes: yardNotes,
         approvalCode: paymentEntry.approvalCode || "",
