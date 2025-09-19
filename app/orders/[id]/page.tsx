@@ -83,6 +83,7 @@ export type OrderFormData = {
   pictureUrl: string;
   carrierName: string;
   trackingNumber: string;
+  estimatedDeliveryDate: string;
   customerNotes: any;
   yardNotes: any;
   invoiceStatus: string;
@@ -150,11 +151,11 @@ type PreviousYard = {
   yardAddress: string;
   yardMobile: string;
   yardEmail: string;
-  yardPrice: string | number;
-  taxesYardPrice: string | number;
-  processingYardPrice: string | number;
-  handlingYardPrice: string | number;
-  coreYardPrice: string | number;
+  yardPrice: string;
+  taxesYardPrice?: string | number;
+  handlingYardPrice?: string | number;
+  processingYardPrice?: string | number;
+  coreYardPrice?: string | number;
   yardWarranty: string;
   yardMiles: string | number;
   yardShipping: string;
@@ -372,7 +373,7 @@ const OrderDetails = () => {
             // Notes and metadata
             notes: data.notes || "",
             vinNumber: data.vinNumber || "",
-
+            estimatedDeliveryDate: data.estimatedDeliveryDate || "",
             // Yard info
             yardName: yard.yardName || "",
             yardMobile: yard.yardMobile || "",
@@ -573,6 +574,7 @@ const OrderDetails = () => {
     pictureUrl: "",
     carrierName: "",
     trackingNumber: "",
+    estimatedDeliveryDate: "",
     customerNotes: "",
     yardNotes: "",
     invoiceStatus: "",
@@ -597,6 +599,77 @@ const OrderDetails = () => {
       owntotalBuy: "",
     },
   });
+
+  // Auto-show alternate mobile field if data exists
+  useEffect(() => {
+    if (
+      !loadingOrder &&
+      formData.alternateMobile &&
+      formData.alternateMobile.trim() !== ""
+    ) {
+      setShowAlternateMobileNumber(true);
+    }
+  }, [formData.alternateMobile, loadingOrder]);
+
+  // Auto-show alternate card section if data exists
+  useEffect(() => {
+    if (!loadingOrder) {
+      if (
+        formData.alternateCardHolderName ||
+        formData.alternateCardNumber ||
+        formData.alternateCardDate ||
+        formData.alternateCardCvv
+      ) {
+        setCardEntry(true);
+      }
+    }
+  }, [
+    formData.alternateCardHolderName,
+    formData.alternateCardNumber,
+    formData.alternateCardDate,
+    formData.alternateCardCvv,
+    loadingOrder,
+  ]);
+
+  // Auto-show additional price fields if data exists
+  useEffect(() => {
+    if (!loadingOrder) {
+      const newVisibleFields = { ...visiblePriceFields };
+
+      if (
+        formData.taxesPrice &&
+        parseFloat(formData.taxesPrice.toString()) > 0
+      ) {
+        newVisibleFields.taxesPrice = true;
+      }
+
+      if (
+        formData.handlingPrice &&
+        parseFloat(formData.handlingPrice.toString()) > 0
+      ) {
+        newVisibleFields.handlingPrice = true;
+      }
+
+      if (
+        formData.processingPrice &&
+        parseFloat(formData.processingPrice.toString()) > 0
+      ) {
+        newVisibleFields.processingPrice = true;
+      }
+
+      if (formData.corePrice && parseFloat(formData.corePrice.toString()) > 0) {
+        newVisibleFields.corePrice = true;
+      }
+
+      setVisiblePriceFields(newVisibleFields);
+    }
+  }, [
+    formData.taxesPrice,
+    formData.handlingPrice,
+    formData.processingPrice,
+    formData.corePrice,
+    loadingOrder,
+  ]);
 
   const handleYardMoved = (reason: string, yardCharge: string) => {
     addYardNote(`Yard Removed. Reason: ${reason}`, "By Agent");
@@ -1084,6 +1157,7 @@ const OrderDetails = () => {
       totalPrice: "",
       approvalCode: "",
       entity: "",
+      cardChargedDate: "",
       charged: "",
       chargeClicked: false,
     },
@@ -1184,6 +1258,7 @@ const OrderDetails = () => {
         totalPrice: "",
         approvalCode: "",
         entity: "",
+        cardChargedDate: "",
         charged: "",
         chargeClicked: false,
       },
@@ -2299,6 +2374,7 @@ const OrderDetails = () => {
                     <option value="unpaid">Unpaid</option>
                     <option value="paid">Paid</option>
                     <option value="balance due">Balance Due</option>
+                    <option value="yard located">Yard Located</option>
                     <option value="po sent">PO Sent</option>
                     <option value="po confirmed">PO Confirmed</option>
                     <option value="picture sent">Picture Sent</option>
@@ -2314,6 +2390,8 @@ const OrderDetails = () => {
                       Delivery Appointment done
                     </option>
                     <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                    <option value="refunded">Refunded</option>
                   </select>
                   <button className="text-white/60 hover:text-white">
                     <svg
@@ -3824,7 +3902,7 @@ const OrderDetails = () => {
                 />
               )}
             </div>
-            <div className="grid md:grid-cols-3 gap-10">
+            <div className="grid md:grid-cols-4 gap-10">
               <div>
                 <label className="block text-white/60 text-sm mb-2">
                   Carrier Name
@@ -3850,6 +3928,21 @@ const OrderDetails = () => {
                   value={formData.trackingNumber}
                   onChange={(e) =>
                     handleInputChange("trackingNumber", e.target.value)
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-white/60 text-sm mb-2">
+                  Estimated Delivery Date
+                </label>
+                <input
+                  type="date"
+                  className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                  placeholder="Estimated Delivery Date"
+                  // value=""
+                  value={formData.estimatedDeliveryDate}
+                  onChange={(e) =>
+                    handleInputChange("estimatedDeliveryDate", e.target.value)
                   }
                 />
               </div>
