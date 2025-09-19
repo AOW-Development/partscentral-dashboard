@@ -2,6 +2,11 @@ import React from "react";
 
 interface OwnShippingInfoProps {
   formData: {
+    yardPrice?: string | number;
+    taxesYardPrice?: string | number;
+    handlingYardPrice?: string | number;
+    processingYardPrice?: string | number;
+    coreYardPrice?: string;
     ownShippingInfo: {
       productType: string;
       packageType: string;
@@ -15,11 +20,12 @@ interface OwnShippingInfoProps {
       totalBuy: string;
     };
   };
-  
+
   setFormData: React.Dispatch<React.SetStateAction<any>>;
   handleCreateBOL: () => void;
   ChevronDown: React.ElementType;
 }
+
 const OwnShippingInfo: React.FC<OwnShippingInfoProps> = ({ formData, setFormData, handleCreateBOL, ChevronDown }) => {
   const formatToTwoDecimals = (value: string): string => {
     if (!value || value === "") return ""
@@ -240,7 +246,17 @@ const OwnShippingInfo: React.FC<OwnShippingInfoProps> = ({ formData, setFormData
             type="number"
             className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
             placeholder="Enter total buy"
-            value={formData.ownShippingInfo.totalBuy}
+           value={
+                  (
+                   (Number(formData.yardPrice) || 0) +
+                  (Number(formData.taxesYardPrice) || 0) +
+                (Number(formData.handlingYardPrice) || 0) +
+                    (Number(formData.processingYardPrice) || 0) +
+                      (Number(formData.coreYardPrice) || 0) +
+                 (Number(formData.ownShippingInfo.price) || 0) 
+                
+                 ).toFixed(2)
+                }
           />
           
         </div>

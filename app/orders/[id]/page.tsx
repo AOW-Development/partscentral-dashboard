@@ -69,7 +69,11 @@ export type OrderFormData = {
   yardMobile: string;
   yardAddress: string;
   yardEmail: string;
-  yardPrice: String | number;
+  yardPrice: string | number;
+  taxesYardPrice: string|number;
+  processingYardPrice: string|number;
+  handlingYardPrice:string|number;
+  coreYardPrice:string|number;
   yardWarranty: string;
   yardMiles: string | number;
   yardShipping: string;
@@ -147,6 +151,10 @@ type PreviousYard = {
   yardMobile: string;
   yardEmail: string;
   yardPrice: string | number;
+  taxesYardPrice: string | number;
+  processingYardPrice: string | number;
+  handlingYardPrice: string | number;
+  coreYardPrice: string | number;
   yardWarranty: string;
   yardMiles: string | number;
   yardShipping: string;
@@ -553,6 +561,10 @@ const OrderDetails = () => {
     yardAddress: "",
     yardEmail: "",
     yardPrice: "",
+    taxesYardPrice: "", 
+    handlingYardPrice: "",
+    processingYardPrice: "",
+    coreYardPrice:"", 
     yardWarranty: "",
     yardMiles: "",
     yardShipping: "",
@@ -584,6 +596,7 @@ const OrderDetails = () => {
       variance: "",
       bolNumber: "",
       totalBuy: "",
+      
     },
   });
 
@@ -597,6 +610,10 @@ const OrderDetails = () => {
       yardMobile: formData.yardMobile,
       yardEmail: formData.yardEmail,
       yardPrice: formData.yardPrice.toString(),
+      taxesYardPrice: formData.taxesYardPrice.toString(),
+      handlingYardPrice: formData.handlingYardPrice.toString(),
+      processingYardPrice: formData.processingYardPrice.toString(),
+      coreYardPrice: formData.coreYardPrice.toString(),
       yardWarranty: formData.yardWarranty,
       yardMiles: formData.yardMiles.toString(),
       yardShipping: formData.yardShipping,
@@ -714,6 +731,7 @@ const OrderDetails = () => {
     });
   };
 
+
   // Helper function to handle any form field change
   const handleFormFieldChange = (field: keyof OrderFormData, value: any) => {
     setFormData((prev) => {
@@ -723,9 +741,10 @@ const OrderDetails = () => {
       };
 
       // Update totalBuy when yardPrice or yardCost changes
-      if (field === "yardPrice" || field === "yardCost") {
+      if (field === "yardPrice" || field === "yardCost" || field === "taxesYardPrice") {
         const yardPrice = parseFloat(newData.yardPrice.toString()) || 0;
         const yardCost = parseFloat(newData.yardCost.toString()) || 0;
+        const yardTaxesPrice= parseFloat(newData.taxesYardPrice.toString())||0;
         newData.totalBuy = (yardPrice + yardCost).toFixed(2);
       }
 
@@ -1069,40 +1088,30 @@ const OrderDetails = () => {
   ]);
 
   // Handle form field changes
-  // const handleInputChange = (field: string, value: string) => {
-  //   setFormData((prev) => {
-  //     const newData = {
-  //       ...prev,
-  //       [field]: value,
-  //     };
-
-  //     // Update totalBuy when yardPrice or yardCost changes
-  //     if (field === "yardPrice" || field === "yardCost") {
-  //       const yardPrice = parseFloat(newData.yardPrice.toString()) || 0;
-  //       const yardCost = parseFloat(newData.yardCost.toString()) || 0;
-  //       newData.totalBuy = (yardPrice + yardCost).toFixed(2);
-  //     }
-
-  //     return newData;
-  //   });
-
-  //   // Clear field error when user starts typing
-  //   if (fieldErrors[field]) {
-  //     setFieldErrors((prev) => ({
-  //       ...prev,
-  //       [field]: "",
-  //     }));
-  //   }
-  // };
-
-
   const handleInputChange = (field: string, value: string) => {
-  setFormData((prev) => ({
-    ...prev,
-    [field]: value,
-  }));
+  setFormData((prev) => {
+    const newData = {
+      ...prev,
+      [field]: value,
+    };
 
-  // Clear field error when user starts typing
+    // Update totalBuy (Yard total)
+    if (
+      field === "yardPrice" ||
+      field === "yardCost" ||
+      field === "taxesYardPrice"
+    ) {
+      const yardPrice = parseFloat(newData.yardPrice?.toString() || "0");
+      const yardCost = parseFloat(newData.yardCost?.toString() || "0");
+      const taxesYardPrice = parseFloat(newData.taxesYardPrice?.toString() || "0");
+
+      newData.totalBuy = (yardPrice + yardCost + taxesYardPrice).toFixed(2);
+    }
+
+    return newData;
+  });
+
+  // clear error if any
   if (fieldErrors[field]) {
     setFieldErrors((prev) => ({
       ...prev,
@@ -1110,6 +1119,25 @@ const OrderDetails = () => {
     }));
   }
 };
+
+
+  
+
+
+//   const handleInputChange = (field: string, value: string) => {
+//   setFormData((prev) => ({
+//     ...prev,
+//     [field]: value,
+//   }));
+
+//   // Clear field error when user starts typing
+//   if (fieldErrors[field]) {
+//     setFieldErrors((prev) => ({
+//       ...prev,
+//       [field]: "",
+//     }));
+//   }
+// };
 
 
   const handleOwnShippingInfoChange = (field: string, value: string) => {
@@ -2043,45 +2071,53 @@ const OrderDetails = () => {
     );
   }, []);
 
-  // useEffect(() => {
-  //   const selling = parseFloat(formData.totalSellingPrice.toString()) || 0;
-  //   const yardPrice = parseFloat(formData.yardPrice.toString()) || 0;
-  //   const yardCost = parseFloat(formData.yardCost.toString()) || 0;
-  //   const totalBuy = yardPrice + yardCost;
-  //   setGrossProfit(selling - totalBuy);
-  // }, [formData.totalSellingPrice, formData.yardPrice, formData.yardCost]);
+  useEffect(() => {
+    const selling = parseFloat(formData.totalSellingPrice.toString()) || 0;
+    const yardPrice = parseFloat(formData.yardPrice.toString()) || 0;
+    const taxesYardPrice = parseFloat(formData.taxesYardPrice.toString()) || 0;
+    const processingYardPrice = parseFloat(formData.processingYardPrice.toString()) || 0;
+    const handlingYardPrice = parseFloat(formData.handlingYardPrice.toString()) || 0;
+    const coreYardPrice = parseFloat(formData.coreYardPrice.toString()) || 0;
+
+    const yardCost = parseFloat(formData.yardCost.toString()) || 0;
+    const totalBuy = yardPrice + yardCost + taxesYardPrice + processingYardPrice + handlingYardPrice + coreYardPrice;
+    setGrossProfit(selling - totalBuy);
+  }, [formData.totalSellingPrice, formData.yardPrice, formData.yardCost]);
 // Function to calculate total buy
-const getTotalBuy = () => {
-  const yardPrice = parseFloat(formData.yardPrice?.toString() || "0");
-  const yardCost = parseFloat(formData.yardCost?.toString() || "0");
-  const ownPrice = parseFloat(formData.ownShippingInfo?.price?.toString() || "0");
+// const getTotalBuy = () => {
+//   const yardPrice = parseFloat(formData.yardPrice?.toString() || "0");
+//   const yardCost = parseFloat(formData.yardCost?.toString() || "0");
+//   const ownPrice = parseFloat(formData.ownShippingInfo?.price?.toString() || "0");
 
-  if (formData.shippingAddressType === "yard") return yardPrice + yardCost;
-  if (formData.shippingAddressType === "own") return yardPrice + ownPrice;
-  return 0;
-};
+//   if (formData.shippingAddressType === "yard") return yardPrice + yardCost;
+//   if (formData.shippingAddressType === "own") return yardPrice + ownPrice;
+//   return 0;
+// };
 
-// Update totalBuy in formData whenever relevant fields change
-useEffect(() => {
-  const totalBuy = getTotalBuy();
-  setFormData(prev => ({
-    ...prev,
-    totalBuy: totalBuy.toString(),
-    ownShippingInfo: {
-      ...prev.ownShippingInfo,
-      totalBuy: totalBuy.toString(),
-    },
-  }));
+// // Update totalBuy in formData whenever relevant fields change
+// useEffect(() => {
+//   const totalBuy = getTotalBuy();
 
-  const selling = parseFloat(formData.totalSellingPrice?.toString() || "0");
-  setGrossProfit(selling - totalBuy);
-}, [
-  formData.totalSellingPrice,
-  formData.yardPrice,
-  formData.yardCost,
-  formData.ownShippingInfo?.price,
-  formData.shippingAddressType,
-]);
+//   setFormData(prev => ({
+//     ...prev,
+//     totalBuy: totalBuy.toString(),
+//     ownShippingInfo: {
+//       ...prev.ownShippingInfo,
+//       totalBuy: totalBuy.toString(),
+//     },
+//   }));
+
+//   const selling = parseFloat(formData.totalSellingPrice?.toString() || "0");
+
+//   // ✅ Gross Profit = Selling + TotalBuy
+//   setGrossProfit(selling - totalBuy);
+// }, [
+//   formData.totalSellingPrice,
+//   formData.yardPrice,
+//   formData.yardCost,
+//   formData.ownShippingInfo?.price,
+//   formData.shippingAddressType,
+// ]);
 
 
   return (
@@ -2195,6 +2231,7 @@ useEffect(() => {
                     }
                   >
                     <option value="">Source</option>
+                    <option value="Inbound Call">Inbound Call</option>
                     <option value="meta ads">Meta Ads</option>
                     <option value="meta organic">Meta Organic</option>
                     <option value="ucpc google ads">UCPC G Ads</option>
@@ -2660,6 +2697,7 @@ useEffect(() => {
                         }}
                       >
                         <option value="">Select address type</option>
+                        <option value="Yet to Update">Yet to Update</option>
                         <option value="Residential">Residential</option>
                         {/* <option value="Non Residential">
                             Non Residential
@@ -3078,7 +3116,15 @@ useEffect(() => {
                       }
                     >
                       <option value="">Select person</option>
-                      <option>Shiva</option>
+                      <option>Zack Tyler</option>
+                      <option>Sean David</option>
+                      <option>Ben Johnson</option>
+                      <option>Danny Ocean</option>
+                      <option>Reymond</option>
+                      <option>Lisa</option>
+                      <option>Bruce Moris</option>
+                      <option>Alex Steel</option>
+                      <option>Jordan</option>
                     </select>
                     <ChevronDown
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
@@ -3523,6 +3569,19 @@ useEffect(() => {
                   yardPrice: formData.yardPrice
                     ? parseFloat(formData.yardPrice as string)
                     : 0,
+                 taxesYardPrice: formData.taxesYardPrice
+                    ? parseFloat(formData.taxesYardPrice as string)
+                    : 0,
+                 handlingYardPrice: formData.handlingYardPrice
+                    ? parseFloat(formData.handlingYardPrice as string)
+                    : 0,
+                processingYardPrice: formData.processingYardPrice
+                    ? parseFloat(formData.processingYardPrice as string)
+                    : 0,
+               coreYardPrice: formData.coreYardPrice
+                    ? parseFloat(formData.coreYardPrice as string)
+                    :0,
+
                   yardWarranty: formData.yardWarranty,
                   yardMiles: formData.yardMiles,
                   yardShipping: formData.yardShipping,

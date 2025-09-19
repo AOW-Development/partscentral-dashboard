@@ -354,6 +354,8 @@ useEffect(() => {
                   <option>send bol</option>
                   <option>confirm bol</option>
                   <option>cx picked the part</option>
+                  <option>Cancelled</option>
+                  <option>Refunded</option>
                 </select>
 
                 {/* Right-aligned custom arrow, after the text */}
