@@ -94,6 +94,7 @@ export type OrderFormData = {
   poConfirmedAt: string;
   vinNumber: string;
   notes: string;
+  internalNotes: string;
   ownShippingInfo: {
     productType: string;
     packageType: string;
@@ -585,6 +586,7 @@ const OrderDetails = () => {
     poConfirmedAt: "",
     vinNumber: "",
     notes: "",
+    internalNotes: "",
     warranty: "",
     ownShippingInfo: {
       productType: "",
@@ -2509,292 +2511,9 @@ const OrderDetails = () => {
                       </p>
                     </div>
                   )}
-                  <div className="relative">
-                    
-                    <label className="block text-white/60 text-sm mb-2">
-                      Part Price *
-                    </label>
-                    
-                    <div className="relative" ref={priceOptionsRef}>
-                      <input
-                        type="number"
-                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 pr-12 text-white focus:outline-none ${
-                          fieldErrors.partPrice
-                            ? "border-red-500 focus:border-red-500"
-                            : "border-gray-600 focus:border-blue-500"
-                        }`}
-                        placeholder="00.00"
-                        value={formData.partPrice}
-                        onChange={(e) =>
-                          handleInputChange("partPrice", e.target.value)
-                        }
-                        onBlur={(e) => {
-                          const rawValue = e.target.value || "0"; // always string
-                          const value = parseFloat(rawValue).toFixed(2); // value is string
-                          handleInputChange("partPrice", value);
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPriceOptions(!showPriceOptions)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold transition-colors"
-                      >
-                        <Plus size={14} />
-                      </button>
-
-                      {/* Dropdown options */}
-                      {showPriceOptions && (
-                        <div className="absolute top-full left-0 right-0 mt-1 bg-[#0a1929] border border-gray-600 rounded-lg shadow-lg z-10">
-                          <div className="py-1">
-                            {!visiblePriceFields.taxesPrice && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handlePriceFieldSelection("taxesPrice")
-                                }
-                                className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
-                              >
-                                Taxes Price
-                              </button>
-                            )}
-                            {!visiblePriceFields.handlingPrice && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handlePriceFieldSelection("handlingPrice")
-                                }
-                                className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
-                              >
-                                Handling Price
-                              </button>
-                            )}
-                            {!visiblePriceFields.processingPrice && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handlePriceFieldSelection("processingPrice")
-                                }
-                                className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
-                              >
-                                Processing Price
-                              </button>
-                            )}
-                            {!visiblePriceFields.corePrice && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handlePriceFieldSelection("corePrice")
-                                }
-                                className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
-                              >
-                                Core Price
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <p
-                      className={`text-red-400 text-xs mt-1 h-4 ${
-                        fieldErrors.partPrice ? "" : "invisible"
-                      }`}
-                    >
-                      {fieldErrors.partPrice || "placeholder"}
-                    </p>
-                  </div>
                 </div>
               </div>
-              {/* Dynamic additional price fields */}
-              {(visiblePriceFields.taxesPrice ||
-                visiblePriceFields.handlingPrice ||
-                visiblePriceFields.processingPrice ||
-                visiblePriceFields.corePrice) && (
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-3">
-                  {visiblePriceFields.taxesPrice && (
-                    <div className="relative">
-                      {true && (
-                        <button
-                          onClick={() => {
-                            setVisiblePriceFields((prev) => ({
-                              ...prev,
-                              ["taxesPrice"]: false,
-                            }));
-                            handleInputChange("taxesPrice", "");
-                          }}
-                          className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                          title="Remove payment"
-                        >
-                          <X size={16} />
-                        </button>
-                      )}
-                      <label className="block text-white/60 text-sm mb-2">
-                        Taxes Price
-                      </label>
-                      <input
-                        type="number"
-                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                          fieldErrors.taxesPrice
-                            ? "border-red-500 focus:border-red-500"
-                            : "border-gray-600 focus:border-blue-500"
-                        }`}
-                        placeholder="00.00"
-                        value={formData.taxesPrice}
-                        onChange={(e) =>
-                          handleInputChange("taxesPrice", e.target.value)
-                        }
-                        onBlur={(e) => {
-                          const rawValue = e.target.value || "0"; // always string
-                          const value = parseFloat(rawValue).toFixed(2); // value is string
-                          handleInputChange("taxesPrice", value);
-                        }}
-                      />
-                      {fieldErrors.taxesPrice && (
-                        <p className="text-red-400 text-xs mt-1">
-                          {fieldErrors.taxesPrice}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {visiblePriceFields.handlingPrice && (
-                    <div className="relative">
-                      {true && (
-                        <button
-                          onClick={() => {
-                            setVisiblePriceFields((prev) => ({
-                              ...prev,
-                              ["handlingPrice"]: false,
-                            }));
-                            handleInputChange("handlingPrice", "");
-                          }}
-                          className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                          title="Remove payment"
-                        >
-                          <X size={16} />
-                        </button>
-                      )}
-                      <label className="block text-white/60 text-sm mb-2">
-                        Handling Price
-                      </label>
-                      <input
-                        type="number"
-                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                          fieldErrors.handlingPrice
-                            ? "border-red-500 focus:border-red-500"
-                            : "border-gray-600 focus:border-blue-500"
-                        }`}
-                        placeholder="00.00"
-                        value={formData.handlingPrice}
-                        onChange={(e) =>
-                          handleInputChange("handlingPrice", e.target.value)
-                        }
-                        onBlur={(e) => {
-                          const rawValue = e.target.value || "0"; // always string
-                          const value = parseFloat(rawValue).toFixed(2); // value is string
-                          handleInputChange("handlingPrice", value);
-                        }}
-                      />
-                      {fieldErrors.handlingPrice && (
-                        <p className="text-red-400 text-xs mt-1">
-                          {fieldErrors.handlingPrice}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {visiblePriceFields.processingPrice && (
-                    <div className="relative">
-                      {true && (
-                        <button
-                          onClick={() => {
-                            setVisiblePriceFields((prev) => ({
-                              ...prev,
-                              ["processingPrice"]: false,
-                            }));
-                            handleInputChange("processingPrice", "");
-                          }}
-                          className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                          title="Remove payment"
-                        >
-                          <X size={16} />
-                        </button>
-                      )}
-                      <label className="block text-white/60 text-sm mb-2">
-                        Processing Price
-                      </label>
-                      <input
-                        type="number"
-                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                          fieldErrors.processingPrice
-                            ? "border-red-500 focus:border-red-500"
-                            : "border-gray-600 focus:border-blue-500"
-                        }`}
-                        placeholder="00.00"
-                        value={formData.processingPrice}
-                        onChange={(e) =>
-                          handleInputChange("processingPrice", e.target.value)
-                        }
-                        onBlur={(e) => {
-                          const rawValue = e.target.value || "0"; // always string
-                          const value = parseFloat(rawValue).toFixed(2); // value is string
-                          handleInputChange("processingPrice", value);
-                        }}
-                      />
-                      {fieldErrors.processingPrice && (
-                        <p className="text-red-400 text-xs mt-1">
-                          {fieldErrors.processingPrice}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {visiblePriceFields.corePrice && (
-                    <div className="relative">
-                      {true && (
-                        <button
-                          onClick={() => {
-                            setVisiblePriceFields((prev) => ({
-                              ...prev,
-                              ["corePrice"]: false,
-                            }));
-                            handleInputChange("corePrice", "");
-                          }}
-                          className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                          title="Remove payment"
-                        >
-                          <X size={16} />
-                        </button>
-                      )}
-                      <label className="block text-white/60 text-sm mb-2">
-                        Core Price
-                      </label>
-                      <input
-                        type="number"
-                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                          fieldErrors.corePrice
-                            ? "border-red-500 focus:border-red-500"
-                            : "border-gray-600 focus:border-blue-500"
-                        }`}
-                        placeholder="00.00"
-                        value={formData.corePrice}
-                        onChange={(e) =>
-                          handleInputChange("corePrice", e.target.value)
-                        }
-                        onBlur={(e) => {
-                          const rawValue = e.target.value || "0"; // always string
-                          const value = parseFloat(rawValue).toFixed(2); // value is string
-                          handleInputChange("corePrice", value);
-                        }}
-                      />
-                      {fieldErrors.corePrice && (
-                        <p className="text-red-400 text-xs mt-1">
-                          {fieldErrors.corePrice}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
+             
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Row 2 */}
@@ -3526,25 +3245,295 @@ const OrderDetails = () => {
                       </datalist>
                     </div>
                   </div>
+
+                
+                  
+                  <div className="relative">
+                    
+                    <label className="block text-white/60 text-sm mb-2">
+                      Part Price *
+                    </label>
+                    
+                    <div className="relative" ref={priceOptionsRef}>
+                      <input
+                        type="number"
+                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 pr-12 text-white focus:outline-none ${
+                          fieldErrors.partPrice
+                            ? "border-red-500 focus:border-red-500"
+                            : "border-gray-600 focus:border-blue-500"
+                        }`}
+                        placeholder="00.00"
+                        value={formData.partPrice}
+                        onChange={(e) =>
+                          handleInputChange("partPrice", e.target.value)
+                        }
+                        onBlur={(e) => {
+                          const rawValue = e.target.value || "0"; // always string
+                          const value = parseFloat(rawValue).toFixed(2); // value is string
+                          handleInputChange("partPrice", value);
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPriceOptions(!showPriceOptions)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold transition-colors"
+                      >
+                        <Plus size={14} />
+                      </button>
+
+                      {/* Dropdown options */}
+                      {showPriceOptions && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-[#0a1929] border border-gray-600 rounded-lg shadow-lg z-10">
+                          <div className="py-1">
+                            {!visiblePriceFields.taxesPrice && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handlePriceFieldSelection("taxesPrice")
+                                }
+                                className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
+                              >
+                                Taxes Price
+                              </button>
+                            )}
+                            {!visiblePriceFields.handlingPrice && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handlePriceFieldSelection("handlingPrice")
+                                }
+                                className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
+                              >
+                                Handling Price
+                              </button>
+                            )}
+                            {!visiblePriceFields.processingPrice && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handlePriceFieldSelection("processingPrice")
+                                }
+                                className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
+                              >
+                                Processing Price
+                              </button>
+                            )}
+                            {!visiblePriceFields.corePrice && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handlePriceFieldSelection("corePrice")
+                                }
+                                className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
+                              >
+                                Core Price
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <p
+                      className={`text-red-400 text-xs mt-1 h-4 ${
+                        fieldErrors.partPrice ? "" : "invisible"
+                      }`}
+                    >
+                      {fieldErrors.partPrice || "placeholder"}
+                    </p>
+                  </div>
+
+                {(visiblePriceFields.taxesPrice ||
+                visiblePriceFields.handlingPrice ||
+                visiblePriceFields.processingPrice ||
+                visiblePriceFields.corePrice) && (
+                 <div className="">
+                  {visiblePriceFields.taxesPrice && (
+                    <div className="relative">
+                      {true && (
+                        <button
+                          onClick={() => {
+                            setVisiblePriceFields((prev) => ({
+                              ...prev,
+                              ["taxesPrice"]: false,
+                            }));
+                            handleInputChange("taxesPrice", "");
+                          }}
+                          className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                          title="Remove payment"
+                        >
+                          <X size={16} />
+                        </button>
+                      )}
+                      <label className="block text-white/60 text-sm mb-2">
+                        Taxes Price
+                      </label>
+                      <input
+                        type="number"
+                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                          fieldErrors.taxesPrice
+                            ? "border-red-500 focus:border-red-500"
+                            : "border-gray-600 focus:border-blue-500"
+                        }`}
+                        placeholder="00.00"
+                        value={formData.taxesPrice}
+                        onChange={(e) =>
+                          handleInputChange("taxesPrice", e.target.value)
+                        }
+                        onBlur={(e) => {
+                          const rawValue = e.target.value || "0"; // always string
+                          const value = parseFloat(rawValue).toFixed(2); // value is string
+                          handleInputChange("taxesPrice", value);
+                        }}
+                      />
+                      {fieldErrors.taxesPrice && (
+                        <p className="text-red-400 text-xs mt-1">
+                          {fieldErrors.taxesPrice}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {visiblePriceFields.handlingPrice && (
+                    <div className="relative">
+                      {true && (
+                        <button
+                          onClick={() => {
+                            setVisiblePriceFields((prev) => ({
+                              ...prev,
+                              ["handlingPrice"]: false,
+                            }));
+                            handleInputChange("handlingPrice", "");
+                          }}
+                          className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                          title="Remove payment"
+                        >
+                          <X size={16} />
+                        </button>
+                      )}
+                      <label className="block text-white/60 text-sm mb-2">
+                        Handling Price
+                      </label>
+                      <input
+                        type="number"
+                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                          fieldErrors.handlingPrice
+                            ? "border-red-500 focus:border-red-500"
+                            : "border-gray-600 focus:border-blue-500"
+                        }`}
+                        placeholder="00.00"
+                        value={formData.handlingPrice}
+                        onChange={(e) =>
+                          handleInputChange("handlingPrice", e.target.value)
+                        }
+                        onBlur={(e) => {
+                          const rawValue = e.target.value || "0"; // always string
+                          const value = parseFloat(rawValue).toFixed(2); // value is string
+                          handleInputChange("handlingPrice", value);
+                        }}
+                      />
+                      {fieldErrors.handlingPrice && (
+                        <p className="text-red-400 text-xs mt-1">
+                          {fieldErrors.handlingPrice}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {visiblePriceFields.processingPrice && (
+                    <div className="relative">
+                      {true && (
+                        <button
+                          onClick={() => {
+                            setVisiblePriceFields((prev) => ({
+                              ...prev,
+                              ["processingPrice"]: false,
+                            }));
+                            handleInputChange("processingPrice", "");
+                          }}
+                          className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                          title="Remove payment"
+                        >
+                          <X size={16} />
+                        </button>
+                      )}
+                      <label className="block text-white/60 text-sm mb-2">
+                        Processing Price
+                      </label>
+                      <input
+                        type="number"
+                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                          fieldErrors.processingPrice
+                            ? "border-red-500 focus:border-red-500"
+                            : "border-gray-600 focus:border-blue-500"
+                        }`}
+                        placeholder="00.00"
+                        value={formData.processingPrice}
+                        onChange={(e) =>
+                          handleInputChange("processingPrice", e.target.value)
+                        }
+                        onBlur={(e) => {
+                          const rawValue = e.target.value || "0"; // always string
+                          const value = parseFloat(rawValue).toFixed(2); // value is string
+                          handleInputChange("processingPrice", value);
+                        }}
+                      />
+                      {fieldErrors.processingPrice && (
+                        <p className="text-red-400 text-xs mt-1">
+                          {fieldErrors.processingPrice}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {visiblePriceFields.corePrice && (
+                    <div className="relative">
+                      {true && (
+                        <button
+                          onClick={() => {
+                            setVisiblePriceFields((prev) => ({
+                              ...prev,
+                              ["corePrice"]: false,
+                            }));
+                            handleInputChange("corePrice", "");
+                          }}
+                          className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                          title="Remove payment"
+                        >
+                          <X size={16} />
+                        </button>
+                      )}
+                      <label className="block text-white/60 text-sm mb-2">
+                        Core Price
+                      </label>
+                      <input
+                        type="number"
+                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                          fieldErrors.corePrice
+                            ? "border-red-500 focus:border-red-500"
+                            : "border-gray-600 focus:border-blue-500"
+                        }`}
+                        placeholder="00.00"
+                        value={formData.corePrice}
+                        onChange={(e) =>
+                          handleInputChange("corePrice", e.target.value)
+                        }
+                        onBlur={(e) => {
+                          const rawValue = e.target.value || "0"; // always string
+                          const value = parseFloat(rawValue).toFixed(2); // value is string
+                          handleInputChange("corePrice", value);
+                        }}
+                      />
+                      {fieldErrors.corePrice && (
+                        <p className="text-red-400 text-xs mt-1">
+                          {fieldErrors.corePrice}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
-              ))}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-6 mt-2">
-                <div>
-                  <label className="block text-white/60 text-sm mb-2">
-                    Total Selling Price
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                    placeholder="Total Selling Price"
-                    value={formData.totalSellingPrice}
-                    onChange={(e) =>
-                      handleInputChange("totalSellingPrice", e.target.value)
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="block text-white/60 text-sm mb-2">
+              )} 
+               <div>
+                  <label className="block text-white/60 text-sm mb-2 ">
                     VIN Number
                   </label>
                   <input
@@ -3564,7 +3553,7 @@ const OrderDetails = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-white/60 text-sm mb-2">
+                  <label className="block text-white/60 text-sm mb-2 mt-0 ">
                     Note
                   </label>
                   <textarea
@@ -3574,6 +3563,56 @@ const OrderDetails = () => {
                     onChange={(e) => handleInputChange("notes", e.target.value)}
                   />
                 </div>
+              
+                </div>
+              ))}
+               
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-6 mt-2">
+                <div>
+                  <label className="block text-white/60 text-sm mb-2">
+                    Total Selling Price
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                    placeholder="Total Selling Price"
+                    value={formData.totalSellingPrice}
+                    onChange={(e) =>
+                      handleInputChange("totalSellingPrice", e.target.value)
+                    }
+                  />
+                </div>
+                {/* <div>
+                  <label className="block text-white/60 text-sm mb-2">
+                    VIN Number
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                    placeholder="VIN Number"
+                    value={formData.vinNumber}
+                    maxLength={17}
+                    pattern="[A-Za-z0-9]{17}"
+                    onChange={(e) => {
+                      // Only allow alphanumeric and max 17 chars
+                      const value = e.target.value
+                        .replace(/[^A-Za-z0-9]/g, "")
+                        .slice(0, 17);
+                      handleInputChange("vinNumber", value);
+                    }}
+                  />
+                </div> */}
+                <div>
+                  <label className="block text-white/60 text-sm mb-2">
+                   Internal Notes
+                  </label>
+                  <textarea
+                    className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                    placeholder="Example : Enter VIN Number .... "
+                    value={formData.internalNotes}
+                    onChange={(e) => handleInputChange("notes", e.target.value)}
+                  />
+                </div> 
               </div>
 
               {/* Send Invoice Button */}

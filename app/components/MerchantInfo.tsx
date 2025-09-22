@@ -138,6 +138,8 @@ const MerchantInfo: React.FC<MerchantInfoProps> = ({
                 >
                   <option value="">Select merchant</option>
                   <option>Paypal</option>
+                  <option>Wells Fargo</option>
+                  <option>Netevia</option>
                   <option>Wire Transfer</option>
                   <option>Zelle</option>
                   <option>EMS</option>

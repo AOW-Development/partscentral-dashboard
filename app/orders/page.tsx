@@ -106,6 +106,8 @@ export default function Orders() {
             status: order.status,
             raw: order,
           }));
+          mappedOrders.sort((a: Order, b: Order) => Number(b.orderNumber) - Number(a.orderNumber));
+
           setOrders(mappedOrders);
         } else {
           console.error('Failed to fetch orders');
@@ -144,7 +146,10 @@ export default function Orders() {
         mobile: incoming.mobile ?? "",
         status: incoming.status ?? "",
       };
-      setOrders((prevOrders) => [newOrder, ...prevOrders]);
+      setOrders((prevOrders) => {
+        const updated = [newOrder, ...prevOrders];
+        return updated.sort((a: Order, b: Order) => Number(b.orderNumber) - Number(a.orderNumber));
+      });
     });
 
     return () => {
@@ -168,6 +173,11 @@ export default function Orders() {
 
   // State for action menu
   const [openActionMenu, setOpenActionMenu] = useState<number | null>(null);
+  // And this as the paginated subset that goes to the table
+  const [paginatedOrders, setPaginatedOrders] = useState<Order[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = 50;
+
 
   // Close panel when clicking outside
   useEffect(() => {
@@ -233,9 +243,12 @@ useEffect(() => {
      );
   }
 
-  if (status && status !== "Order Status") {
-    filtered = filtered.filter((order) => order.status === status);
-  }
+  if (status) {
+  filtered = filtered.filter(
+    (order) => order.status?.toLowerCase() === status.toLowerCase()
+  );
+}
+
 
   if (dateRange.from && dateRange.to) {
     filtered = filtered.filter(
@@ -243,12 +256,24 @@ useEffect(() => {
         order.orderDate >= dateRange.from && order.orderDate <= dateRange.to
     );
   }
+ setFilteredOrders(filtered);
 
-  const startIndex = (currentPage - 1) * 50;
-  const endIndex = startIndex + 50;
-  filtered = filtered.slice(startIndex, endIndex);
+  // 2. Calculate totalPages
+  const total = Math.max(1, Math.ceil(filtered.length / pageSize));
+  setTotalPages(total);
 
-  setFilteredOrders(filtered);
+  // 3. Clamp current page
+  const safePage = Math.min(currentPage, total);
+
+  // 4. Slice orders for that page
+  const startIndex = (safePage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  setPaginatedOrders(filtered.slice(startIndex, endIndex));
+
+  // 5. Fix currentPage if it was too high
+  if (safePage !== currentPage) {
+    setCurrentPage(safePage);
+  }
 }, [search, status, dateRange, orders, dropdownQty, currentPage]);
 
 
@@ -338,24 +363,26 @@ useEffect(() => {
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
                 >
-                  <option>Order Status</option>
-                  <option>order created</option>
-                  <option>invoice sent</option>
-                  <option>invoice confirmed</option>
-                  <option>unpaid</option>
-                  <option>paid</option>
-                  <option>balance due</option>
-                  <option>po sent</option>
-                  <option>po confirmed</option>
-                  <option>picture sent</option>
-                  <option>tracking sent</option>
-                  <option>get w/d</option>
-                  <option>create bol</option>
-                  <option>send bol</option>
-                  <option>confirm bol</option>
-                  <option>cx picked the part</option>
-                  <option>Cancelled</option>
-                  <option>Refunded</option>
+                  <option value="">Order Status</option>
+                  <option value="order created">order created</option>
+                  <option value="invoice sent">invoice sent</option>
+                  <option value="invoice confirmed">invoice confirmed</option>
+                  <option value="unpaid">unpaid</option>
+                  <option value="paid">paid</option>
+                  <option value="balance due">balance due</option>
+                  <option value="po sent">po sent</option>
+                  <option value="po confirmed">po confirmed</option>
+                  <option value="yard located">Yard located</option>
+                  <option value="picture sent">picture sent</option>
+                  <option value="tracking sent">tracking sent</option>
+                  <option value="get w/d">get w/d</option>
+                  <option value="create bol">create bol</option>
+                  <option value="send bol">send bol</option>
+                  <option value="confirm bol">confirm bol</option>
+                  <option value="cx picked the part">cx picked the part</option>
+                  <option value="Delivered">Delivered</option>
+                  <option value="Cancelled">Cancelled</option>
+                  <option value="Refunded">Refunded</option>
                 </select>
 
                 {/* Right-aligned custom arrow, after the text */}
@@ -461,7 +488,7 @@ useEffect(() => {
                     </tr>
                   </thead>
                   <tbody className="text-gray-100">
-                    {filteredOrders.map((order, idx) => (
+                    {paginatedOrders.map((order, idx) => (
                       <tr
                         key={idx}
                         className="border-b border-gray-700 last:border-0 cursor-pointer"
@@ -566,7 +593,7 @@ useEffect(() => {
               {/* Your content here */}
               <Pagination
                 currentPage={currentPage}
-                totalPages={5}
+                totalPages={totalPages}
                 onPageChange={setCurrentPage}
               />
             </div>

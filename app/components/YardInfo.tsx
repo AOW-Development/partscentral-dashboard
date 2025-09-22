@@ -20,6 +20,7 @@ interface PreviousYard {
   yardCost: string | number;
   reason?: string;
   yardCharge?: string;
+  yardChangedAmount?: string | number;
 }
 
 interface FormData {
@@ -40,6 +41,7 @@ interface FormData {
   yardtotalBuy: string | number;
   reason?: string;
   yardCharge?: string;
+  yardChangedAmount?: string | number;
 }
 
 interface YardInfoProps {
@@ -75,6 +77,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
   const [yardCharge, setYardCharge] = useState("");
   const [submitReason, setSubmitReason] = useState(false);
   const [showYardPriceOptions, setShowYardPriceOptions] = useState(false);
+  const [yardChangedAmount, setYardChangedAmount] = useState("");
   const [visiblePriceFields, setVisiblePriceFields] = useState({
     taxesPrice: false,
     handlingPrice: false,
@@ -450,28 +453,18 @@ const YardInfo: React.FC<YardInfoProps> = ({
 
         {/* Price */}
 
-        <div className="relative">
-          <label className="block text-white/60 text-sm mb-2">
-            Yard Price *
-          </label>
+         <div className="relative">
+          <label className="block text-white/60 text-sm mb-2">Yard Price *</label>
           <div className="relative" ref={yardPriceOptionsRef}>
             <input
               type="text"
-              className={`
-                appearance-none
-                [appearance:textfield]
-                [&::-webkit-outer-spin-button]:appearance-none
-                [&::-webkit-inner-spin-button]:appearance-none
-                w-full bg-[#0a1929] border rounded-lg px-4 py-3 pr-12 text-white focus:outline-none ${
-                  fieldErrors.yardPrice
-                    ? "border-red-500 focus:border-red-500"
-                    : "border-gray-600 focus:border-blue-500"
-                }`}
+              className={`appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full bg-[#0a1929] border rounded-lg px-4 py-3 pr-12 text-white focus:outline-none ${
+                fieldErrors.yardPrice ? "border-red-500 focus:border-red-500" : "border-gray-600 focus:border-blue-500"
+              }`}
               placeholder="00.00"
               value={formData.yardPrice === 0 ? "" : formData.yardPrice}
               onChange={(e) => handleInputChange("yardPrice", e.target.value)}
-            
-
+              onBlur={(e) => handlePriceBlur("yardPrice", e.target.value)}
             />
             <button
               type="button"
@@ -506,9 +499,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
                   {!visiblePriceFields.processingPrice && (
                     <button
                       type="button"
-                      onClick={() =>
-                        handlePriceFieldSelection("processingPrice")
-                      }
+                      onClick={() => handlePriceFieldSelection("processingPrice")}
                       className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
                     >
                       Processing Price
@@ -537,29 +528,34 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 setVisiblePriceFields((prev) => ({
                   ...prev,
                   taxesPrice: false,
-                }));
-                handleInputChange("taxesYardPrice", "");
+                }))
+                handleInputChange("taxesYardPrice", "")
               }}
               className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
               title="Remove payment"
             >
               <X size={16} />
             </button>
-            <label className="block text-white/60 text-sm mb-2">
-              Taxes Price
-            </label>
+            <label className="block text-white/60 text-sm mb-2">Taxes Price</label>
             <input
-              type="number"
-              className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                fieldErrors.taxesPrice
-                  ? "border-red-500 focus:border-red-500"
-                  : "border-gray-600 focus:border-blue-500"
-              }`}
+              type="text"
+              className={`
+                appearance-none
+                [appearance:textfield]
+                [&::-webkit-outer-spin-button]:appearance-none
+                [&::-webkit-inner-spin-button]:appearance-none
+                w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                  fieldErrors.taxesPrice
+                    ? "border-red-500 focus:border-red-500"
+                    : "border-gray-600 focus:border-blue-500"
+                }`}
               placeholder="00.00"
-              value={formData.taxesYardPrice}
-              onChange={(e) =>
-                handleInputChange("taxesYardPrice", e.target.value)
+              value={
+                formData.taxesYardPrice === 0 || formData.taxesYardPrice === "0" || formData.taxesYardPrice === "0.00"
+                  ? ""
+                  : formData.taxesYardPrice
               }
+              onChange={(e) => handleInputChange("taxesYardPrice", e.target.value)}
               onBlur={(e) => handlePriceBlur("taxesYardPrice", e.target.value)}
             />
           </div>
@@ -572,32 +568,37 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 setVisiblePriceFields((prev) => ({
                   ...prev,
                   handlingPrice: false,
-                }));
-                handleInputChange("handlingYardPrice", "");
+                }))
+                handleInputChange("handlingYardPrice", "")
               }}
               className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
               title="Remove payment"
             >
               <X size={16} />
             </button>
-            <label className="block text-white/60 text-sm mb-2">
-              Handling Price
-            </label>
+            <label className="block text-white/60 text-sm mb-2">Handling Price</label>
             <input
-              type="number"
-              className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                fieldErrors.handlingPrice
-                  ? "border-red-500 focus:border-red-500"
-                  : "border-gray-600 focus:border-blue-500"
-              }`}
+              type="text"
+              className={`
+                appearance-none
+                [appearance:textfield]
+                [&::-webkit-outer-spin-button]:appearance-none
+                [&::-webkit-inner-spin-button]:appearance-none
+                w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                  fieldErrors.handlingPrice
+                    ? "border-red-500 focus:border-red-500"
+                    : "border-gray-600 focus:border-blue-500"
+                }`}
               placeholder="00.00"
-              value={formData.handlingYardPrice}
-              onChange={(e) =>
-                handleInputChange("handlingYardPrice", e.target.value)
+              value={
+                formData.handlingYardPrice === 0 ||
+                formData.handlingYardPrice === "0" ||
+                formData.handlingYardPrice === "0.00"
+                  ? ""
+                  : formData.handlingYardPrice
               }
-              onBlur={(e) =>
-                handlePriceBlur("handlingYardPrice", e.target.value)
-              }
+              onChange={(e) => handleInputChange("handlingYardPrice", e.target.value)}
+              onBlur={(e) => handlePriceBlur("handlingYardPrice", e.target.value)}
             />
           </div>
         )}
@@ -609,32 +610,37 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 setVisiblePriceFields((prev) => ({
                   ...prev,
                   processingPrice: false,
-                }));
-                handleInputChange("processingYardPrice", "");
+                }))
+                handleInputChange("processingYardPrice", "")
               }}
               className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
               title="Remove payment"
             >
               <X size={16} />
             </button>
-            <label className="block text-white/60 text-sm mb-2">
-              Processing Price
-            </label>
+            <label className="block text-white/60 text-sm mb-2">Processing Price</label>
             <input
-              type="number"
-              className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                fieldErrors.processingPrice
-                  ? "border-red-500 focus:border-red-500"
-                  : "border-gray-600 focus:border-blue-500"
-              }`}
+              type="text"
+              className={`
+                appearance-none
+                [appearance:textfield]
+                [&::-webkit-outer-spin-button]:appearance-none
+                [&::-webkit-inner-spin-button]:appearance-none
+                w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                  fieldErrors.processingPrice
+                    ? "border-red-500 focus:border-red-500"
+                    : "border-gray-600 focus:border-blue-500"
+                }`}
               placeholder="00.00"
-              value={formData.processingYardPrice}
-              onChange={(e) =>
-                handleInputChange("processingYardPrice", e.target.value)
+              value={
+                formData.processingYardPrice === 0 ||
+                formData.processingYardPrice === "0" ||
+                formData.processingYardPrice === "0.00"
+                  ? ""
+                  : formData.processingYardPrice
               }
-              onBlur={(e) =>
-                handlePriceBlur("processingYardPrice", e.target.value)
-              }
+              onChange={(e) => handleInputChange("processingYardPrice", e.target.value)}
+              onBlur={(e) => handlePriceBlur("processingYardPrice", e.target.value)}
             />
           </div>
         )}
@@ -646,37 +652,39 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 setVisiblePriceFields((prev) => ({
                   ...prev,
                   corePrice: false,
-                }));
-                handleInputChange("coreYardPrice", "");
+                }))
+                handleInputChange("coreYardPrice", "")
               }}
               className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
               title="Remove payment"
             >
               <X size={16} />
             </button>
-            <label className="block text-white/60 text-sm mb-2">
-              Core Price
-            </label>
+            <label className="block text-white/60 text-sm mb-2">Core Price</label>
             <input
-              type="number"
-              className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                fieldErrors.corePrice
-                  ? "border-red-500 focus:border-red-500"
-                  : "border-gray-600 focus:border-blue-500"
-              }`}
+              type="text"
+              className={`
+                appearance-none
+                [appearance:textfield]
+                [&::-webkit-outer-spin-button]:appearance-none
+                [&::-webkit-inner-spin-button]:appearance-none
+                w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                  fieldErrors.corePrice
+                    ? "border-red-500 focus:border-red-500"
+                    : "border-gray-600 focus:border-blue-500"
+                }`}
               placeholder="00.00"
-              value={formData.coreYardPrice}
-              onChange={(e) =>
-                handleInputChange("coreYardPrice", e.target.value)
+              value={
+                formData.coreYardPrice === 0 || formData.coreYardPrice === "0" || formData.coreYardPrice === "0.00"
+                  ? ""
+                  : formData.coreYardPrice
               }
-              onBlur={(e) => {
-                const rawValue = e.target.value || "0";
-                const value = parseFloat(rawValue).toFixed(2);
-                handleInputChange("coreYardPrice", value);
-              }}
+              onChange={(e) => handleInputChange("coreYardPrice", e.target.value)}
+              onBlur={(e) => handlePriceBlur("coreYardPrice", e.target.value)}
             />
           </div>
         )}
+
 
         {/* Warranty */}
         <div>
@@ -775,6 +783,43 @@ const YardInfo: React.FC<YardInfoProps> = ({
               />
             </div>
           </>
+        )}
+
+
+        <div>
+        <label className="block text-white/60 text-sm mb-2">Yard Charged</label>
+        <div className="relative">
+          <select
+            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+            value={yardCharge}
+            onChange={(e) => setYardCharge(e.target.value)}
+          >
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+          </select>
+          <ChevronDown
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+            size={16}
+          />
+        </div>
+      </div>
+
+      {yardCharge === "Yes" && (
+        <div>
+          <label className="block text-white/60 text-sm mb-2">Yard Changed Amount</label>
+          <input
+            type="number"
+            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+            placeholder="Enter amount"
+            value={yardChangedAmount}
+            onChange={(e) => setYardChangedAmount(e.target.value)}
+            onBlur={(e) => {
+              const rawValue = e.target.value || "0";
+              const value = parseFloat(rawValue).toFixed(2);
+              setYardChangedAmount(value);
+            }}
+          />
+        </div>
         )}
       </div>
     </div>
