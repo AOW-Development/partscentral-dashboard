@@ -260,7 +260,7 @@ const MerchantInfo: React.FC<MerchantInfoProps> = ({
                 type="date"
                 className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
                 placeholder="Enter card charged date"
-                value={entry.cardChargedDate}
+                value={entry.cardChargedDate || ""}
                 // value=""
                 onChange={(e) =>
                   handlePaymentEntryChange(

@@ -247,6 +247,9 @@ const OrderDetails = () => {
               totalPrice: p.amount || "",
               approvalCode: p.approvelCode || "",
               entity: p.entity || "",
+              cardChargedDate: p.chargedDate
+                ? new Date(p.chargedDate).toISOString().split("T")[0]
+                : "",
               charged: p.charged || (p.status === "SUCCEEDED" ? "Yes" : "No"),
               chargeClicked: p.status === "SUCCEEDED",
             })
@@ -1177,7 +1180,7 @@ const OrderDetails = () => {
       if (
         field === "yardPrice" ||
         field === "yardCost" ||
-        field === "taxesYardPrice"||
+        field === "taxesYardPrice" ||
         field === "handlingYardPrice" ||
         field === "processingYardPrice" ||
         field === "coreYardPrice"
@@ -1187,17 +1190,24 @@ const OrderDetails = () => {
         const taxesYardPrice = parseFloat(
           newData.taxesYardPrice?.toString() || "0"
         );
-         const handlingYardPrice = parseFloat(
+        const handlingYardPrice = parseFloat(
           newData.handlingYardPrice?.toString() || "0"
         );
-         const processingYardPrice = parseFloat(
+        const processingYardPrice = parseFloat(
           newData.processingYardPrice?.toString() || "0"
         );
-         const coreYardPrice = parseFloat(
+        const coreYardPrice = parseFloat(
           newData.coreYardPrice?.toString() || "0"
         );
 
-        newData.yardtotalBuy = (yardPrice + yardCost + taxesYardPrice + handlingYardPrice + processingYardPrice +coreYardPrice).toFixed(2);
+        newData.yardtotalBuy = (
+          yardPrice +
+          yardCost +
+          taxesYardPrice +
+          handlingYardPrice +
+          processingYardPrice +
+          coreYardPrice
+        ).toFixed(2);
       }
 
       return newData;
@@ -1783,8 +1793,23 @@ const OrderDetails = () => {
         }))
         .filter((item) => !!item.id);
 
-      // Pass formData directly, which contains all the latest updates from the state
-      const result = await updateOrderFromAdmin(orderId, formData, cartItems);
+      // Map payment entry data to form data for merchant info
+      const firstPaymentEntry = paymentEntries[0];
+      const updatedFormDataWithPayment = {
+        ...formData,
+        entity: firstPaymentEntry?.entity || "",
+        merchantMethod: firstPaymentEntry?.merchantMethod || "",
+        approvalCode: firstPaymentEntry?.approvalCode || "",
+        charged: firstPaymentEntry?.charged || "",
+        cardChargedDate: firstPaymentEntry?.cardChargedDate || "",
+        paymentAmount: firstPaymentEntry?.totalPrice || "",
+      };
+
+      const result = await updateOrderFromAdmin(
+        orderId,
+        updatedFormDataWithPayment,
+        cartItems
+      );
 
       toast.success("Order updated successfully");
       setIsProcessing(false);
@@ -1860,7 +1885,23 @@ const OrderDetails = () => {
           : null,
         invoiceStatus: formData.invoiceStatus || "NOT_AVAILABLE",
       };
-      const result = await createOrderFromAdmin(updatedFormData, cartItems);
+
+      // Map payment entry data to form data for merchant info
+      const firstPaymentEntry = paymentEntries[0];
+      const finalFormDataWithPayment = {
+        ...updatedFormData,
+        entity: firstPaymentEntry?.entity || "",
+        merchantMethod: firstPaymentEntry?.merchantMethod || "",
+        approvalCode: firstPaymentEntry?.approvalCode || "",
+        charged: firstPaymentEntry?.charged || "",
+        cardChargedDate: firstPaymentEntry?.cardChargedDate || "",
+        paymentAmount: firstPaymentEntry?.totalPrice || "",
+      };
+
+      const result = await createOrderFromAdmin(
+        finalFormDataWithPayment,
+        cartItems
+      );
 
       // setMessage({
       //   type: "success",
@@ -2159,50 +2200,58 @@ const OrderDetails = () => {
     );
   }, []);
 
- useEffect(() => {
-  const selling = parseFloat(formData.totalSellingPrice?.toString() || "0");
-  const yardPrice = parseFloat(formData.yardPrice?.toString() || "0");
-  const taxesYardPrice = parseFloat(formData.taxesYardPrice?.toString() || "0");
-  const processingYardPrice = parseFloat(formData.processingYardPrice?.toString() || "0");
-  const handlingYardPrice = parseFloat(formData.handlingYardPrice?.toString() || "0");
-  const coreYardPrice = parseFloat(formData.coreYardPrice?.toString() || "0");
-  const yardCost = parseFloat(formData.yardCost?.toString() || "0");
-  const ownPrice = parseFloat(formData.ownShippingInfo?.price?.toString() || "0");
+  useEffect(() => {
+    const selling = parseFloat(formData.totalSellingPrice?.toString() || "0");
+    const yardPrice = parseFloat(formData.yardPrice?.toString() || "0");
+    const taxesYardPrice = parseFloat(
+      formData.taxesYardPrice?.toString() || "0"
+    );
+    const processingYardPrice = parseFloat(
+      formData.processingYardPrice?.toString() || "0"
+    );
+    const handlingYardPrice = parseFloat(
+      formData.handlingYardPrice?.toString() || "0"
+    );
+    const coreYardPrice = parseFloat(formData.coreYardPrice?.toString() || "0");
+    const yardCost = parseFloat(formData.yardCost?.toString() || "0");
+    const ownPrice = parseFloat(
+      formData.ownShippingInfo?.price?.toString() || "0"
+    );
 
-  // total buy if shipping from yard
-  const yardtotalBuy =
-    yardPrice +
-    yardCost +
-    taxesYardPrice +
-    processingYardPrice +
-    handlingYardPrice +
-    coreYardPrice;
+    // total buy if shipping from yard
+    const yardtotalBuy =
+      yardPrice +
+      yardCost +
+      taxesYardPrice +
+      processingYardPrice +
+      handlingYardPrice +
+      coreYardPrice;
 
-  // total buy if own shipping
-  const owntotalBuy =
-    yardPrice +
-    taxesYardPrice +
-    processingYardPrice +
-    coreYardPrice +
-    ownPrice+
-    handlingYardPrice;
+    // total buy if own shipping
+    const owntotalBuy =
+      yardPrice +
+      taxesYardPrice +
+      processingYardPrice +
+      coreYardPrice +
+      ownPrice +
+      handlingYardPrice;
 
-  if (formData.yardShipping === "Yard Shipping") {
-    setGrossProfit(selling - yardtotalBuy);
-  } else if(formData.yardShipping === "Own Shipping") {
-    setGrossProfit(selling - owntotalBuy);
-  }
-}, [
-  formData.totalSellingPrice,
-  formData.yardPrice,
-  formData.yardCost,
-  formData.taxesYardPrice,
-  formData.processingYardPrice,
-  formData.handlingYardPrice,
-  formData.coreYardPrice,
-  formData.ownShippingInfo?.price,
-  formData.yardShipping,
-]);
+    if (formData.yardShipping === "Yard Shipping") {
+      setGrossProfit(selling - yardtotalBuy);
+    } else if (formData.yardShipping === "Own Shipping") {
+      setGrossProfit(selling - owntotalBuy);
+    }
+  }, [
+    formData.totalSellingPrice,
+    formData.yardPrice,
+    formData.yardCost,
+    formData.taxesYardPrice,
+    formData.processingYardPrice,
+    formData.handlingYardPrice,
+    formData.coreYardPrice,
+    formData.ownShippingInfo?.price,
+    formData.yardShipping,
+  ]);
 
   // Function to calculate total buy
   // const getTotalBuy = () => {
@@ -3748,7 +3797,13 @@ const OrderDetails = () => {
                   yardMiles: formData.yardMiles,
                   yardShipping: formData.yardShipping,
                   yardCost: formData.yardCost,
-                  yardtotalBuy: formData.yardCost + formData.yardPrice + formData.processingYardPrice + formData.taxesYardPrice+formData.handlingYardPrice + formData.coreYardPrice,
+                  yardtotalBuy:
+                    formData.yardCost +
+                    formData.yardPrice +
+                    formData.processingYardPrice +
+                    formData.taxesYardPrice +
+                    formData.handlingYardPrice +
+                    formData.coreYardPrice,
                   // yardCharge: formData.yardCharge,
                 }}
                 handleInputChange={handleInputChange}

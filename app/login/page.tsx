@@ -149,7 +149,7 @@ export default function LoginPage() {
             >
               {loading ? "Logging in..." : "Login"}
             </button>
-            <div className="mt-4">
+            {/* <div className="mt-4">
               <p className="text-sm text-gray-400 my-2">
                 Use demo credentials:
               </p>
@@ -157,7 +157,7 @@ export default function LoginPage() {
                 Username: admin@partscentral.com
               </p>
               <p className="text-xs text-white">Password: admin@123</p>
-            </div>
+            </div> */}
           </form>
         </div>
       </main>

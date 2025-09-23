@@ -124,7 +124,7 @@ export const createOrderFromAdmin = async (
     paymentInfo: {
       paymentMethod: formData.merchantMethod || "",
       status: "PENDING",
-      amount: formData.totalPrice || 0,
+      amount: formData.paymentAmount || formData.totalPrice || 0,
       currency: "USD",
       provider: "STRIPE",
       entity: formData.entity || null,
@@ -152,6 +152,7 @@ export const createOrderFromAdmin = async (
         : null,
       approvelCode: formData.approvalCode,
       charged: formData.charged,
+      cardChargedDate: formData.cardChargedDate,
     },
     totalAmount: parseFloat(formData.totalPrice as string) || 0,
     subtotal: parseFloat(formData.partPrice as string) || 0,
