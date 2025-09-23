@@ -1514,68 +1514,68 @@ const OrderDetails = () => {
   let TIME1 = new Date();
 
   // Validate all required fields
-  const validateAllFields = () => {
-    const requiredFields = [
-      "email",
-      "mobile",
-      "shippingAddress",
-      "billingAddress",
-      "saleMadeBy",
-    ];
+  // const validateAllFields = () => {
+  //   const requiredFields = [
+  //     "email",
+  //     "mobile",
+  //     "shippingAddress",
+  //     "billingAddress",
+  //     "saleMadeBy",
+  //   ];
 
-    const newErrors: { [key: string]: string } = {};
-    let hasErrors = false;
+  //   const newErrors: { [key: string]: string } = {};
+  //   let hasErrors = false;
 
-    // Validate basic required fields
-    requiredFields.forEach((field) => {
-      const error = validateField(
-        field,
-        formData[field as keyof typeof formData]
-      );
-      if (error) {
-        newErrors[field] = error;
-        hasErrors = true;
-      }
-    });
+  //   // Validate basic required fields
+  //   requiredFields.forEach((field) => {
+  //     const error = validateField(
+  //       field,
+  //       formData[field as keyof typeof formData]
+  //     );
+  //     if (error) {
+  //       newErrors[field] = error;
+  //       hasErrors = true;
+  //     }
+  //   });
 
-    // No validation for products array - allow empty/incomplete products
+  //   // No validation for products array - allow empty/incomplete products
 
-    if (formData.yardShipping === "Own Shipping") {
-      const ownShippingInfoKeys = Object.keys(
-        formData.ownShippingInfo
-      ) as Array<keyof typeof formData.ownShippingInfo>;
-      ownShippingInfoKeys.forEach((field) => {
-        const error = validateField(field, formData.ownShippingInfo[field]);
-        if (error) {
-          newErrors[`ownShippingInfo.${field}`] = error;
-          hasErrors = true;
-        }
-      });
-    }
+  //   if (formData.yardShipping === "Own Shipping") {
+  //     const ownShippingInfoKeys = Object.keys(
+  //       formData.ownShippingInfo
+  //     ) as Array<keyof typeof formData.ownShippingInfo>;
+  //     ownShippingInfoKeys.forEach((field) => {
+  //       const error = validateField(field, formData.ownShippingInfo[field]);
+  //       if (error) {
+  //         newErrors[`ownShippingInfo.${field}`] = error;
+  //         hasErrors = true;
+  //       }
+  //     });
+  //   }
 
-    // Validate optional payment fields if provided
-    ["cardNumber", "cardDate", "cardCvv"].forEach((field) => {
-      const value = formData[field as keyof typeof formData] as string;
-      if (value) {
-        const error = validateField(field, value);
-        if (error) {
-          newErrors[field] = error;
-          hasErrors = true;
-        }
-      }
-    });
+  //   // Validate optional payment fields if provided
+  //   ["cardNumber", "cardDate", "cardCvv"].forEach((field) => {
+  //     const value = formData[field as keyof typeof formData] as string;
+  //     if (value) {
+  //       const error = validateField(field, value);
+  //       if (error) {
+  //         newErrors[field] = error;
+  //         hasErrors = true;
+  //       }
+  //     }
+  //   });
 
-    setFieldErrors(newErrors);
-    return !hasErrors;
-  };
+  //   setFieldErrors(newErrors);
+  //   return !hasErrors;
+  // };
   const [invoiceDate, setInvoiceData] = useState(false);
   const [poDate, setPoData] = useState(false);
   // Send invoice function
   const handleSendInvoice = async () => {
-    if (!validateAllFields()) {
-      toast.error("Please fill all the fields");
-      return;
-    }
+    // if (!validateAllFields()) {
+    //   toast.error("Please fill all the fields");
+    //   return;
+    // }
 
     setIsLoading(true);
     setMessage(null);
@@ -1705,10 +1705,10 @@ const OrderDetails = () => {
     }
   };
   const handleSendPO = async () => {
-    if (!validateAllFields()) {
-      toast.error("Please fill all the fields");
-      return;
-    }
+    // if (!validateAllFields()) {
+    //   toast.error("Please fill all the fields");
+    //   return;
+    // }
 
     setIsLoading(true);
     setMessage(null);
@@ -1844,10 +1844,10 @@ const OrderDetails = () => {
   };
 
   const handleUpdateOrder = async () => {
-    if (!validateAllFields()) {
-      toast.error("Please fill all the fields");
-      return;
-    }
+    // if (!validateAllFields()) {
+    //   toast.error("Please fill all the fields");
+    //   return;
+    // }
     setIsLoading(true);
     setMessage(null);
     try {
@@ -1897,10 +1897,10 @@ const OrderDetails = () => {
   };
 
   const handleCreateOrder = async () => {
-    if (!validateAllFields()) {
-      toast.error("Please fill all the fields");
-      return;
-    }
+    // if (!validateAllFields()) {
+    //   toast.error("Please fill all the fields");
+    //   return;
+    // }
 
     setIsLoading(true);
     setMessage(null);
