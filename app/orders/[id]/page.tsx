@@ -43,11 +43,6 @@ export type OrderFormData = {
   email: string;
   mobile: string;
   alternateMobile: string;
-  partPrice: string | number;
-  taxesPrice: string | number;
-  handlingPrice: string | number;
-  processingPrice: string | number;
-  corePrice: string | number;
   shippingAddressType: string;
   company: string;
   shippingAddress: string;
@@ -264,10 +259,13 @@ const OrderDetails = () => {
           }
 
           // Map backend cartItems to UI cartItems array with strong typing
+          // Debug logs removed
+
           const products =
             Array.isArray(data.items) && data.items.length > 0
-              ? data.items.map(
-                  (item: any): ProductFormData => ({
+              ? data.items.map((item: any): ProductFormData => {
+                  // Debug log removed
+                  return {
                     variantSku: String(item.sku || item.id || ""),
                     make: String(item.makeName || ""),
                     model: String(item.modelName || ""),
@@ -293,10 +291,33 @@ const OrderDetails = () => {
                     productVariants: [],
                     selectedSubpart: null,
                     selectedMileage: "",
-                  })
-                )
-              : formData.products; // Keep existing products if data.items is empty
-          console.log("DEBUG 1: Products from server mapping:", products);
+                  };
+                })
+              : data.totalAmount && data.totalAmount > 0
+              ? [
+                  {
+                    variantSku: "",
+                    make: "",
+                    model: "",
+                    year: "",
+                    parts: "",
+                    partPrice: String(data.totalAmount || ""),
+                    taxesPrice: String(data.taxesAmount || ""),
+                    handlingPrice: String(data.handlingFee || ""),
+                    processingPrice: String(data.processingFee || ""),
+                    corePrice: String(data.corePrice || ""),
+                    quantity: 1,
+                    milesPromised: "",
+                    specification: "",
+                    pictureUrl: "",
+                    pictureStatus: "PENDING",
+                    productVariants: [],
+                    selectedSubpart: null,
+                    selectedMileage: "",
+                  },
+                ]
+              : formData.products; // Keep existing products if no data available
+          // Debug logs removed to prevent console spam
           const dataPoStatus = data.poStatus || "";
           const dataInvoiceStatus = data.invoiceStatus || "";
 
@@ -329,11 +350,6 @@ const OrderDetails = () => {
             alternateMobile: data.customer?.alternativePhone || "",
 
             // Pricing
-            partPrice: data.subtotal || "",
-            taxesPrice: data.taxesAmount || "",
-            handlingPrice: data.handlingFee || "",
-            processingPrice: data.processingFee || "",
-            corePrice: data.corePrice || "",
             totalSellingPrice: data.totalAmount || "",
             totalPrice: data.totalAmount || "",
 
@@ -456,6 +472,10 @@ const OrderDetails = () => {
           console.error("Failed to fetch order details", err);
         })
         .finally(() => {
+          console.log(
+            "DEBUG 4: FormData after setFormData:",
+            formData.products
+          );
           setLoadingOrder(false);
         });
     } else {
@@ -530,9 +550,9 @@ const OrderDetails = () => {
         parts: "",
         partPrice: "",
         taxesPrice: "",
-      handlingPrice: "",
-      processingPrice: "",
-      corePrice: "",
+        handlingPrice: "",
+        processingPrice: "",
+        corePrice: "",
         quantity: 1,
         milesPromised: "",
         specification: "",
@@ -551,11 +571,6 @@ const OrderDetails = () => {
     email: "",
     mobile: "",
     alternateMobile: "",
-    partPrice: "",
-    taxesPrice: "",
-    handlingPrice: "",
-    processingPrice: "",
-    corePrice: "",
     shippingAddressType: "",
     company: "",
     shippingAddress: "",
@@ -657,40 +672,45 @@ const OrderDetails = () => {
     if (!loadingOrder) {
       const newVisibleFields = { ...visiblePriceFields };
 
-      if (
-        formData.taxesPrice &&
-        parseFloat(formData.taxesPrice.toString()) > 0
-      ) {
+      // Check if any product has these additional price fields
+      const hasTaxesPrice = formData.products.some(
+        (product) =>
+          product.taxesPrice && parseFloat(product.taxesPrice.toString()) > 0
+      );
+      const hasHandlingPrice = formData.products.some(
+        (product) =>
+          product.handlingPrice &&
+          parseFloat(product.handlingPrice.toString()) > 0
+      );
+      const hasProcessingPrice = formData.products.some(
+        (product) =>
+          product.processingPrice &&
+          parseFloat(product.processingPrice.toString()) > 0
+      );
+      const hasCorePrice = formData.products.some(
+        (product) =>
+          product.corePrice && parseFloat(product.corePrice.toString()) > 0
+      );
+
+      if (hasTaxesPrice) {
         newVisibleFields.taxesPrice = true;
       }
 
-      if (
-        formData.handlingPrice &&
-        parseFloat(formData.handlingPrice.toString()) > 0
-      ) {
+      if (hasHandlingPrice) {
         newVisibleFields.handlingPrice = true;
       }
 
-      if (
-        formData.processingPrice &&
-        parseFloat(formData.processingPrice.toString()) > 0
-      ) {
+      if (hasProcessingPrice) {
         newVisibleFields.processingPrice = true;
       }
 
-      if (formData.corePrice && parseFloat(formData.corePrice.toString()) > 0) {
+      if (hasCorePrice) {
         newVisibleFields.corePrice = true;
       }
 
       setVisiblePriceFields(newVisibleFields);
     }
-  }, [
-    formData.taxesPrice,
-    formData.handlingPrice,
-    formData.processingPrice,
-    formData.corePrice,
-    loadingOrder,
-  ]);
+  }, [formData.products, loadingOrder]);
 
   const handleYardMoved = (reason: string, yardCharge: string) => {
     addYardNote(`Yard Removed. Reason: ${reason}`, "By Agent");
@@ -809,45 +829,56 @@ const OrderDetails = () => {
   }, [loadingOrder]);
 
   const handleProductInputChange = <K extends keyof ProductFormData>(
-  index: number,
-  field: K,
-  value: ProductFormData[K]
-) => {
-  setFormData((prev) => {
-    const updatedProducts = [...prev.products];
-    updatedProducts[index] = {
-      ...updatedProducts[index],
-      [field]: value,
-    };
+    index: number,
+    field: K,
+    value: ProductFormData[K]
+  ) => {
+    setFormData((prev) => {
+      const updatedProducts = [...prev.products];
+      updatedProducts[index] = {
+        ...updatedProducts[index],
+        [field]: value,
+      };
 
-    // Calculate total selling price
-    const totalSelling = updatedProducts.reduce((acc, product) => {
-      const partPrice = parseFloat(product.partPrice?.toString() || "0");
-      const taxesPrice = parseFloat(product.taxesPrice?.toString() || "0");
-      const handlingPrice = parseFloat(product.handlingPrice?.toString() || "0");
-      const processingPrice = parseFloat(product.processingPrice?.toString() || "0");
-      const corePrice = parseFloat(product.corePrice?.toString() || "0");
+      // Calculate total selling price
+      const totalSelling = updatedProducts.reduce((acc, product) => {
+        const partPrice = parseFloat(product.partPrice?.toString() || "0");
+        const taxesPrice = parseFloat(product.taxesPrice?.toString() || "0");
+        const handlingPrice = parseFloat(
+          product.handlingPrice?.toString() || "0"
+        );
+        const processingPrice = parseFloat(
+          product.processingPrice?.toString() || "0"
+        );
+        const corePrice = parseFloat(product.corePrice?.toString() || "0");
+        const quantity = product.quantity || 1;
 
-      return acc + partPrice + taxesPrice + handlingPrice + processingPrice + corePrice;
-    }, 0);
+        return (
+          acc +
+          (partPrice +
+            taxesPrice +
+            handlingPrice +
+            processingPrice +
+            corePrice) *
+            quantity
+        );
+      }, 0);
 
-    return {
-      ...prev,
-      products: updatedProducts,
-      totalSellingPrice: totalSelling.toFixed(2),
-    };
-  });
+      return {
+        ...prev,
+        products: updatedProducts,
+        totalSellingPrice: totalSelling.toFixed(2),
+      };
+    });
 
-  // Clear field error if any
-  if (fieldErrors[field as string]) {
-    setFieldErrors((prev) => ({
-      ...prev,
-      [field as string]: "",
-    }));
-  }
-};
-
-
+    // Clear field error if any
+    if (fieldErrors[field as string]) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        [field as string]: "",
+      }));
+    }
+  };
 
   // Helper function to handle any form field change
   const handleFormFieldChange = (field: keyof OrderFormData, value: any) => {
@@ -1006,11 +1037,8 @@ const OrderDetails = () => {
           part: product.parts,
         });
         const variants = data.groupedVariants || [];
-        console.log(`DEBUG fetchProductVariants for index ${index}:`);
-        console.log(`  - Product:`, product);
-        console.log(`  - Fetched variants:`, variants);
-        console.log(`  - Existing specification:`, product.specification);
-        console.log(`  - Existing milesPromised:`, product.milesPromised);
+        // Debug logs removed
+        // Debug logs removed
         // debugger;
         handleProductInputChange(index, "productVariants", variants);
 
@@ -1049,7 +1077,7 @@ const OrderDetails = () => {
     }
     formData.products.forEach((product, index) => {
       // debugger;
-      console.log(`DEBUG 2: useEffect running for index ${index}`, product);
+      // Debug log removed
       const { make, model, year, parts } = product;
       // Compose a unique key for these fields
       const key = `${make}-${model}-${year}-${parts}`;
@@ -1062,7 +1090,7 @@ const OrderDetails = () => {
         // Only reset dependent fields if this is NOT the initial load AND the key actually changed
         // This prevents resetting fields when loading existing order data
         if (lastVariantKeys.current[index]) {
-          console.log(`DEBUG 5: Resetting fields for index ${index}`);
+          // Debug log removed
           handleProductInputChange(index, "specification", "");
           handleProductInputChange(index, "selectedSubpart", null);
           handleProductInputChange(index, "selectedMileage", "");
@@ -1152,16 +1180,30 @@ const OrderDetails = () => {
   const priceOptionsRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const newTotalPrice =
-      Number(formData.partPrice) +
-      Number(formData.handlingPrice) +
-      Number(formData.corePrice) +
-      Number(formData.taxesPrice) +
-      Number(formData.processingPrice);
+    // Calculate total from products array instead of single price fields
+    const newTotalPrice = formData.products.reduce((acc, product) => {
+      const partPrice = parseFloat(product.partPrice?.toString() || "0");
+      const taxesPrice = parseFloat(product.taxesPrice?.toString() || "0");
+      const handlingPrice = parseFloat(
+        product.handlingPrice?.toString() || "0"
+      );
+      const processingPrice = parseFloat(
+        product.processingPrice?.toString() || "0"
+      );
+      const corePrice = parseFloat(product.corePrice?.toString() || "0");
+      const quantity = product.quantity || 1;
+
+      return (
+        acc +
+        (partPrice + taxesPrice + handlingPrice + processingPrice + corePrice) *
+          quantity
+      );
+    }, 0);
 
     // format with two decimals
     const formattedTotal = newTotalPrice.toFixed(2);
 
+    // Only update if the total actually changed to prevent infinite loop
     if (formData.totalPrice !== formattedTotal) {
       setFormData((prev) => ({
         ...prev,
@@ -1170,12 +1212,15 @@ const OrderDetails = () => {
       }));
     }
   }, [
-    formData.partPrice,
-    formData.handlingPrice,
-    formData.corePrice,
-    formData.taxesPrice,
-    formData.processingPrice,
+    formData.products
+      .map(
+        (p) =>
+          `${p.partPrice}-${p.taxesPrice}-${p.handlingPrice}-${p.processingPrice}-${p.corePrice}-${p.quantity}`
+      )
+      .join(","),
   ]);
+
+  // Debug: Monitor formData.products changes - removed to prevent infinite loop
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -1473,43 +1518,27 @@ const OrderDetails = () => {
     const requiredFields = [
       "email",
       "mobile",
-      "partPrice",
       "shippingAddress",
       "billingAddress",
-      "make",
-      "model",
-      "year",
-      "parts",
       "saleMadeBy",
-
-      // "yardName",
-      // "yardMobile",
-      // "yardAddress",
-      // "yardEmail",
-      // "yardPrice",
-      // "yardWarranty",
-      // "yardMiles",
-      // "yardShipping",
-      // "yardCost",
-      // "pictureStatus",
-      // "carrierName",
-      // "trackingNumber",
-      // "notes",
     ];
 
     const newErrors: { [key: string]: string } = {};
     let hasErrors = false;
 
-    // requiredFields.forEach((field) => {
-    //   const error = validateField(
-    //     field,
-    //     formData[field as keyof typeof formData]
-    //   );
-    //   if (error) {
-    //     newErrors[field] = error;
-    //     hasErrors = true;
-    //   }
-    // });
+    // Validate basic required fields
+    requiredFields.forEach((field) => {
+      const error = validateField(
+        field,
+        formData[field as keyof typeof formData]
+      );
+      if (error) {
+        newErrors[field] = error;
+        hasErrors = true;
+      }
+    });
+
+    // No validation for products array - allow empty/incomplete products
 
     if (formData.yardShipping === "Own Shipping") {
       const ownShippingInfoKeys = Object.keys(
@@ -1563,11 +1592,7 @@ const OrderDetails = () => {
           email: formData.email,
           mobile: formData.mobile,
           alternateMobile: formData.alternateMobile,
-          partPrice: formData.partPrice,
-          taxesPrice: formData.taxesPrice,
-          handlingPrice: formData.handlingPrice,
-          processingPrice: formData.processingPrice,
-          corePrice: formData.corePrice,
+          products: formData.products,
           shippingAddress: formData.shippingAddress,
           billingAddress: formData.billingAddress,
           shippingAddressType: formData.shippingAddressType,
@@ -1699,7 +1724,7 @@ const OrderDetails = () => {
           email: formData.email,
           mobile: formData.mobile,
           alternateMobile: formData.alternateMobile,
-          partPrice: formData.partPrice,
+          products: formData.products,
           shippingAddress: formData.shippingAddress,
           billingAddress: formData.billingAddress,
           shippingAddressType: formData.shippingAddressType,
@@ -1973,9 +1998,6 @@ const OrderDetails = () => {
       setIsLoading(false);
     }
   };
-
-
-  
 
   const handleCharge = async (entryId: number) => {
     setIsLoading(true);
@@ -2611,7 +2633,6 @@ const OrderDetails = () => {
                   )}
                 </div>
               </div>
-             
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Row 2 */}
@@ -3344,18 +3365,15 @@ const OrderDetails = () => {
                     </div>
                   </div>
 
-                
-                  
                   <div className="relative">
-                    
                     <label className="block text-white/60 text-sm mb-2">
                       Part Price *
                     </label>
-                    
+
                     <div className="relative" ref={priceOptionsRef}>
                       <input
                         type="text"
-                         inputMode="decimal"
+                        inputMode="decimal"
                         className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 pr-12 text-white focus:outline-none ${
                           fieldErrors.partPrice
                             ? "border-red-500 focus:border-red-500"
@@ -3364,16 +3382,24 @@ const OrderDetails = () => {
                         placeholder="00.00"
                         value={product.partPrice}
                         onChange={(e) =>
-                          handleProductInputChange(index,"partPrice", e.target.value)
+                          handleProductInputChange(
+                            index,
+                            "partPrice",
+                            e.target.value
+                          )
                         }
                         onBlur={(e) => {
-                        let rawValue = e.target.value.trim();
-                        if (rawValue) {
-                          // Only format if it’s a valid number
-                          const formatted = Number(rawValue).toFixed(2);
-                          handleProductInputChange(index, "partPrice", formatted);
-                        }
-                      }}
+                          let rawValue = e.target.value.trim();
+                          if (rawValue) {
+                            // Only format if it’s a valid number
+                            const formatted = Number(rawValue).toFixed(2);
+                            handleProductInputChange(
+                              index,
+                              "partPrice",
+                              formatted
+                            );
+                          }
+                        }}
                       />
                       <button
                         type="button"
@@ -3444,248 +3470,281 @@ const OrderDetails = () => {
                     </p>
                   </div>
 
-                {(visiblePriceFields.taxesPrice ||
-                visiblePriceFields.handlingPrice ||
-                visiblePriceFields.processingPrice ||
-                visiblePriceFields.corePrice) && (
-                 <div className="">
-                  {visiblePriceFields.taxesPrice && (
-                    <div className="relative">
-                      {true && (
-                        <button
-                          onClick={() => {
-                            setVisiblePriceFields((prev) => ({
-                              ...prev,
-                              ["taxesPrice"]: false,
-                            }));
-                            handleInputChange("taxesPrice", "");
-                          }}
-                          className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                          title="Remove payment"
-                        >
-                          <X size={16} />
-                        </button>
+                  {(visiblePriceFields.taxesPrice ||
+                    visiblePriceFields.handlingPrice ||
+                    visiblePriceFields.processingPrice ||
+                    visiblePriceFields.corePrice) && (
+                    <div className="">
+                      {visiblePriceFields.taxesPrice && (
+                        <div className="relative">
+                          {true && (
+                            <button
+                              onClick={() => {
+                                setVisiblePriceFields((prev) => ({
+                                  ...prev,
+                                  ["taxesPrice"]: false,
+                                }));
+                                handleInputChange("taxesPrice", "");
+                              }}
+                              className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                              title="Remove payment"
+                            >
+                              <X size={16} />
+                            </button>
+                          )}
+                          <label className="block text-white/60 text-sm mb-2">
+                            Taxes Price
+                          </label>
+                          <input
+                            type="number"
+                            className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                              fieldErrors.taxesPrice
+                                ? "border-red-500 focus:border-red-500"
+                                : "border-gray-600 focus:border-blue-500"
+                            }`}
+                            placeholder="00.00"
+                            value={product.taxesPrice}
+                            onChange={(e) =>
+                              handleProductInputChange(
+                                index,
+                                "taxesPrice",
+                                e.target.value
+                              )
+                            }
+                            // onBlur={(e) => {
+                            //   const rawValue = e.target.value || "0"; // always string
+                            //   const value = parseFloat(rawValue).toFixed(2); // value is string
+                            //   handleInputChange("taxesPrice", value);
+                            // }}
+                            onBlur={(e) => {
+                              let rawValue = e.target.value.trim();
+                              if (rawValue) {
+                                // Only format if it’s a valid number
+                                const formatted = Number(rawValue).toFixed(2);
+                                handleProductInputChange(
+                                  index,
+                                  "taxesPrice",
+                                  formatted
+                                );
+                              }
+                            }}
+                          />
+                          {fieldErrors.taxesPrice && (
+                            <p className="text-red-400 text-xs mt-1">
+                              {fieldErrors.taxesPrice}
+                            </p>
+                          )}
+                        </div>
                       )}
-                      <label className="block text-white/60 text-sm mb-2">
-                        Taxes Price
-                      </label>
-                      <input
-                        type="number"
-                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                          fieldErrors.taxesPrice
-                            ? "border-red-500 focus:border-red-500"
-                            : "border-gray-600 focus:border-blue-500"
-                        }`}
-                        placeholder="00.00"
-                        value={product.taxesPrice}
-                       onChange={(e) =>
-                          handleProductInputChange(index,"taxesPrice", e.target.value)
-                        }
-                        // onBlur={(e) => {
-                        //   const rawValue = e.target.value || "0"; // always string
-                        //   const value = parseFloat(rawValue).toFixed(2); // value is string
-                        //   handleInputChange("taxesPrice", value);
-                        // }}
-                         onBlur={(e) => {
-                        let rawValue = e.target.value.trim();
-                        if (rawValue) {
-                          // Only format if it’s a valid number
-                          const formatted = Number(rawValue).toFixed(2);
-                          handleProductInputChange(index, "taxesPrice", formatted);
-                        }
-                      }}
-                      />
-                      {fieldErrors.taxesPrice && (
-                        <p className="text-red-400 text-xs mt-1">
-                          {fieldErrors.taxesPrice}
-                        </p>
-                      )}
-                    </div>
-                  )}
 
-                  {visiblePriceFields.handlingPrice && (
-                    <div className="relative">
-                      {true && (
-                        <button
-                          onClick={() => {
-                            setVisiblePriceFields((prev) => ({
-                              ...prev,
-                              ["handlingPrice"]: false,
-                            }));
-                            handleInputChange("handlingPrice", "");
-                          }}
-                          className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                          title="Remove payment"
-                        >
-                          <X size={16} />
-                        </button>
+                      {visiblePriceFields.handlingPrice && (
+                        <div className="relative">
+                          {true && (
+                            <button
+                              onClick={() => {
+                                setVisiblePriceFields((prev) => ({
+                                  ...prev,
+                                  ["handlingPrice"]: false,
+                                }));
+                                handleInputChange("handlingPrice", "");
+                              }}
+                              className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                              title="Remove payment"
+                            >
+                              <X size={16} />
+                            </button>
+                          )}
+                          <label className="block text-white/60 text-sm mb-2">
+                            Handling Price
+                          </label>
+                          <input
+                            type="number"
+                            className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                              fieldErrors.handlingPrice
+                                ? "border-red-500 focus:border-red-500"
+                                : "border-gray-600 focus:border-blue-500"
+                            }`}
+                            placeholder="00.00"
+                            value={product.handlingPrice}
+                            onChange={(e) =>
+                              handleProductInputChange(
+                                index,
+                                "handlingPrice",
+                                e.target.value
+                              )
+                            }
+                            onBlur={(e) => {
+                              let rawValue = e.target.value.trim();
+                              if (rawValue) {
+                                // Only format if it’s a valid number
+                                const formatted = Number(rawValue).toFixed(2);
+                                handleProductInputChange(
+                                  index,
+                                  "handlingPrice",
+                                  formatted
+                                );
+                              }
+                            }}
+                          />
+                          {fieldErrors.handlingPrice && (
+                            <p className="text-red-400 text-xs mt-1">
+                              {fieldErrors.handlingPrice}
+                            </p>
+                          )}
+                        </div>
                       )}
-                      <label className="block text-white/60 text-sm mb-2">
-                        Handling Price
-                      </label>
-                      <input
-                        type="number"
-                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                          fieldErrors.handlingPrice
-                            ? "border-red-500 focus:border-red-500"
-                            : "border-gray-600 focus:border-blue-500"
-                        }`}
-                        placeholder="00.00"
-                        value={product.handlingPrice}
-                        onChange={(e) =>
-                          handleProductInputChange(index,"handlingPrice", e.target.value)
-                        }
-                        onBlur={(e) => {
-                        let rawValue = e.target.value.trim();
-                        if (rawValue) {
-                          // Only format if it’s a valid number
-                          const formatted = Number(rawValue).toFixed(2);
-                          handleProductInputChange(index, "handlingPrice", formatted);
-                        }
-                      }}
-                      />
-                      {fieldErrors.handlingPrice && (
-                        <p className="text-red-400 text-xs mt-1">
-                          {fieldErrors.handlingPrice}
-                        </p>
-                      )}
-                    </div>
-                  )}
 
-                  {visiblePriceFields.processingPrice && (
-                    <div className="relative">
-                      {true && (
-                        <button
-                          onClick={() => {
-                            setVisiblePriceFields((prev) => ({
-                              ...prev,
-                              ["processingPrice"]: false,
-                            }));
-                            handleInputChange("processingPrice", "");
-                          }}
-                          className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                          title="Remove payment"
-                        >
-                          <X size={16} />
-                        </button>
+                      {visiblePriceFields.processingPrice && (
+                        <div className="relative">
+                          {true && (
+                            <button
+                              onClick={() => {
+                                setVisiblePriceFields((prev) => ({
+                                  ...prev,
+                                  ["processingPrice"]: false,
+                                }));
+                                handleInputChange("processingPrice", "");
+                              }}
+                              className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                              title="Remove payment"
+                            >
+                              <X size={16} />
+                            </button>
+                          )}
+                          <label className="block text-white/60 text-sm mb-2">
+                            Processing Price
+                          </label>
+                          <input
+                            type="number"
+                            className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                              fieldErrors.processingPrice
+                                ? "border-red-500 focus:border-red-500"
+                                : "border-gray-600 focus:border-blue-500"
+                            }`}
+                            placeholder="00.00"
+                            value={product.processingPrice}
+                            onChange={(e) =>
+                              handleProductInputChange(
+                                index,
+                                "processingPrice",
+                                e.target.value
+                              )
+                            }
+                            onBlur={(e) => {
+                              let rawValue = e.target.value.trim();
+                              if (rawValue) {
+                                // Only format if it’s a valid number
+                                const formatted = Number(rawValue).toFixed(2);
+                                handleProductInputChange(
+                                  index,
+                                  "processingPrice",
+                                  formatted
+                                );
+                              }
+                            }}
+                          />
+                          {fieldErrors.processingPrice && (
+                            <p className="text-red-400 text-xs mt-1">
+                              {fieldErrors.processingPrice}
+                            </p>
+                          )}
+                        </div>
                       )}
-                      <label className="block text-white/60 text-sm mb-2">
-                        Processing Price
-                      </label>
-                      <input
-                        type="number"
-                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                          fieldErrors.processingPrice
-                            ? "border-red-500 focus:border-red-500"
-                            : "border-gray-600 focus:border-blue-500"
-                        }`}
-                        placeholder="00.00"
-                        value={product.processingPrice}
-                        onChange={(e) =>
-                          handleProductInputChange(index,"processingPrice", e.target.value)
-                        }
-                         onBlur={(e) => {
-                        let rawValue = e.target.value.trim();
-                        if (rawValue) {
-                          // Only format if it’s a valid number
-                          const formatted = Number(rawValue).toFixed(2);
-                          handleProductInputChange(index, "processingPrice", formatted);
-                        }
-                      }}
-                      />
-                      {fieldErrors.processingPrice && (
-                        <p className="text-red-400 text-xs mt-1">
-                          {fieldErrors.processingPrice}
-                        </p>
-                      )}
-                    </div>
-                  )}
 
-                  {visiblePriceFields.corePrice && (
-                    <div className="relative">
-                      {true && (
-                        <button
-                          onClick={() => {
-                            setVisiblePriceFields((prev) => ({
-                              ...prev,
-                              ["corePrice"]: false,
-                            }));
-                            handleInputChange("corePrice", "");
-                          }}
-                          className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                          title="Remove payment"
-                        >
-                          <X size={16} />
-                        </button>
-                      )}
-                      <label className="block text-white/60 text-sm mb-2">
-                        Core Price
-                      </label>
-                      <input
-                        type="number"
-                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                          fieldErrors.corePrice
-                            ? "border-red-500 focus:border-red-500"
-                            : "border-gray-600 focus:border-blue-500"
-                        }`}
-                        placeholder="00.00"
-                        value={product.corePrice}
-                        onChange={(e) =>
-                          handleProductInputChange(index,"corePrice", e.target.value)
-                        }
-                         onBlur={(e) => {
-                        let rawValue = e.target.value.trim();
-                        if (rawValue) {
-                          // Only format if it’s a valid number
-                          const formatted = Number(rawValue).toFixed(2);
-                          handleProductInputChange(index, "corePrice", formatted);
-                        }
-                      }}
-                      />
-                      {fieldErrors.corePrice && (
-                        <p className="text-red-400 text-xs mt-1">
-                          {fieldErrors.corePrice}
-                        </p>
+                      {visiblePriceFields.corePrice && (
+                        <div className="relative">
+                          {true && (
+                            <button
+                              onClick={() => {
+                                setVisiblePriceFields((prev) => ({
+                                  ...prev,
+                                  ["corePrice"]: false,
+                                }));
+                                handleInputChange("corePrice", "");
+                              }}
+                              className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                              title="Remove payment"
+                            >
+                              <X size={16} />
+                            </button>
+                          )}
+                          <label className="block text-white/60 text-sm mb-2">
+                            Core Price
+                          </label>
+                          <input
+                            type="number"
+                            className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                              fieldErrors.corePrice
+                                ? "border-red-500 focus:border-red-500"
+                                : "border-gray-600 focus:border-blue-500"
+                            }`}
+                            placeholder="00.00"
+                            value={product.corePrice}
+                            onChange={(e) =>
+                              handleProductInputChange(
+                                index,
+                                "corePrice",
+                                e.target.value
+                              )
+                            }
+                            onBlur={(e) => {
+                              let rawValue = e.target.value.trim();
+                              if (rawValue) {
+                                // Only format if it’s a valid number
+                                const formatted = Number(rawValue).toFixed(2);
+                                handleProductInputChange(
+                                  index,
+                                  "corePrice",
+                                  formatted
+                                );
+                              }
+                            }}
+                          />
+                          {fieldErrors.corePrice && (
+                            <p className="text-red-400 text-xs mt-1">
+                              {fieldErrors.corePrice}
+                            </p>
+                          )}
+                        </div>
                       )}
                     </div>
                   )}
-                </div>
-              )} 
-               <div>
-                  <label className="block text-white/60 text-sm mb-2 ">
-                    VIN Number
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                    placeholder="VIN Number"
-                    value={formData.vinNumber}
-                    maxLength={17}
-                    pattern="[A-Za-z0-9]{17}"
-                    onChange={(e) => {
-                      // Only allow alphanumeric and max 17 chars
-                      const value = e.target.value
-                        .replace(/[^A-Za-z0-9]/g, "")
-                        .slice(0, 17);
-                      handleInputChange("vinNumber", value);
-                    }}
-                  />
-                </div>
-                <div>
-                  <label className="block text-white/60 text-sm mb-2 mt-0 ">
-                    Note
-                  </label>
-                  <textarea
-                    className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                    placeholder="Example : Enter VIN Number .... "
-                    value={formData.notes}
-                    onChange={(e) => handleInputChange("notes", e.target.value)}
-                  />
-                </div>
-              
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2 ">
+                      VIN Number
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                      placeholder="VIN Number"
+                      value={formData.vinNumber}
+                      maxLength={17}
+                      pattern="[A-Za-z0-9]{17}"
+                      onChange={(e) => {
+                        // Only allow alphanumeric and max 17 chars
+                        const value = e.target.value
+                          .replace(/[^A-Za-z0-9]/g, "")
+                          .slice(0, 17);
+                        handleInputChange("vinNumber", value);
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2 mt-0 ">
+                      Note
+                    </label>
+                    <textarea
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                      placeholder="Example : Enter VIN Number .... "
+                      value={formData.notes}
+                      onChange={(e) =>
+                        handleInputChange("notes", e.target.value)
+                      }
+                    />
+                  </div>
                 </div>
               ))}
-               
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-6 mt-2">
                 <div>
                   <label className="block text-white/60 text-sm mb-2">
@@ -3723,7 +3782,7 @@ const OrderDetails = () => {
                 </div> */}
                 <div>
                   <label className="block text-white/60 text-sm mb-2">
-                   Internal Notes
+                    Internal Notes
                   </label>
                   <textarea
                     className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
@@ -3731,7 +3790,7 @@ const OrderDetails = () => {
                     value={formData.internalNotes}
                     onChange={(e) => handleInputChange("notes", e.target.value)}
                   />
-                </div> 
+                </div>
               </div>
 
               {/* Send Invoice Button */}
