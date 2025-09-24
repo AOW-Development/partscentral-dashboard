@@ -5,6 +5,10 @@ type CartItem = {
   sku?: string;
   quantity: number;
   price: number;
+  taxesPrice?: number;
+  handlingPrice?: number;
+  processingPrice?: number;
+  corePrice?: number;
   warranty?: string;
   milesPromised?: string | number;
   specification?: string;
@@ -113,6 +117,10 @@ export const createOrderFromAdmin = async (
         sku: sku,
         quantity: item.quantity || 1,
         price: item.price,
+        taxesPrice: item.taxesPrice || 0,
+        handlingPrice: item.handlingPrice || 0,
+        processingPrice: item.processingPrice || 0,
+        corePrice: item.corePrice || 0,
         name: `Engine for ${sku.split("-").slice(0, 3).join(" ")}`,
         milesPromised: item.milesPromised,
         specification: item.specification || "",

@@ -14,7 +14,7 @@ import CalendarMain from "../components/Calendar";
 import { getSocket } from "../../utils/socket";
 import { deleteOrder } from "../../utils/orderApi";
 // import Calendar from "react-calendar";
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 type ValuePiece = Date | null;
 
@@ -22,14 +22,14 @@ type Value = ValuePiece | [ValuePiece, ValuePiece];
 
 interface Order {
   id: string;
-  orderNumber:string;
+  orderNumber: string;
   name: string;
   orderDate: string;
   sum: string;
   email: string;
   mobile: string;
   status: string;
-  raw?: any; 
+  raw?: any;
 }
 
 interface RawOrder {
@@ -94,30 +94,47 @@ export default function Orders() {
         if (response.ok) {
           const data = await response.json();
           const mappedOrders = data.map((order: RawOrder) => ({
-             id: order.id, // keep backend id for routing/actions
+            id: order.id, // keep backend id for routing/actions
             orderNumber: order.orderNumber, // show this in the UI
             name: order.customer.full_name,
-            orderDate: order.orderDate 
-              ? new Date(order.orderDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).replace(/ /g, ' ')
-              : new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).replace(/ /g, ' '),
+            orderDate: order.orderDate
+              ? new Date(order.orderDate)
+                  .toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "2-digit",
+                  })
+                  .replace(/ /g, " ")
+              : new Date(order.createdAt)
+                  .toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "2-digit",
+                  })
+                  .replace(/ /g, " "),
             sum: `${order.totalAmount}`,
             email: order.customer.email,
-            mobile: order.shippingSnapshot?.phone || order.billingSnapshot?.phone || '',
+            mobile:
+              order.shippingSnapshot?.phone ||
+              order.billingSnapshot?.phone ||
+              "",
             status: order.status,
             raw: order,
           }));
-          mappedOrders.sort((a: Order, b: Order) => Number(b.orderNumber) - Number(a.orderNumber));
+          mappedOrders.sort(
+            (a: Order, b: Order) =>
+              Number(b.orderNumber) - Number(a.orderNumber)
+          );
 
           setOrders(mappedOrders);
         } else {
-          console.error('Failed to fetch orders');
+          console.error("Failed to fetch orders");
         }
       } catch (error) {
-        console.error('Error fetching orders:', error);
+        console.error("Error fetching orders:", error);
+      } finally {
+        setLoading(false); // 👈 stop loader
       }
-      finally {
-      setLoading(false); // 👈 stop loader
-    }
     };
 
     fetchOrders();
@@ -126,14 +143,20 @@ export default function Orders() {
   useEffect(() => {
     const socket = getSocket();
 
-   
-    socket.on('new_order', (data) => {
+    socket.on("new_order", (data) => {
       // Safely extract fields from incoming socket payload (with fallbacks)
       const incoming = data.order || data;
-      const incomingOrderNumber = incoming.orderNumber ?? incoming.orderNo ?? incoming.id ?? "";
+      const incomingOrderNumber =
+        incoming.orderNumber ?? incoming.orderNo ?? incoming.id ?? "";
       const incomingDate = incoming.orderDate ?? incoming.createdAt ?? null;
       const formattedDate = incomingDate
-        ? new Date(incomingDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).replace(/ /g, ' ')
+        ? new Date(incomingDate)
+            .toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "2-digit",
+            })
+            .replace(/ /g, " ")
         : "";
 
       const newOrder: Order = {
@@ -148,15 +171,17 @@ export default function Orders() {
       };
       setOrders((prevOrders) => {
         const updated = [newOrder, ...prevOrders];
-        return updated.sort((a: Order, b: Order) => Number(b.orderNumber) - Number(a.orderNumber));
+        return updated.sort(
+          (a: Order, b: Order) => Number(b.orderNumber) - Number(a.orderNumber)
+        );
       });
     });
 
     return () => {
-      socket.off('new_order');
+      socket.off("new_order");
     };
   }, []);
-  
+
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [dateRange, setDateRange] = useState({ from: "", to: "" });
@@ -177,7 +202,6 @@ export default function Orders() {
   const [paginatedOrders, setPaginatedOrders] = useState<Order[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const pageSize = 50;
-
 
   // Close panel when clicking outside
   useEffect(() => {
@@ -215,67 +239,65 @@ export default function Orders() {
   }, [openActionMenu]);
 
   // Filtering logic (now in useEffect)
-// Filtering logic (now in useEffect)
-useEffect(() => {
-  let filtered = [...orders];
+  // Filtering logic (now in useEffect)
+  useEffect(() => {
+    let filtered = [...orders];
 
-  if (search.trim()) {
-    const query = search.toLowerCase();
+    if (search.trim()) {
+      const query = search.toLowerCase();
 
-    // helper to flatten nested objects into a single string
-    const flattenObject = (obj: any): string => {
-      let result = "";
-      for (const key in obj) {
-        if (!obj.hasOwnProperty(key)) continue;
+      // helper to flatten nested objects into a single string
+      const flattenObject = (obj: any): string => {
+        let result = "";
+        for (const key in obj) {
+          if (!obj.hasOwnProperty(key)) continue;
 
-        const val = obj[key];
-        if (val && typeof val === "object") {
-          result += " " + flattenObject(val);
-        } else {
-          result += " " + String(val || "");
+          const val = obj[key];
+          if (val && typeof val === "object") {
+            result += " " + flattenObject(val);
+          } else {
+            result += " " + String(val || "");
+          }
         }
-      }
-      return result.toLowerCase();
-    };
+        return result.toLowerCase();
+      };
 
-    filtered = filtered.filter((order) =>
-    (flattenObject(order) + flattenObject(order.raw || {})).includes(query)
-     );
-  }
+      filtered = filtered.filter((order) =>
+        (flattenObject(order) + flattenObject(order.raw || {})).includes(query)
+      );
+    }
 
-  if (status) {
-  filtered = filtered.filter(
-    (order) => order.status?.toLowerCase() === status.toLowerCase()
-  );
-}
+    if (status) {
+      filtered = filtered.filter(
+        (order) => order.status?.toLowerCase() === status.toLowerCase()
+      );
+    }
 
+    if (dateRange.from && dateRange.to) {
+      filtered = filtered.filter(
+        (order) =>
+          order.orderDate >= dateRange.from && order.orderDate <= dateRange.to
+      );
+    }
+    setFilteredOrders(filtered);
 
-  if (dateRange.from && dateRange.to) {
-    filtered = filtered.filter(
-      (order) =>
-        order.orderDate >= dateRange.from && order.orderDate <= dateRange.to
-    );
-  }
- setFilteredOrders(filtered);
+    // 2. Calculate totalPages
+    const total = Math.max(1, Math.ceil(filtered.length / pageSize));
+    setTotalPages(total);
 
-  // 2. Calculate totalPages
-  const total = Math.max(1, Math.ceil(filtered.length / pageSize));
-  setTotalPages(total);
+    // 3. Clamp current page
+    const safePage = Math.min(currentPage, total);
 
-  // 3. Clamp current page
-  const safePage = Math.min(currentPage, total);
+    // 4. Slice orders for that page
+    const startIndex = (safePage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    setPaginatedOrders(filtered.slice(startIndex, endIndex));
 
-  // 4. Slice orders for that page
-  const startIndex = (safePage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  setPaginatedOrders(filtered.slice(startIndex, endIndex));
-
-  // 5. Fix currentPage if it was too high
-  if (safePage !== currentPage) {
-    setCurrentPage(safePage);
-  }
-}, [search, status, dateRange, orders, dropdownQty, currentPage]);
-
+    // 5. Fix currentPage if it was too high
+    if (safePage !== currentPage) {
+      setCurrentPage(safePage);
+    }
+  }, [search, status, dateRange, orders, dropdownQty, currentPage]);
 
   // Handle date range change from calendar
   const handleDateRangeChange = (
@@ -304,19 +326,25 @@ useEffect(() => {
 
   // Handle delete order
   const handleDeleteOrder = async (orderId: string) => {
-    if (!confirm('Are you sure you want to delete this order? This action cannot be undone.')) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this order? This action cannot be undone."
+      )
+    ) {
       return;
     }
 
     try {
       await deleteOrder(orderId);
       // Remove the order from the local state
-      setOrders(prevOrders => prevOrders.filter(order => order.id !== orderId));
+      setOrders((prevOrders) =>
+        prevOrders.filter((order) => order.id !== orderId)
+      );
       setOpenActionMenu(null);
-      alert('Order deleted successfully!');
+      alert("Order deleted successfully!");
     } catch (error) {
-      console.error('Error deleting order:', error);
-      alert('Failed to delete order. Please try again.');
+      console.error("Error deleting order:", error);
+      alert("Failed to delete order. Please try again.");
     }
   };
 
@@ -464,50 +492,51 @@ useEffect(() => {
               </div>
               {/* <p className="text-gray-400 mb-6">This is the orders page.</p> */}
               {loading ? (
-               // 👇 Loader
-              <div className="flex justify-center items-center py-20">
-                <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            ) : (
-
-              <div className="overflow-x-auto rounded-lg shadow-lg ">
-                <table className="min-w-full text-lg text-left">
-                  <thead className=" text-gray-300">
-                    <tr>
-                      <th className="px-4 py-6 font-semibold">
-                        <input type="checkbox" />
-                      </th>
-                      <th className="px-4 py-3 font-semibold">ID</th>
-                      <th className="px-4 py-3 font-semibold">Name</th>
-                      <th className="px-4 py-3 font-semibold">Date</th>
-                      {/* <th className="px-4 py-3 font-semibold">Email</th> */}
-                      <th className="px-4 py-3 font-semibold">Mobile</th>
-                      <th className="px-4 py-3 font-semibold">Selling Price</th>
-                      <th className="px-4 py-3 font-semibold">Status</th>
-                      <th className="px-4 py-3 font-semibold">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-gray-100">
-                    {paginatedOrders.map((order, idx) => (
-                      <tr
-                        key={idx}
-                        className="border-b border-gray-700 last:border-0 cursor-pointer"
-                      >
-                        <td className="px-4 py-3">
+                // 👇 Loader
+                <div className="flex justify-center items-center py-20">
+                  <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-lg shadow-lg ">
+                  <table className="min-w-full text-lg text-left">
+                    <thead className=" text-gray-300">
+                      <tr>
+                        <th className="px-4 py-6 font-semibold">
                           <input type="checkbox" />
-                        </td>
-                        <td className="px-4 py-6">{order.orderNumber}</td>
-                        <td className="px-4 py-6">{order.name}</td>
-                        <td className="px-4 py-6">{order.orderDate}</td>
-                        {/* <td className="px-4 py-6">{order.email}</td> */}
-                        <td className="px-4 py-6">{order.mobile}</td>
-                        <td className="px-4 py-6">{order.sum}</td>
-                        <td className="px-4 py-6">
-                          <span className="bg-[#8b88f9] px-5 py-2 rounded-full text-xs">
-                            {String(order.status || '')}
-                          </span>
-                        </td>
-                        {/* {order.status === "Processing" && (
+                        </th>
+                        <th className="px-4 py-3 font-semibold">ID</th>
+                        <th className="px-4 py-3 font-semibold">Name</th>
+                        <th className="px-4 py-3 font-semibold">Date</th>
+                        {/* <th className="px-4 py-3 font-semibold">Email</th> */}
+                        <th className="px-4 py-3 font-semibold">Mobile</th>
+                        <th className="px-4 py-3 font-semibold">
+                          Selling Price
+                        </th>
+                        <th className="px-4 py-3 font-semibold">Status</th>
+                        <th className="px-4 py-3 font-semibold">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-gray-100">
+                      {paginatedOrders.map((order, idx) => (
+                        <tr
+                          key={idx}
+                          className="border-b border-gray-700 last:border-0 cursor-pointer"
+                        >
+                          <td className="px-4 py-3">
+                            <input type="checkbox" />
+                          </td>
+                          <td className="px-4 py-6">{order.orderNumber}</td>
+                          <td className="px-4 py-6">{order.name}</td>
+                          <td className="px-4 py-6">{order.orderDate}</td>
+                          {/* <td className="px-4 py-6">{order.email}</td> */}
+                          <td className="px-4 py-6">{order.mobile}</td>
+                          <td className="px-4 py-6">{order.sum}</td>
+                          <td className="px-4 py-6">
+                            <span className="bg-[#8b88f9] px-5 py-2 rounded-full text-xs">
+                              {String(order.status || "").toLowerCase()}
+                            </span>
+                          </td>
+                          {/* {order.status === "Processing" && (
                             <span className="bg-[#8b88f9] text-white px-5 py-3 rounded-full text-xs">
                               Processing
                             </span>
@@ -537,57 +566,57 @@ useEffect(() => {
                               Refunded
                             </span>
                           )} */}
-                        
-                        <td className="px-4 py-3 relative">
-                          <button
-                            className="text-white hover:text-blue-400 order-action-pen"
-                            onClick={() =>
-                              setOpenActionMenu(
-                                openActionMenu === idx ? null : idx
-                              )
-                            }
-                            type="button"
-                          >
-                            <Pencil className="w-5 h-4 ml-3 cursor-pointer" />
-                          </button>
-                          {openActionMenu === idx && (
-                            <div
-                              className="order-action-menu absolute right-8 top-1 z-50 bg-gray-300 rounded-lg shadow-lg border-2 border-blue-300 min-w-[160px] p-2 flex flex-col animate-fadeIn"
-                              style={{
-                                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                              }}
+
+                          <td className="px-4 py-3 relative">
+                            <button
+                              className="text-white hover:text-blue-400 order-action-pen"
+                              onClick={() =>
+                                setOpenActionMenu(
+                                  openActionMenu === idx ? null : idx
+                                )
+                              }
+                              type="button"
                             >
-                              <Link
-                                href={`/orders/${order.id}`}
-                                className="text-black text-base px-2 py-1 text-left rounded hover:bg-gray-200"
-                                onClick={() => setOpenActionMenu(null)}
-                                type="button"
+                              <Pencil className="w-5 h-4 ml-3 cursor-pointer" />
+                            </button>
+                            {openActionMenu === idx && (
+                              <div
+                                className="order-action-menu absolute right-8 top-1 z-50 bg-gray-300 rounded-lg shadow-lg border-2 border-blue-300 min-w-[160px] p-2 flex flex-col animate-fadeIn"
+                                style={{
+                                  boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                                }}
                               >
-                                Details
-                              </Link>
-                              {/* <button
+                                <Link
+                                  href={`/orders/${order.id}`}
+                                  className="text-black text-base px-2 py-1 text-left rounded hover:bg-gray-200"
+                                  onClick={() => setOpenActionMenu(null)}
+                                  type="button"
+                                >
+                                  Details
+                                </Link>
+                                {/* <button
                                 className="text-black text-base px-2 py-1 text-left rounded hover:bg-gray-200"
                                 onClick={() => setOpenActionMenu(null)}
                                 type="button"
                               >
                                 Change Status
                               </button> */}
-                              <button
-                                className="text-red-600 text-base px-2 py-1 text-left rounded hover:bg-red-100"
-                                onClick={() => handleDeleteOrder(order.id)}
-                                type="button"
-                              >
-                                Remove Order
-                              </button>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                                <button
+                                  className="text-red-600 text-base px-2 py-1 text-left rounded hover:bg-red-100"
+                                  onClick={() => handleDeleteOrder(order.id)}
+                                  type="button"
+                                >
+                                  Remove Order
+                                </button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
             <div className="pb-6">
               {/* Your content here */}

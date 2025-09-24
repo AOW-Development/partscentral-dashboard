@@ -637,15 +637,15 @@ const OrderDetails = () => {
   });
 
   // Auto-show alternate mobile field if data exists
-  // useEffect(() => {
-  //   if (
-  //     !loadingOrder &&
-  //     formData.alternateMobile &&
-  //     formData.alternateMobile.trim() !== ""
-  //   ) {
-  //     setShowAlternateMobileNumber(true);
-  //   }
-  // }, [formData.alternateMobile, loadingOrder]);
+  useEffect(() => {
+    if (
+      !loadingOrder &&
+      formData.alternateMobile &&
+      String(formData.alternateMobile).trim() !== ""
+    ) {
+      setShowAlternateMobileNumber(true);
+    }
+  }, [formData.alternateMobile, loadingOrder]);
 
   // Auto-show alternate card section if data exists
   useEffect(() => {
@@ -666,6 +666,15 @@ const OrderDetails = () => {
     formData.alternateCardCvv,
     loadingOrder,
   ]);
+
+  // Auto-show company field if data exists
+  useEffect(() => {
+    if (!loadingOrder) {
+      if (formData.company && String(formData.company).trim() !== "") {
+        setShowCompany(true);
+      }
+    }
+  }, [formData.company, loadingOrder]);
 
   // Auto-show additional price fields if data exists
   useEffect(() => {
@@ -1852,17 +1861,29 @@ const OrderDetails = () => {
     setMessage(null);
     try {
       const cartItems = formData.products
-        .map((item) => ({
-          id: item.variantSku,
+        .map((item, index) => ({
+          id: item.variantSku || `manual-${index}-${Date.now()}`, // Generate ID if no SKU
           name: `${item.make} ${item.model} ${item.year} ${item.parts}`,
           price: parseFloat(String(item.partPrice)) || 0,
+          taxesPrice: parseFloat(String(item.taxesPrice)) || 0,
+          handlingPrice: parseFloat(String(item.handlingPrice)) || 0,
+          processingPrice: parseFloat(String(item.processingPrice)) || 0,
+          corePrice: parseFloat(String(item.corePrice)) || 0,
           quantity: item.quantity || 1,
           milesPromised: item.milesPromised,
           specification: item.specification,
           pictureUrl: item.pictureUrl || "",
           pictureStatus: item.pictureStatus || "PENDING",
         }))
-        .filter((item) => !!item.id);
+        .filter(
+          (item) =>
+            !!item.id ||
+            item.price > 0 ||
+            item.taxesPrice > 0 ||
+            item.handlingPrice > 0 ||
+            item.processingPrice > 0 ||
+            item.corePrice > 0
+        ); // Include items with SKU or manual prices
 
       // Map payment entry data to form data for merchant info
       const firstPaymentEntry = paymentEntries[0];
@@ -1922,10 +1943,14 @@ const OrderDetails = () => {
       }
 
       const cartItems = formData.products
-        .map((item) => ({
-          id: item.variantSku,
+        .map((item, index) => ({
+          id: item.variantSku || `manual-${index}-${Date.now()}`, // Generate ID if no SKU
           name: `${item.make} ${item.model} ${item.year} ${item.parts}`,
           price: parseFloat(String(item.partPrice)) || 0,
+          taxesPrice: parseFloat(String(item.taxesPrice)) || 0,
+          handlingPrice: parseFloat(String(item.handlingPrice)) || 0,
+          processingPrice: parseFloat(String(item.processingPrice)) || 0,
+          corePrice: parseFloat(String(item.corePrice)) || 0,
           quantity: item.quantity || 1,
           // warranty: item.warranty,
           milesPromised: item.milesPromised,
@@ -1933,7 +1958,15 @@ const OrderDetails = () => {
           pictureUrl: item.pictureUrl || "",
           pictureStatus: item.pictureStatus || "PENDING",
         }))
-        .filter((item) => !!item.id); // Ensure SKU is present
+        .filter(
+          (item) =>
+            !!item.id ||
+            item.price > 0 ||
+            item.taxesPrice > 0 ||
+            item.handlingPrice > 0 ||
+            item.processingPrice > 0 ||
+            item.corePrice > 0
+        ); // Include items with SKU or manual prices
       console.log("Cart items:", cartItems);
 
       // Get the first payment entry (or use default values if none exists)
@@ -2494,7 +2527,7 @@ const OrderDetails = () => {
                     <option value="invoice sent">Invoice Sent</option>
                     <option value="invoice confirmed">Invoice Confirmed</option>
                     <option value="unpaid">Unpaid</option>
-                    <option value="paid">Paid</option>
+                    <option value="PAID">Paid</option>
                     <option value="balance due">Balance Due</option>
                     <option value="yard located">Yard Located</option>
                     <option value="po sent">PO Sent</option>
