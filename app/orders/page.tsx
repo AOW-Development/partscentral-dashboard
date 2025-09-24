@@ -380,9 +380,12 @@ useEffect(() => {
                   <option value="send bol">send bol</option>
                   <option value="confirm bol">confirm bol</option>
                   <option value="cx picked the part">cx picked the part</option>
+                  <option value="transit">transit</option>
                   <option value="Delivered">Delivered</option>
                   <option value="Cancelled">Cancelled</option>
                   <option value="Refunded">Refunded</option>
+                  <option value="send po">send po</option>
+                  <option value="Need to Refund">Need to Refund</option>
                 </select>
 
                 {/* Right-aligned custom arrow, after the text */}

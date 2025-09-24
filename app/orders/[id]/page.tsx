@@ -2511,9 +2511,12 @@ const OrderDetails = () => {
                     <option value="delivery appointment done">
                       Delivery Appointment done
                     </option>
+                    <option value="transit">transit</option>
                     <option value="delivered">Delivered</option>
                     <option value="cancelled">Cancelled</option>
                     <option value="refunded">Refunded</option>
+                    <option value="send po">send po</option>
+                  <option value="Need to Refund">Need to Refund</option>
                   </select>
                   <button className="text-white/60 hover:text-white">
                     <svg
