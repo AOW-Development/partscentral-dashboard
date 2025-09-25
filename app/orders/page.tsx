@@ -400,7 +400,7 @@ export default function Orders() {
                   <option value="balance due">balance due</option>
                   <option value="po sent">po sent</option>
                   <option value="po confirmed">po confirmed</option>
-                  <option value="yard located">Yard located</option>
+                  <option value="yard located">yard located</option>
                   <option value="picture sent">picture sent</option>
                   <option value="tracking sent">tracking sent</option>
                   <option value="get w/d">get w/d</option>
@@ -409,11 +409,19 @@ export default function Orders() {
                   <option value="confirm bol">confirm bol</option>
                   <option value="cx picked the part">cx picked the part</option>
                   <option value="transit">transit</option>
-                  <option value="Delivered">Delivered</option>
-                  <option value="Cancelled">Cancelled</option>
-                  <option value="Refunded">Refunded</option>
+                  <option value="Delivered">delivered</option>
+                  <option value="Cancelled">cancelled</option>
+                  <option value="Refunded">refunded</option>
                   <option value="send po">send po</option>
-                  <option value="Need to Refund">Need to Refund</option>
+                  <option value="need to refund">need to refund</option>
+                  <option value="re-quote">re-quote</option>
+                  <option value="relocate">relocate</option>
+                  <option value="wwex tracking">wwex tracking</option>
+                  <option value="yard payment">yard payment</option>
+                  <option value="locate yard">locate yard</option>
+                  <option value="declined-cx">declined-cx</option>
+                  <option value="chargeback">chargeback</option>
+                  <option value="problematic order">problematic order</option>
                 </select>
 
                 {/* Right-aligned custom arrow, after the text */}
