@@ -37,7 +37,8 @@ const mapWarrantyToPrismaEnum = (warranty: string): string => {
 
 export const createOrderFromAdmin = async (
   formData: any,
-  cartItems: CartItem[]
+  cartItems: CartItem[],
+  paymentEntries: any[] = []
 ) => {
   // Debug: log ownShippingInfo and yardShipping before constructing orderData
   console.log("DEBUG ownShippingInfo:", formData.ownShippingInfo);
@@ -129,39 +130,67 @@ export const createOrderFromAdmin = async (
         // pictureStatus: item.pictureStatus || formData.pictureStatus || 'PENDING',
       };
     }),
-    paymentInfo: {
-      paymentMethod: formData.merchantMethod || "",
-      status: "PENDING",
-      amount: formData.paymentAmount || formData.totalPrice || 0,
-      currency: "USD",
-      provider: "STRIPE",
-      entity: formData.entity || null,
-      cardData: formData.cardNumber
-        ? {
-            cardNumber: formData.cardNumber,
-            cardholderName: formData.cardHolderName,
-            expirationDate: formData.cardDate,
-            securityCode: formData.cardCvv,
-            last4: formData.cardNumber.slice(-4),
-            brand: formData.cardNumber.startsWith("4") ? "Visa" : "Mastercard",
-          }
-        : null,
-      alternateCardData: formData.alternateCardNumber
-        ? {
-            cardNumber: formData.alternateCardNumber,
-            cardholderName: formData.alternateCardHolderName,
-            expirationDate: formData.alternateCardDate,
-            securityCode: formData.alternateCardCvv,
-            last4: formData.alternateCardNumber.slice(-4),
-            brand: formData.alternateCardNumber.startsWith("4")
-              ? "Visa"
-              : "Mastercard",
-          }
-        : null,
-      approvelCode: formData.approvalCode,
-      charged: formData.charged,
-      cardChargedDate: formData.cardChargedDate,
-    },
+    paymentInfo:
+      paymentEntries.length > 0
+        ? paymentEntries.map((entry) => ({
+            ...entry,
+            cardData: formData.cardNumber
+              ? {
+                  cardNumber: formData.cardNumber,
+                  cardholderName: formData.cardHolderName,
+                  expirationDate: formData.cardDate,
+                  securityCode: formData.cardCvv,
+                  last4: formData.cardNumber.slice(-4),
+                  brand: "Visa", // Default brand
+                }
+              : null,
+            alternateCardData: formData.alternateCardNumber
+              ? {
+                  cardNumber: formData.alternateCardNumber,
+                  cardholderName: formData.alternateCardHolderName,
+                  expirationDate: formData.alternateCardDate,
+                  securityCode: formData.alternateCardCvv,
+                  last4: formData.alternateCardNumber.slice(-4),
+                  brand: "Visa", // Default brand
+                }
+              : null,
+          }))
+        : {
+            paymentMethod: formData.merchantMethod || "",
+            status: "PENDING",
+            amount: formData.paymentAmount || formData.totalPrice || 0,
+            currency: "USD",
+            provider: "STRIPE",
+            entity: formData.entity || null,
+            cardData: formData.cardNumber
+              ? {
+                  cardNumber: formData.cardNumber,
+                  cardholderName: formData.cardHolderName,
+                  expirationDate: formData.cardDate,
+                  securityCode: formData.cardCvv,
+                  last4: formData.cardNumber.slice(-4),
+                  brand: formData.cardNumber.startsWith("4")
+                    ? "Visa"
+                    : "Mastercard",
+                }
+              : null,
+            alternateCardData: formData.alternateCardNumber
+              ? {
+                  cardNumber: formData.alternateCardNumber,
+                  cardholderName: formData.alternateCardHolderName,
+                  expirationDate: formData.alternateCardDate,
+                  securityCode: formData.alternateCardCvv,
+                  last4: formData.alternateCardNumber.slice(-4),
+                  brand: formData.alternateCardNumber.startsWith("4")
+                    ? "Visa"
+                    : "Mastercard",
+                }
+              : null,
+            approvelCode: formData.approvalCode,
+            charged: formData.charged,
+            cardChargedDate: formData.cardChargedDate,
+          },
+    internalNotes: formData.internalNotes,
     totalAmount: parseFloat(formData.totalPrice as string) || 0,
     subtotal: parseFloat(formData.partPrice as string) || 0,
     orderNumber: formData.id,
@@ -234,6 +263,8 @@ export const createOrderFromAdmin = async (
   };
   console.log("formData.yardName in orderApi:", formData.yardName);
   try {
+    console.log("DEBUG: Payment Entries received in orderApi:", paymentEntries);
+    console.log("DEBUG: Payment Info being sent:", orderData.paymentInfo);
     console.log("Sending order data:", JSON.stringify(orderData, null, 2));
 
     // Create the order with nested yard info if provided

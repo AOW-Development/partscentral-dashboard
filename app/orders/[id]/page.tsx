@@ -184,14 +184,31 @@ const OrderDetails = () => {
   const [showAlternateMobileNumber, setShowAlternateMobileNumber] =
     useState(false);
 
+  // Payment entries state for dynamic payment fields (only MerchantInfo fields)
+  const [paymentEntries, setPaymentEntries] = useState([
+    {
+      id: 1,
+      merchantMethod: "",
+      totalPrice: "",
+      approvalCode: "",
+      entity: "",
+      cardChargedDate: "",
+      charged: "",
+      chargeClicked: false,
+    },
+  ]);
+
+  // Note: Payment entries are loaded separately and don't override main form card details
+
   useEffect(() => {
     if (orderId && orderId !== "create" && orderId !== "new") {
       setLoadingOrder(true);
       getOrderById(orderId)
         .then((data) => {
-          const payment = data.payments?.[0] || {};
-          const billing = data.billingSnapshot || {};
+          console.log("DEBUG: Full order data received:", data);
+          console.log("DEBUG: Order ID being loaded:", orderId);
 
+          const billing = data.billingSnapshot || {};
           const shipping = data.shippingSnapshot || {};
           const yard = data.yardInfo || {};
           const ownShipping = yard.yardOwnShippingInfo || {};
@@ -239,6 +256,8 @@ const OrderDetails = () => {
           setPreviousYards(yardHistory);
 
           const payments = Array.isArray(data.payments) ? data.payments : [];
+          console.log("DEBUG: Raw payments from API:", payments);
+
           const mappedPaymentEntries = payments.map(
             (p: any, index: number) => ({
               id: p.id || Date.now() + index,
@@ -253,6 +272,26 @@ const OrderDetails = () => {
               chargeClicked: p.status === "SUCCEEDED",
             })
           );
+
+          console.log("DEBUG: Mapped payment entries:", mappedPaymentEntries);
+          // console.log(
+          //   "DEBUG: Payment amounts from API:",
+          //   payments.map((p) => ({
+          //     id: p.id,
+          //     amount: p.amount,
+          //     method: p.method,
+          //   }))
+          // );
+          console.log(
+            "DEBUG: First payment for card details:",
+            data.payments?.[0]
+          );
+          console.log("DEBUG: Card details from first payment:", {
+            cardHolderName: data.payments?.[0]?.cardHolderName,
+            cardNumber: data.payments?.[0]?.cardNumber,
+            cardExpiry: data.payments?.[0]?.cardExpiry,
+            cardCvv: data.payments?.[0]?.cardCvv,
+          });
 
           if (mappedPaymentEntries.length > 0) {
             setPaymentEntries(mappedPaymentEntries);
@@ -332,7 +371,7 @@ const OrderDetails = () => {
           } else {
             setInvoiceButtonState(false);
           }
-          setFormData({
+          const newFormData = {
             ...formData,
             products, // Set the products here
             // Basic order info
@@ -360,20 +399,10 @@ const OrderDetails = () => {
             billingAddress: data.billingAddress || billing.address || "",
 
             // Payment info
-            cardHolderName: payment.cardHolderName || "",
-            cardNumber: payment.cardNumber || "",
-            cardDate: payment.cardExpiry
-              ? new Date(payment.cardExpiry).toLocaleDateString("en-US", {
-                  month: "2-digit",
-                  year: "2-digit",
-                })
-              : "",
-            cardCvv: payment.cardCvv || "",
-            // Alternate card info
-            alternateCardHolderName: payment.alternateCardHolderName || "",
-            alternateCardNumber: payment.alternateCardNumber || "",
-            alternateCardDate: payment.alternateCardExpiry
-              ? new Date(payment.alternateCardExpiry).toLocaleDateString(
+            cardHolderName: data.payments?.[0]?.cardHolderName || "",
+            cardNumber: data.payments?.[0]?.cardNumber || "",
+            cardDate: data.payments?.[0]?.cardExpiry
+              ? new Date(data.payments[0].cardExpiry).toLocaleDateString(
                   "en-US",
                   {
                     month: "2-digit",
@@ -381,12 +410,27 @@ const OrderDetails = () => {
                   }
                 )
               : "",
-            alternateCardCvv: payment.alternateCardCvv || "",
-            merchantMethod: payment.method || "",
+            cardCvv: data.payments?.[0]?.cardCvv || "",
+            // Alternate card info
+            alternateCardHolderName:
+              data.payments?.[0]?.alternateCardHolderName || "",
+            alternateCardNumber: data.payments?.[0]?.alternateCardNumber || "",
+            alternateCardDate: data.payments?.[0]?.alternateCardExpiry
+              ? new Date(
+                  data.payments[0].alternateCardExpiry
+                ).toLocaleDateString("en-US", {
+                  month: "2-digit",
+                  year: "2-digit",
+                })
+              : "",
+            alternateCardCvv: data.payments?.[0]?.alternateCardCvv || "",
+            merchantMethod: data.payments?.[0]?.method || "",
             approvalCode:
-              payment.approvelCode || payment.providerPaymentId || "",
-            entity: payment.entity || "",
-            charged: payment.status === "SUCCEEDED" ? "Yes" : "No",
+              data.payments?.[0]?.approvelCode ||
+              data.payments?.[0]?.providerPaymentId ||
+              "",
+            entity: data.payments?.[0]?.entity || "",
+            charged: data.payments?.[0]?.status === "SUCCEEDED" ? "Yes" : "No",
 
             // Product info (from first item if available)
             warranty: mapPrismaEnumToWarranty(data.warranty) || "",
@@ -400,6 +444,7 @@ const OrderDetails = () => {
 
             // Notes and metadata
             notes: data.notes || "",
+            internalNotes: data.internalNotes || "",
             vinNumber: data.vinNumber || "",
             estimatedDeliveryDate: data.estimatedDeliveryDate || "",
             // Yard info
@@ -441,7 +486,10 @@ const OrderDetails = () => {
               bolNumber: ownShipping.bolNumber || "",
               owntotalBuy: ownShipping.totalBuy || "",
             },
-          });
+          };
+
+          console.log("DEBUG: Form data being set:", newFormData);
+          setFormData(newFormData);
           console.log("formData after loading order:", formData);
 
           if (data.customerNotes && typeof data.customerNotes === "string") {
@@ -1254,20 +1302,6 @@ const OrderDetails = () => {
   // Field-specific error states
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
-  // Payment entries state for dynamic payment fields
-  const [paymentEntries, setPaymentEntries] = useState([
-    {
-      id: 1,
-      merchantMethod: "",
-      totalPrice: "",
-      approvalCode: "",
-      entity: "",
-      cardChargedDate: "",
-      charged: "",
-      chargeClicked: false,
-    },
-  ]);
-
   // Handle form field changes
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => {
@@ -1897,10 +1931,20 @@ const OrderDetails = () => {
         paymentAmount: firstPaymentEntry?.totalPrice || "",
       };
 
+      console.log(
+        "DEBUG: Payment Entries being sent for update:",
+        paymentEntries
+      );
+      console.log(
+        "DEBUG: Form Data being sent for update:",
+        updatedFormDataWithPayment
+      );
+
       const result = await updateOrderFromAdmin(
         orderId,
         updatedFormDataWithPayment,
-        cartItems
+        cartItems,
+        paymentEntries
       );
 
       toast.success("Order updated successfully");
@@ -1975,6 +2019,7 @@ const OrderDetails = () => {
       const updatedFormData = {
         ...formData,
         // warranty: mapWarrantyToPrismaEnum(formData.warranty),
+        internalNotes: formData.internalNotes || "",
         status: formData.status || "order created",
         customerNotes: customerNotes,
         yardNotes: yardNotes,
@@ -2002,10 +2047,17 @@ const OrderDetails = () => {
         paymentAmount: firstPaymentEntry?.totalPrice || "",
       };
 
+      console.log("DEBUG: Payment Entries being sent:", paymentEntries);
+      console.log("DEBUG: Form Data being sent:", finalFormDataWithPayment);
+
       const result = await createOrderFromAdmin(
         finalFormDataWithPayment,
-        cartItems
+        cartItems,
+        paymentEntries
       );
+
+      console.log("DEBUG: Order creation result:", result);
+      console.log("DEBUG: Created order ID:", result?.id);
 
       // setMessage({
       //   type: "success",
@@ -2545,11 +2597,19 @@ const OrderDetails = () => {
                       Delivery Appointment done
                     </option>
                     <option value="transit">transit</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="cancelled">Cancelled</option>
-                    <option value="refunded">Refunded</option>
-                    <option value="send po">send po</option>
-                  <option value="Need to Refund">Need to Refund</option>
+                    <option value="DELIVERED">Delivered</option>
+                    <option value="CANCELLED">Cancelled</option>
+                    <option value="REFUNDED">Refunded</option>
+                    <option value="send po">Send PO</option>
+                    <option value="need to refund">Need to Refund</option>
+                    <option value="re-quote">Re-Quote</option>
+                    <option value="relocate">Relocate</option>
+                    <option value="wwex tracking">WWEX Tracking</option>
+                    <option value="yard payment">Yard Payment</option>
+                    <option value="locate yard">Locate Yard</option>
+                    <option value="declined-cx">Declined-CX</option>
+                    <option value="chargeback">ChargeBack</option>
+                    <option value="problematic order">Problematic Order</option>
                   </select>
                   <button className="text-white/60 hover:text-white">
                     <svg
@@ -3824,7 +3884,9 @@ const OrderDetails = () => {
                     className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
                     placeholder="Example : Enter VIN Number .... "
                     value={formData.internalNotes}
-                    onChange={(e) => handleInputChange("notes", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("internalNotes", e.target.value)
+                    }
                   />
                 </div>
               </div>
