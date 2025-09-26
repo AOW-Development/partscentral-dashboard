@@ -213,6 +213,10 @@ const OrderDetails = () => {
           const yard = data.yardInfo || {};
           const ownShipping = yard.yardOwnShippingInfo || {};
 
+          console.log("DEBUG: Full data received:", data);
+          console.log("DEBUG: data.yardInfo:", data.yardInfo);
+          console.log("DEBUG: yard object:", yard);
+
           const customerNotesArray =
             data.customerNotes && typeof data.customerNotes === "string"
               ? JSON.parse(data.customerNotes)
@@ -229,6 +233,26 @@ const OrderDetails = () => {
           setCustomerNotes(customerNotesArray);
           setYardNotes(yardNotesArray);
 
+          console.log("DEBUG: Raw yardHistory from API:", data.yardHistory);
+          console.log("DEBUG: Full order data structure:", data);
+          console.log("DEBUG: Yard data from API:", yard);
+          console.log(
+            "DEBUG: Yard prices - yardTaxesPrice:",
+            yard.yardTaxesPrice
+          );
+          console.log(
+            "DEBUG: Yard prices - yardHandlingFee:",
+            yard.yardHandlingFee
+          );
+          console.log(
+            "DEBUG: Yard prices - yardProcessingFee:",
+            yard.yardProcessingFee
+          );
+          console.log(
+            "DEBUG: Yard prices - yardCorePrice:",
+            yard.yardCorePrice
+          );
+
           const yardHistory = Array.isArray(data.yardHistory)
             ? data.yardHistory.map((item: any) => ({
                 yardName: item.yardName || "",
@@ -236,23 +260,24 @@ const OrderDetails = () => {
                 yardAddress: item.yardAddress || "",
                 yardMobile: item.yardMobile || "",
                 yardEmail: item.yardEmail || "",
-                yardPrice: item.yardPrice || "",
-                yardWarranty: item.yardWarranty || "",
-                yardMiles: item.yardMiles || "",
+                yardPrice: item.yardPrice?.toString() || "",
+                yardWarranty: item.yardWarranty
+                  ? mapPrismaEnumToWarranty(item.yardWarranty)
+                  : "",
+                yardMiles: item.yardMiles?.toString() || "",
                 yardShipping: item.shipping || "",
-                yardTaxesPrice: item.yardTaxesPrice || "",
-                yardHandlingFee: item.yardHandlingFee || "",
-                yardProcessingFee: item.yardProcessingFee || "",
-                yardCorePrice: item.yardCorePrice || "",
-                yardCost:
-                  item.shipping === "Own Shipping"
-                    ? item.yardCost?.yardOwnShippingInfo?.price || "0"
-                    : item.yardCost?.yardShippingCost?.toString() || "0",
+                taxesYardPrice: item.yardTaxesPrice?.toString() || "",
+                handlingYardPrice: item.yardHandlingFee?.toString() || "",
+                processingYardPrice: item.yardProcessingFee?.toString() || "",
+                coreYardPrice: item.yardCorePrice?.toString() || "",
+                yardCost: item.yardCost?.toString() || "0",
                 reason: item.reason || "",
                 yardCharge: item.yardCharge || "",
                 yardtotalBuy: item.yardtotalBuy || "",
               }))
             : [];
+
+          console.log("DEBUG: Mapped yardHistory:", yardHistory);
           setPreviousYards(yardHistory);
 
           const payments = Array.isArray(data.payments) ? data.payments : [];
@@ -446,7 +471,9 @@ const OrderDetails = () => {
             notes: data.notes || "",
             internalNotes: data.internalNotes || "",
             vinNumber: data.vinNumber || "",
-            estimatedDeliveryDate: data.estimatedDeliveryDate || "",
+            estimatedDeliveryDate: data.estimatedDeliveryDate
+              ? new Date(data.estimatedDeliveryDate).toISOString().split("T")[0]
+              : "",
             // Yard info
             yardName: yard.yardName || "",
             yardMobile: yard.yardMobile || "",
@@ -458,9 +485,12 @@ const OrderDetails = () => {
             yardMiles: yard.yardMiles || "",
             yardShipping: yard.yardShippingType || "",
             yardCost: yard.yardShippingCost || "",
+            taxesYardPrice: yard.yardTaxesPrice?.toString() || "",
+            handlingYardPrice: yard.yardHandlingFee?.toString() || "",
+            processingYardPrice: yard.yardProcessingFee?.toString() || "",
+            coreYardPrice: yard.yardCorePrice?.toString() || "",
             customerNotes: customerNotesArray,
             yardNotes: yardNotesArray,
-            invoiceStatus: dataInvoiceStatus,
             invoiceSentAt: data.invoiceSentAt
               ? new Date(data.invoiceSentAt).toISOString().split("T")[0]
               : "",
@@ -487,6 +517,24 @@ const OrderDetails = () => {
               owntotalBuy: ownShipping.totalBuy || "",
             },
           };
+
+          console.log("DEBUG: Yard price fields being mapped:");
+          console.log(
+            "DEBUG: taxesYardPrice in newFormData:",
+            newFormData.taxesYardPrice
+          );
+          console.log(
+            "DEBUG: handlingYardPrice in newFormData:",
+            newFormData.handlingYardPrice
+          );
+          console.log(
+            "DEBUG: processingYardPrice in newFormData:",
+            newFormData.processingYardPrice
+          );
+          console.log(
+            "DEBUG: coreYardPrice in newFormData:",
+            newFormData.coreYardPrice
+          );
 
           console.log("DEBUG: Form data being set:", newFormData);
           setFormData(newFormData);
@@ -587,6 +635,8 @@ const OrderDetails = () => {
   const [initialFormData, setInitialFormData] = useState<OrderFormData | null>(
     null
   );
+  const [initialPaymentEntries, setInitialPaymentEntries] = useState<any[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
   const router = useRouter();
   const [formData, setFormData] = useState<OrderFormData>({
     products: [
@@ -822,12 +872,14 @@ const OrderDetails = () => {
         setHasUnsavedChanges(false);
         // Update initial data to current data after successful save
         setInitialFormData(JSON.parse(JSON.stringify(formData)));
+        setInitialPaymentEntries(JSON.parse(JSON.stringify(paymentEntries)));
         return true;
       } else {
         await handleSave();
         setHasUnsavedChanges(false);
         // Update initial data to current data after successful save
         setInitialFormData(JSON.parse(JSON.stringify(formData)));
+        setInitialPaymentEntries(JSON.parse(JSON.stringify(paymentEntries)));
         return true;
       }
     } catch (error) {
@@ -861,8 +913,153 @@ const OrderDetails = () => {
   const checkForChanges = (currentData: OrderFormData) => {
     if (!initialFormData) return false;
 
-    // Deep comparison of form data
-    return JSON.stringify(currentData) !== JSON.stringify(initialFormData);
+    // More intelligent comparison that ignores formatting differences
+    const normalizeValue = (value: any): any => {
+      if (value === null || value === undefined) return "";
+      if (typeof value === "string") return value.trim();
+      if (typeof value === "number") return value.toString();
+      if (Array.isArray(value)) return value.map(normalizeValue);
+      if (typeof value === "object") {
+        const normalized: any = {};
+        for (const key in value) {
+          normalized[key] = normalizeValue(value[key]);
+        }
+        return normalized;
+      }
+      return value;
+    };
+
+    // Compare specific fields that matter for user changes
+    const compareFields = (current: any, initial: any, fields: string[]) => {
+      for (const field of fields) {
+        const currentValue = normalizeValue(current[field]);
+        const initialValue = normalizeValue(initial[field]);
+        if (JSON.stringify(currentValue) !== JSON.stringify(initialValue)) {
+          console.log(`DEBUG: Field '${field}' changed:`, {
+            current: currentValue,
+            initial: initialValue,
+          });
+          return true;
+        }
+      }
+      return false;
+    };
+
+    // Check important form fields (excluding calculated fields like totalPrice)
+    const importantFields = [
+      "customerName",
+      "email",
+      "mobile",
+      "alternateMobile",
+      "company",
+      "shippingAddress",
+      "billingAddress",
+      "cardHolderName",
+      "cardNumber",
+      "cardDate",
+      "cardCvv",
+      "merchantMethod",
+      "approvalCode",
+      "entity",
+      "charged",
+      "yardName",
+      "yardAddress",
+      "yardMobile",
+      "yardEmail",
+      "yardPrice",
+      "yardWarranty",
+      "yardMiles",
+      "yardShipping",
+      "yardCost",
+      "carrierName",
+      "trackingNumber",
+      "notes",
+      "internalNotes",
+      "vinNumber",
+      "status",
+      "warranty",
+      // Removed totalPrice and totalSellingPrice as they are calculated fields
+    ];
+
+    const formDataChanged = compareFields(
+      currentData,
+      initialFormData,
+      importantFields
+    );
+
+    // Check products array
+    const productsChanged =
+      JSON.stringify(
+        currentData.products.map((p) => ({
+          variantSku: p.variantSku,
+          make: p.make,
+          model: p.model,
+          year: p.year,
+          parts: p.parts,
+          partPrice: p.partPrice,
+          quantity: p.quantity,
+          taxesPrice: p.taxesPrice,
+          handlingPrice: p.handlingPrice,
+          processingPrice: p.processingPrice,
+          corePrice: p.corePrice,
+          specification: p.specification,
+          milesPromised: p.milesPromised,
+        }))
+      ) !==
+      JSON.stringify(
+        initialFormData.products.map((p) => ({
+          variantSku: p.variantSku,
+          make: p.make,
+          model: p.model,
+          year: p.year,
+          parts: p.parts,
+          partPrice: p.partPrice,
+          quantity: p.quantity,
+          taxesPrice: p.taxesPrice,
+          handlingPrice: p.handlingPrice,
+          processingPrice: p.processingPrice,
+          corePrice: p.corePrice,
+          specification: p.specification,
+          milesPromised: p.milesPromised,
+        }))
+      );
+
+    // Check payment entries
+    const paymentEntriesChanged =
+      JSON.stringify(
+        paymentEntries.map((p) => ({
+          merchantMethod: p.merchantMethod,
+          totalPrice: p.totalPrice,
+          approvalCode: p.approvalCode,
+          entity: p.entity,
+          charged: p.charged,
+          cardChargedDate: p.cardChargedDate,
+        }))
+      ) !==
+      JSON.stringify(
+        initialPaymentEntries.map((p) => ({
+          merchantMethod: p.merchantMethod,
+          totalPrice: p.totalPrice,
+          approvalCode: p.approvalCode,
+          entity: p.entity,
+          charged: p.charged,
+          cardChargedDate: p.cardChargedDate,
+        }))
+      );
+
+    const hasChanges =
+      formDataChanged || productsChanged || paymentEntriesChanged;
+
+    // Debug logging - only log when changes are detected
+    if (hasChanges) {
+      console.log("DEBUG: Changes detected:", {
+        formDataChanged,
+        productsChanged,
+        paymentEntriesChanged,
+      });
+    }
+
+    return hasChanges;
   };
 
   // Track form changes - to be used in form inputs
@@ -870,20 +1067,59 @@ const OrderDetails = () => {
 
   // Update hasUnsavedChanges whenever formData changes
   useEffect(() => {
-    if (initialFormData) {
+    // Only check for changes if we have initial data AND the component is initialized AND we're not loading
+    if (initialFormData && isInitialized && !loadingOrder) {
+      // console.log("DEBUG: Checking for changes - orderId:", orderId);
       const hasChanges = checkForChanges(formData);
-      setHasUnsavedChanges(hasChanges);
+
+      // For new orders, only show unsaved changes if user has actually entered meaningful data
+      if (orderId === "create" || orderId === "new") {
+        const hasMeaningfulChanges =
+          hasChanges &&
+          !!(
+            formData.customerName?.trim() ||
+            formData.email?.trim() ||
+            formData.mobile?.trim() ||
+            formData.products.some(
+              (p) => p.partPrice || (p.quantity && p.quantity > 1)
+            ) ||
+            paymentEntries.some((p: any) => p.totalPrice || p.merchantMethod)
+          );
+        // console.log("DEBUG: New order - hasChanges:", hasChanges, "hasMeaningfulChanges:", hasMeaningfulChanges);
+        setHasUnsavedChanges(hasMeaningfulChanges);
+      } else {
+        // For existing orders, show changes if any data has changed
+        // console.log("DEBUG: Existing order - hasChanges:", hasChanges);
+        setHasUnsavedChanges(hasChanges);
+      }
     }
-  }, [JSON.stringify(formData), initialFormData]);
+  }, [
+    JSON.stringify(formData),
+    initialFormData,
+    orderId,
+    paymentEntries,
+    isInitialized,
+    loadingOrder,
+  ]);
 
   // Set initial form data when component mounts or data loads
   useEffect(() => {
     // Only set initial data once when the order has loaded
     if (!loadingOrder && !initialFormData) {
+      // console.log("DEBUG: Setting initial form data and payment entries");
+
       setInitialFormData(JSON.parse(JSON.stringify(formData)));
+      setInitialPaymentEntries(JSON.parse(JSON.stringify(paymentEntries)));
+      // Reset hasUnsavedChanges to false when initial data is set
+      setHasUnsavedChanges(false);
+      // Mark as initialized after a short delay to prevent immediate popup
+      setTimeout(() => {
+        // console.log("DEBUG: Component marked as initialized");
+        setIsInitialized(true);
+      }, 500); // Increased delay to ensure all data is loaded
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadingOrder]);
+  }, [loadingOrder, formData, paymentEntries]);
 
   const handleProductInputChange = <K extends keyof ProductFormData>(
     index: number,
@@ -1944,12 +2180,18 @@ const OrderDetails = () => {
         orderId,
         updatedFormDataWithPayment,
         cartItems,
-        paymentEntries
+        paymentEntries,
+        previousYards
       );
 
       toast.success("Order updated successfully");
       setIsProcessing(false);
       console.log("Order updated:", result);
+
+      // Reset unsaved changes state after successful update
+      setHasUnsavedChanges(false);
+      setInitialFormData(JSON.parse(JSON.stringify(formData)));
+      setInitialPaymentEntries(JSON.parse(JSON.stringify(paymentEntries)));
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -2053,7 +2295,8 @@ const OrderDetails = () => {
       const result = await createOrderFromAdmin(
         finalFormDataWithPayment,
         cartItems,
-        paymentEntries
+        paymentEntries,
+        previousYards
       );
 
       console.log("DEBUG: Order creation result:", result);
@@ -2066,6 +2309,11 @@ const OrderDetails = () => {
       toast.success("Order created successfully");
       setIsProcessing(false);
       console.log("Order created:", result);
+
+      // Reset unsaved changes state after successful creation
+      setHasUnsavedChanges(false);
+      setInitialFormData(JSON.parse(JSON.stringify(formData)));
+      setInitialPaymentEntries(JSON.parse(JSON.stringify(paymentEntries)));
     } catch (error) {
       // setMessage({
       //   type: "error",
@@ -3851,9 +4099,7 @@ const OrderDetails = () => {
                     className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
                     placeholder="Total Selling Price"
                     value={formData.totalSellingPrice}
-                    // onChange={(e) =>
-                    //   handleProductInputChange("totalSellingPrice", e.target.value)
-                    // }
+                    readOnly
                   />
                 </div>
                 {/* <div>
@@ -4036,6 +4282,7 @@ const OrderDetails = () => {
                 handleInputChange={handleInputChange}
                 showYardShippingCost={showYardShippingCost}
                 previousYards={previousYards}
+                setPreviousYards={setPreviousYards}
                 showPreviousYard={showPreviousYard}
                 setShowPreviousYard={setShowPreviousYard}
                 selectedPrevYardIdx={selectedPrevYardIdx}
@@ -4320,7 +4567,7 @@ const OrderDetails = () => {
       </div>
 
       <SaveChangesPopUp
-        hasUnsavedChanges={hasUnsavedChanges}
+        hasUnsavedChanges={hasUnsavedChanges && isInitialized}
         onSave={handleSaveChanges}
         onDiscard={handleDiscard}
         isOpen={isSaveDialogOpen}

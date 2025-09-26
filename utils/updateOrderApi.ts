@@ -39,7 +39,8 @@ export const updateOrderFromAdmin = async (
   orderId: string,
   formData: any,
   cartItems: CartItem[],
-  paymentEntries: any[] = []
+  paymentEntries: any[] = [],
+  previousYards: any[] = []
 ) => {
   const orderData = {
     billingInfo: {
@@ -112,6 +113,7 @@ export const updateOrderFromAdmin = async (
       paymentEntries.length > 0
         ? paymentEntries.map((entry) => ({
             ...entry,
+            amount: entry.totalPrice, // Map totalPrice to amount for backend
             cardData: formData.cardNumber
               ? {
                   cardNumber: formData.cardNumber,
@@ -178,6 +180,9 @@ export const updateOrderFromAdmin = async (
     orderNumber: formData.id,
     carrierName: formData.carrierName || "",
     trackingNumber: formData.trackingNumber || "",
+    estimatedDeliveryDate: formData.estimatedDeliveryDate
+      ? new Date(formData.estimatedDeliveryDate).toISOString()
+      : null,
     saleMadeBy: formData.saleMadeBy || "Admin",
     taxesAmount: parseFloat(formData.taxesPrice as string) || 0,
     shippingAmount: parseFloat(formData.yardCost as string) || 0,
@@ -228,21 +233,65 @@ export const updateOrderFromAdmin = async (
         yardShippingType: formData.yardShipping || "OWN_SHIPPING",
         yardShippingCost: parseFloat(formData.yardCost as string) || 0,
         reason: formData.reason || "No reason provided",
-        yardTaxesPrice: parseFloat(formData.taxesPrice as string) || 0,
-        yardHandlingFee: parseFloat(formData.handlingPrice as string) || 0,
-        yardProcessingFee: parseFloat(formData.processingPrice as string) || 0,
-        yardCorePrice: parseFloat(formData.corePrice as string) || 0,
+        yardTaxesPrice: parseFloat(formData.taxesYardPrice as string) || 0,
+        yardHandlingFee: parseFloat(formData.handlingYardPrice as string) || 0,
+        yardProcessingFee:
+          parseFloat(formData.processingYardPrice as string) || 0,
+        yardCorePrice: parseFloat(formData.coreYardPrice as string) || 0,
         ...(formData.yardShipping === "Own Shipping" && formData.ownShippingInfo
           ? { yardOwnShippingInfo: formData.ownShippingInfo }
           : {}),
       },
     }),
+    // Add previous yards data
+    yardHistory: previousYards.map((yard) => ({
+      yardName: yard.yardName || "",
+      attnName: yard.attnName || "",
+      yardAddress: yard.yardAddress || "",
+      yardMobile: yard.yardMobile || "",
+      yardEmail: yard.yardEmail || "",
+      yardPrice: parseFloat(yard.yardPrice as string) || 0,
+      yardTaxesPrice: parseFloat(yard.taxesYardPrice as string) || 0,
+      yardHandlingFee: parseFloat(yard.handlingYardPrice as string) || 0,
+      yardProcessingFee: parseFloat(yard.processingYardPrice as string) || 0,
+      yardCorePrice: parseFloat(yard.coreYardPrice as string) || 0,
+      yardWarranty: yard.yardWarranty || "",
+      yardMiles: parseFloat(yard.yardMiles as string) || 0,
+      shipping: yard.yardShipping || "",
+      yardCost: parseFloat(yard.yardCost as string) || 0,
+      reason: yard.reason || "",
+      yardCharge: yard.yardCharge || "",
+    })),
   };
+
+  // DEBUG: Log yard prices being sent to backend
+  console.log("DEBUG: Yard price fields being sent in updateOrderApi:");
+  console.log("DEBUG: previousYards:", previousYards);
+  console.log(
+    "DEBUG: taxesYard:",
+    previousYards.map((yard: any) => yard.taxesYardPrice)
+  );
+  console.log(
+    "DEBUG: handlingYard:",
+    previousYards.map((yard: any) => yard.handlingYardPrice)
+  );
+  console.log(
+    "DEBUG: processingYard:",
+    previousYards.map((yard: any) => yard.processingYardPrice)
+  );
+  console.log(
+    "DEBUG: coreYard:",
+    previousYards.map((yard: any) => yard.coreYardPrice)
+  );
 
   try {
     console.log(
       "DEBUG: Payment Entries received in updateOrderApi:",
       paymentEntries
+    );
+    console.log(
+      "DEBUG: Previous Yards (yardHistory) being sent:",
+      previousYards
     );
     const response = await fetch(`${API_URL}/orders/${orderId}`, {
       method: "PUT",

@@ -38,7 +38,8 @@ const mapWarrantyToPrismaEnum = (warranty: string): string => {
 export const createOrderFromAdmin = async (
   formData: any,
   cartItems: CartItem[],
-  paymentEntries: any[] = []
+  paymentEntries: any[] = [],
+  previousYards: any[] = []
 ) => {
   // Debug: log ownShippingInfo and yardShipping before constructing orderData
   console.log("DEBUG ownShippingInfo:", formData.ownShippingInfo);
@@ -134,6 +135,7 @@ export const createOrderFromAdmin = async (
       paymentEntries.length > 0
         ? paymentEntries.map((entry) => ({
             ...entry,
+            amount: entry.totalPrice, // Map totalPrice to amount for backend
             cardData: formData.cardNumber
               ? {
                   cardNumber: formData.cardNumber,
@@ -196,6 +198,9 @@ export const createOrderFromAdmin = async (
     orderNumber: formData.id,
     carrierName: formData.carrierName || "",
     trackingNumber: formData.trackingNumber || "",
+    estimatedDeliveryDate: formData.estimatedDeliveryDate
+      ? new Date(formData.estimatedDeliveryDate).toISOString()
+      : null,
     saleMadeBy: formData.saleMadeBy || "Admin",
     taxesAmount: parseFloat(formData.taxesPrice as string) || 0,
     shippingAmount: parseFloat(formData.yardCost as string) || 0,
@@ -251,20 +256,43 @@ export const createOrderFromAdmin = async (
         yardShippingCost: formData.yardCost || 0,
         reason: formData.reason || "No reason provided",
 
-        yardTaxesPrice: formData.taxesPrice || 0,
-        yardHandlingFee: formData.handlingPrice || 0,
-        yardProcessingFee: formData.processingPrice || 0,
-        yardCorePrice: formData.corePrice || 0,
+        yardTaxesPrice: formData.taxesYardPrice || 0,
+        yardHandlingFee: formData.handlingYardPrice || 0,
+        yardProcessingFee: formData.processingYardPrice || 0,
+        yardCorePrice: formData.coreYardPrice || 0,
         ...(formData.yardShipping === "Own Shipping" && formData.ownShippingInfo
           ? { yardOwnShippingInfo: formData.ownShippingInfo }
           : {}),
       },
     }),
+    // Add previous yards data
+    yardHistory: previousYards.map((yard) => ({
+      yardName: yard.yardName || "",
+      attnName: yard.attnName || "",
+      yardAddress: yard.yardAddress || "",
+      yardMobile: yard.yardMobile || "",
+      yardEmail: yard.yardEmail || "",
+      yardPrice: parseFloat(yard.yardPrice as string) || 0,
+      yardTaxesPrice: parseFloat(yard.taxesYardPrice as string) || 0,
+      yardHandlingFee: parseFloat(yard.handlingYardPrice as string) || 0,
+      yardProcessingFee: parseFloat(yard.processingYardPrice as string) || 0,
+      yardCorePrice: parseFloat(yard.coreYardPrice as string) || 0,
+      yardWarranty: yard.yardWarranty || "",
+      yardMiles: parseFloat(yard.yardMiles as string) || 0,
+      shipping: yard.yardShipping || "",
+      yardCost: parseFloat(yard.yardCost as string) || 0,
+      reason: yard.reason || "",
+      yardCharge: yard.yardCharge || "",
+    })),
   };
   console.log("formData.yardName in orderApi:", formData.yardName);
   try {
     console.log("DEBUG: Payment Entries received in orderApi:", paymentEntries);
     console.log("DEBUG: Payment Info being sent:", orderData.paymentInfo);
+    console.log(
+      "DEBUG: Previous Yards (yardHistory) being sent:",
+      previousYards
+    );
     console.log("Sending order data:", JSON.stringify(orderData, null, 2));
 
     // Create the order with nested yard info if provided
