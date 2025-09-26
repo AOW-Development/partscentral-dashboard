@@ -26,13 +26,18 @@ interface OwnShippingInfoProps {
   ChevronDown: React.ElementType;
 }
 
-const OwnShippingInfo: React.FC<OwnShippingInfoProps> = ({ formData, setFormData, handleCreateBOL, ChevronDown }) => {
+const OwnShippingInfo: React.FC<OwnShippingInfoProps> = ({
+  formData,
+  setFormData,
+  handleCreateBOL,
+  ChevronDown,
+}) => {
   const formatToTwoDecimals = (value: string): string => {
-    if (!value || value === "") return ""
-    const numValue = Number.parseFloat(value)
-    if (isNaN(numValue)) return value
-    return numValue.toFixed(2)
-  }
+    if (!value || value === "") return "";
+    const numValue = Number.parseFloat(value);
+    if (isNaN(numValue)) return value;
+    return numValue.toFixed(2);
+  };
 
   // const handleNumericChange = (field: string, value: string) => {
   //   // Allow typing decimal numbers but format on blur
@@ -46,15 +51,15 @@ const OwnShippingInfo: React.FC<OwnShippingInfoProps> = ({ formData, setFormData
   // }
 
   const handleNumericBlur = (field: string, value: string) => {
-    const formattedValue = formatToTwoDecimals(value)
+    const formattedValue = formatToTwoDecimals(value);
     setFormData((prev: any) => ({
       ...prev,
       ownShippingInfo: {
         ...prev.ownShippingInfo,
         [field]: formattedValue,
       },
-    }))
-  }
+    }));
+  };
   return (
     <>
       <h3 className="text-white text-lg font-semibold mb-4">
@@ -201,27 +206,25 @@ const OwnShippingInfo: React.FC<OwnShippingInfoProps> = ({ formData, setFormData
         {/* Price */}
         <div>
           <label className="block text-white/60 text-sm mb-2 pr-1">Price</label>
-            <div className="relative">
-             {/* Dollar sign on the left */}
+          <div className="relative">
+            {/* Dollar sign on the left */}
             <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
-          <input
-            type="number"
-            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-5 py-3 text-white focus:border-blue-500 focus:outline-none"
-            placeholder="Enter price"
-            value={formData.ownShippingInfo.price}
-            onChange={(e) =>
-              setFormData((prev: any) => ({
-                ...prev,
-                ownShippingInfo: {
-                  ...prev.ownShippingInfo,
-                  price: e.target.value,
-                },
-              }))
-              
-            }
-            onBlur={(e) => handleNumericBlur("price", e.target.value)}
-            
-          />
+            <input
+              type="number"
+              className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-5 py-3 text-white focus:border-blue-500 focus:outline-none"
+              placeholder="Enter price"
+              value={formData.ownShippingInfo.price}
+              onChange={(e) =>
+                setFormData((prev: any) => ({
+                  ...prev,
+                  ownShippingInfo: {
+                    ...prev.ownShippingInfo,
+                    price: e.target.value,
+                  },
+                }))
+              }
+              onBlur={(e) => handleNumericBlur("price", e.target.value)}
+            />
           </div>
         </div>
         {/* Variance */}
@@ -241,30 +244,30 @@ const OwnShippingInfo: React.FC<OwnShippingInfoProps> = ({ formData, setFormData
                 },
               }))
             }
-             onBlur={(e) => handleNumericBlur("variance", e.target.value)}
+            onBlur={(e) => handleNumericBlur("variance", e.target.value)}
           />
         </div>
-          <div>
+        <div>
           <label className="block text-white/60 text-sm mb-2">Total Buy</label>
           <div className="relative">
-             {/* Dollar sign on the left */}
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-1">$</span>
-          <input
-            type="number"
-            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-5 py-3 text-white focus:border-blue-500 focus:outline-none"
-            placeholder="Enter total buy"
-           value={
-                  (
-                   (Number(formData.yardPrice) || 0) +
-                  (Number(formData.taxesYardPrice) || 0) +
+            {/* Dollar sign on the left */}
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-1">
+              $
+            </span>
+            <input
+              type="number"
+              className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-5 py-3 text-white focus:border-blue-500 focus:outline-none"
+              placeholder="Enter total buy"
+              value={(
+                (Number(formData.yardPrice) || 0) +
+                (Number(formData.taxesYardPrice) || 0) +
                 (Number(formData.handlingYardPrice) || 0) +
-                    (Number(formData.processingYardPrice) || 0) +
-                      (Number(formData.coreYardPrice) || 0) +
-                 (Number(formData.ownShippingInfo.price) || 0) 
-                
-                 ).toFixed(2)
-                }
-          />
+                (Number(formData.processingYardPrice) || 0) +
+                (Number(formData.coreYardPrice) || 0) +
+                (Number(formData.ownShippingInfo.price) || 0)
+              ).toFixed(2)}
+              readOnly
+            />
           </div>
         </div>
         {/* Create BOL Button */}

@@ -49,6 +49,7 @@ interface YardInfoProps {
   handleInputChange: (field: keyof FormData, value: string) => void;
   showYardShippingCost: boolean;
   previousYards: PreviousYard[];
+  setPreviousYards: React.Dispatch<React.SetStateAction<PreviousYard[]>>;
   showPreviousYard: boolean;
   setShowPreviousYard: React.Dispatch<React.SetStateAction<boolean>>;
   selectedPrevYardIdx: number;
@@ -64,6 +65,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
   handleInputChange,
   showYardShippingCost,
   previousYards,
+  setPreviousYards,
   showPreviousYard,
   setShowPreviousYard,
   selectedPrevYardIdx,
@@ -84,6 +86,8 @@ const YardInfo: React.FC<YardInfoProps> = ({
     processingPrice: false,
     corePrice: false,
   });
+  const [editingPreviousYard, setEditingPreviousYard] = useState(false);
+  const [editingYardIndex, setEditingYardIndex] = useState<number | null>(null);
   const yardPriceOptionsRef = useRef<HTMLDivElement>(null);
 
   const [fieldErrors] = useState<{ [key: string]: boolean }>({});
@@ -111,6 +115,71 @@ const YardInfo: React.FC<YardInfoProps> = ({
     handleInputChange(field, formatted); // must store string, not number
   };
 
+  // Ensure we have at least 3 previous yard slots
+  const ensureMinimumPreviousYards = () => {
+    const minYards = 3;
+    console.log(
+      "DEBUG: ensureMinimumPreviousYards - current length:",
+      previousYards.length,
+      "min required:",
+      minYards
+    );
+    if (previousYards.length < minYards) {
+      const emptyYards: PreviousYard[] = Array.from(
+        { length: minYards - previousYards.length },
+        () => ({
+          yardName: "",
+          attnName: "",
+          yardAddress: "",
+          yardMobile: "",
+          yardEmail: "",
+          yardPrice: "",
+          yardWarranty: "",
+          yardMiles: "",
+          yardShipping: "",
+          yardCost: "",
+          reason: "",
+          yardCharge: "",
+        })
+      );
+      console.log(
+        "DEBUG: ensureMinimumPreviousYards - adding",
+        emptyYards.length,
+        "empty yards"
+      );
+      setPreviousYards([...previousYards, ...emptyYards]);
+    }
+  };
+
+  // Handle previous yard field changes
+  const handlePreviousYardChange = (
+    index: number,
+    field: keyof PreviousYard,
+    value: string
+  ) => {
+    setPreviousYards((prev) =>
+      prev.map((yard, i) => (i === index ? { ...yard, [field]: value } : yard))
+    );
+  };
+
+  // Start editing a previous yard
+  const startEditingPreviousYard = (index: number) => {
+    setEditingYardIndex(index);
+    setEditingPreviousYard(true);
+  };
+
+  // Save previous yard changes
+  const savePreviousYard = () => {
+    setEditingPreviousYard(false);
+    setEditingYardIndex(null);
+  };
+
+  // Cancel editing
+  const cancelEditingPreviousYard = () => {
+    setEditingPreviousYard(false);
+    setEditingYardIndex(null);
+  };
+
   // const handleInputChange = (field: string, value: string) => {
   //   setFormData((prev) => ({
   //     ...prev,
@@ -125,6 +194,58 @@ const YardInfo: React.FC<YardInfoProps> = ({
   //     }));
   //   }
   // };
+
+  // Ensure minimum previous yards when component loads or previousYards changes
+  useEffect(() => {
+    console.log(
+      "DEBUG: YardInfo - previousYards.length:",
+      previousYards.length
+    );
+    if (previousYards.length < 3) {
+      console.log("DEBUG: YardInfo - Adding empty yards to reach minimum of 3");
+      ensureMinimumPreviousYards();
+    }
+  }, [previousYards.length]);
+
+  // Show price fields if they already have values
+  useEffect(() => {
+    console.log("YardInfo DEBUG - useEffect triggered, checking values:");
+    console.log("taxesYardPrice:", formData.taxesYardPrice);
+    console.log("handlingYardPrice:", formData.handlingYardPrice);
+    console.log("processingYardPrice:", formData.processingYardPrice);
+    console.log("coreYardPrice:", formData.coreYardPrice);
+
+    const checkAndShowFields = (
+      value: string | number | undefined,
+      fieldName:
+        | "taxesPrice"
+        | "handlingPrice"
+        | "processingPrice"
+        | "corePrice"
+    ) => {
+      console.log(`Checking field ${fieldName} with value:`, value);
+      if (
+        value &&
+        value !== "" &&
+        value !== "0" &&
+        value !== 0 &&
+        value !== "0.00"
+      ) {
+        console.log(`Setting field ${fieldName} visible`);
+        setVisiblePriceFields((prev) => ({ ...prev, [fieldName]: true }));
+      }
+    };
+
+    checkAndShowFields(formData.taxesYardPrice, "taxesPrice");
+    checkAndShowFields(formData.handlingYardPrice, "handlingPrice");
+    checkAndShowFields(formData.processingYardPrice, "processingPrice");
+    checkAndShowFields(formData.coreYardPrice, "corePrice");
+  }, [
+    formData.taxesYardPrice,
+    formData.handlingYardPrice,
+    formData.processingYardPrice,
+    formData.coreYardPrice,
+  ]);
 
   useEffect(() => {
     if (submitReason && reason.trim() && yardCharge.trim()) {
@@ -174,25 +295,52 @@ const YardInfo: React.FC<YardInfoProps> = ({
           {showPreviousYard ? "Hide Previous Yard" : "Show Previous Yard"}
         </button>
       </div>
-      {showPreviousYard && previousYards.length > 0 && (
+      {showPreviousYard && (
         <div className="mb-6 bg-[#222c3a] rounded-lg p-4 border border-blue-700">
-          <div className="flex justify-between items-center mb-2">
+          <div className="flex justify-between items-center mb-4">
             <span className="text-white font-semibold">
               Previous Yard Details
             </span>
-            {previousYards.length > 0 && (
-              <select
-                className="bg-[#0a1929] border border-gray-600 rounded px-2 py-1 text-white text-xs"
-                value={selectedPrevYardIdx}
-                onChange={(e) => setSelectedPrevYardIdx(Number(e.target.value))}
-              >
-                {previousYards.map((_, idx) => (
-                  <option key={idx} value={idx}>
-                    Yard #{idx + 1}
-                  </option>
-                ))}
-              </select>
-            )}
+            <div className="flex gap-2">
+              {previousYards.length > 0 && (
+                <select
+                  className="bg-[#0a1929] border border-gray-600 rounded px-2 py-1 text-white text-xs"
+                  value={selectedPrevYardIdx}
+                  onChange={(e) =>
+                    setSelectedPrevYardIdx(Number(e.target.value))
+                  }
+                >
+                  {previousYards.map((_, idx) => (
+                    <option key={idx} value={idx}>
+                      Yard #{idx + 1}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {editingPreviousYard ? (
+                <div className="flex gap-1">
+                  <button
+                    onClick={savePreviousYard}
+                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={cancelEditingPreviousYard}
+                    className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => startEditingPreviousYard(selectedPrevYardIdx)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs"
+                >
+                  Edit
+                </button>
+              )}
+            </div>
           </div>
 
           <div className=" grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -202,9 +350,26 @@ const YardInfo: React.FC<YardInfoProps> = ({
               </label>
               <input
                 type="text"
-                className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
+                  editingPreviousYard &&
+                  editingYardIndex === selectedPrevYardIdx
+                    ? "focus:border-blue-500 focus:outline-none"
+                    : ""
+                }`}
                 value={previousYards[selectedPrevYardIdx]?.yardName || ""}
-                disabled
+                disabled={
+                  !(
+                    editingPreviousYard &&
+                    editingYardIndex === selectedPrevYardIdx
+                  )
+                }
+                onChange={(e) =>
+                  handlePreviousYardChange(
+                    selectedPrevYardIdx,
+                    "yardName",
+                    e.target.value
+                  )
+                }
               />
             </div>
             <div>
@@ -213,9 +378,26 @@ const YardInfo: React.FC<YardInfoProps> = ({
               </label>
               <input
                 type="text"
-                className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
+                  editingPreviousYard &&
+                  editingYardIndex === selectedPrevYardIdx
+                    ? "focus:border-blue-500 focus:outline-none"
+                    : ""
+                }`}
                 value={previousYards[selectedPrevYardIdx]?.attnName || ""}
-                disabled
+                disabled={
+                  !(
+                    editingPreviousYard &&
+                    editingYardIndex === selectedPrevYardIdx
+                  )
+                }
+                onChange={(e) =>
+                  handlePreviousYardChange(
+                    selectedPrevYardIdx,
+                    "attnName",
+                    e.target.value
+                  )
+                }
               />
             </div>
             <div>
@@ -224,36 +406,106 @@ const YardInfo: React.FC<YardInfoProps> = ({
               </label>
               <input
                 type="text"
-                className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
+                  editingPreviousYard &&
+                  editingYardIndex === selectedPrevYardIdx
+                    ? "focus:border-blue-500 focus:outline-none"
+                    : ""
+                }`}
                 value={previousYards[selectedPrevYardIdx]?.yardAddress || ""}
-                disabled
+                disabled={
+                  !(
+                    editingPreviousYard &&
+                    editingYardIndex === selectedPrevYardIdx
+                  )
+                }
+                onChange={(e) =>
+                  handlePreviousYardChange(
+                    selectedPrevYardIdx,
+                    "yardAddress",
+                    e.target.value
+                  )
+                }
               />
             </div>
             <div>
               <label className="block text-white/60 text-xs mb-1">Mobile</label>
               <input
                 type="text"
-                className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
+                  editingPreviousYard &&
+                  editingYardIndex === selectedPrevYardIdx
+                    ? "focus:border-blue-500 focus:outline-none"
+                    : ""
+                }`}
                 value={previousYards[selectedPrevYardIdx]?.yardMobile || ""}
-                disabled
+                disabled={
+                  !(
+                    editingPreviousYard &&
+                    editingYardIndex === selectedPrevYardIdx
+                  )
+                }
+                onChange={(e) =>
+                  handlePreviousYardChange(
+                    selectedPrevYardIdx,
+                    "yardMobile",
+                    e.target.value
+                  )
+                }
               />
             </div>
             <div>
               <label className="block text-white/60 text-xs mb-1">Email</label>
               <input
                 type="text"
-                className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
+                  editingPreviousYard &&
+                  editingYardIndex === selectedPrevYardIdx
+                    ? "focus:border-blue-500 focus:outline-none"
+                    : ""
+                }`}
                 value={previousYards[selectedPrevYardIdx]?.yardEmail || ""}
-                disabled
+                disabled={
+                  !(
+                    editingPreviousYard &&
+                    editingYardIndex === selectedPrevYardIdx
+                  )
+                }
+                onChange={(e) =>
+                  handlePreviousYardChange(
+                    selectedPrevYardIdx,
+                    "yardEmail",
+                    e.target.value
+                  )
+                }
               />
             </div>
             <div>
-              <label className="block text-white/60 text-xs mb-1">Price</label>
+              <label className="block text-white/60 text-xs mb-1">
+                Yard Price
+              </label>
               <input
                 type="text"
-                className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
+                  editingPreviousYard &&
+                  editingYardIndex === selectedPrevYardIdx
+                    ? "focus:border-blue-500 focus:outline-none"
+                    : ""
+                }`}
                 value={previousYards[selectedPrevYardIdx]?.yardPrice || ""}
-                disabled
+                disabled={
+                  !(
+                    editingPreviousYard &&
+                    editingYardIndex === selectedPrevYardIdx
+                  )
+                }
+                onChange={(e) =>
+                  handlePreviousYardChange(
+                    selectedPrevYardIdx,
+                    "yardPrice",
+                    e.target.value
+                  )
+                }
               />
             </div>
 
@@ -263,9 +515,26 @@ const YardInfo: React.FC<YardInfoProps> = ({
               </label>
               <input
                 type="text"
-                className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
+                  editingPreviousYard &&
+                  editingYardIndex === selectedPrevYardIdx
+                    ? "focus:border-blue-500 focus:outline-none"
+                    : ""
+                }`}
                 value={previousYards[selectedPrevYardIdx]?.taxesYardPrice || ""}
-                disabled
+                disabled={
+                  !(
+                    editingPreviousYard &&
+                    editingYardIndex === selectedPrevYardIdx
+                  )
+                }
+                onChange={(e) =>
+                  handlePreviousYardChange(
+                    selectedPrevYardIdx,
+                    "taxesYardPrice",
+                    e.target.value
+                  )
+                }
               />
             </div>
 
@@ -275,11 +544,28 @@ const YardInfo: React.FC<YardInfoProps> = ({
               </label>
               <input
                 type="text"
-                className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
+                  editingPreviousYard &&
+                  editingYardIndex === selectedPrevYardIdx
+                    ? "focus:border-blue-500 focus:outline-none"
+                    : ""
+                }`}
                 value={
                   previousYards[selectedPrevYardIdx]?.handlingYardPrice || ""
                 }
-                disabled
+                disabled={
+                  !(
+                    editingPreviousYard &&
+                    editingYardIndex === selectedPrevYardIdx
+                  )
+                }
+                onChange={(e) =>
+                  handlePreviousYardChange(
+                    selectedPrevYardIdx,
+                    "handlingYardPrice",
+                    e.target.value
+                  )
+                }
               />
             </div>
 
@@ -289,11 +575,28 @@ const YardInfo: React.FC<YardInfoProps> = ({
               </label>
               <input
                 type="text"
-                className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
+                  editingPreviousYard &&
+                  editingYardIndex === selectedPrevYardIdx
+                    ? "focus:border-blue-500 focus:outline-none"
+                    : ""
+                }`}
                 value={
                   previousYards[selectedPrevYardIdx]?.processingYardPrice || ""
                 }
-                disabled
+                disabled={
+                  !(
+                    editingPreviousYard &&
+                    editingYardIndex === selectedPrevYardIdx
+                  )
+                }
+                onChange={(e) =>
+                  handlePreviousYardChange(
+                    selectedPrevYardIdx,
+                    "processingYardPrice",
+                    e.target.value
+                  )
+                }
               />
             </div>
 
@@ -303,9 +606,26 @@ const YardInfo: React.FC<YardInfoProps> = ({
               </label>
               <input
                 type="text"
-                className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
+                  editingPreviousYard &&
+                  editingYardIndex === selectedPrevYardIdx
+                    ? "focus:border-blue-500 focus:outline-none"
+                    : ""
+                }`}
                 value={previousYards[selectedPrevYardIdx]?.coreYardPrice || ""}
-                disabled
+                disabled={
+                  !(
+                    editingPreviousYard &&
+                    editingYardIndex === selectedPrevYardIdx
+                  )
+                }
+                onChange={(e) =>
+                  handlePreviousYardChange(
+                    selectedPrevYardIdx,
+                    "coreYardPrice",
+                    e.target.value
+                  )
+                }
               />
             </div>
 
@@ -313,20 +633,56 @@ const YardInfo: React.FC<YardInfoProps> = ({
               <label className="block text-white/60 text-xs mb-1">
                 Warranty
               </label>
-              <input
-                type="text"
-                className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+
+              <select
+                className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
                 value={previousYards[selectedPrevYardIdx]?.yardWarranty || ""}
-                disabled
-              />
+                disabled={
+                  !(
+                    editingPreviousYard &&
+                    editingYardIndex === selectedPrevYardIdx
+                  )
+                }
+                onChange={(e) =>
+                  handlePreviousYardChange(
+                    selectedPrevYardIdx,
+                    "yardWarranty",
+                    e.target.value
+                  )
+                }
+              >
+                <option value="">Select warranty</option>
+                <option>30 Days</option>
+                <option>60 Days</option>
+                <option>90 Days</option>
+                <option>6 Months</option>
+                <option>1 Year</option>
+              </select>
             </div>
             <div>
               <label className="block text-white/60 text-xs mb-1">Miles</label>
               <input
                 type="text"
-                className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
+                  editingPreviousYard &&
+                  editingYardIndex === selectedPrevYardIdx
+                    ? "focus:border-blue-500 focus:outline-none"
+                    : ""
+                }`}
                 value={previousYards[selectedPrevYardIdx]?.yardMiles || ""}
-                disabled
+                disabled={
+                  !(
+                    editingPreviousYard &&
+                    editingYardIndex === selectedPrevYardIdx
+                  )
+                }
+                onChange={(e) =>
+                  handlePreviousYardChange(
+                    selectedPrevYardIdx,
+                    "yardMiles",
+                    e.target.value
+                  )
+                }
               />
             </div>
             <div>
@@ -335,38 +691,108 @@ const YardInfo: React.FC<YardInfoProps> = ({
               </label>
               <input
                 type="text"
-                className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
+                  editingPreviousYard &&
+                  editingYardIndex === selectedPrevYardIdx
+                    ? "focus:border-blue-500 focus:outline-none"
+                    : ""
+                }`}
                 value={previousYards[selectedPrevYardIdx]?.yardShipping || ""}
-                disabled
+                disabled={
+                  !(
+                    editingPreviousYard &&
+                    editingYardIndex === selectedPrevYardIdx
+                  )
+                }
+                onChange={(e) =>
+                  handlePreviousYardChange(
+                    selectedPrevYardIdx,
+                    "yardShipping",
+                    e.target.value
+                  )
+                }
               />
             </div>
             <div>
               <label className="block text-white/60 text-xs mb-1">
-                Yard Cost / Own Shipping Info
+                Yard Shipping Cost
               </label>
               <input
                 type="text"
-                className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
+                  editingPreviousYard &&
+                  editingYardIndex === selectedPrevYardIdx
+                    ? "focus:border-blue-500 focus:outline-none"
+                    : ""
+                }`}
                 value={previousYards[selectedPrevYardIdx]?.yardCost || ""}
-                disabled
+                disabled={
+                  !(
+                    editingPreviousYard &&
+                    editingYardIndex === selectedPrevYardIdx
+                  )
+                }
+                onChange={(e) =>
+                  handlePreviousYardChange(
+                    selectedPrevYardIdx,
+                    "yardCost",
+                    e.target.value
+                  )
+                }
               />
             </div>
             <div className="md:col-span-3">
               <label className="block text-white/60 text-xs mb-1">Reason</label>
               <textarea
-                className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
+                  editingPreviousYard &&
+                  editingYardIndex === selectedPrevYardIdx
+                    ? "focus:border-blue-500 focus:outline-none"
+                    : ""
+                }`}
                 value={previousYards[selectedPrevYardIdx]?.reason || ""}
-                disabled
+                disabled={
+                  !(
+                    editingPreviousYard &&
+                    editingYardIndex === selectedPrevYardIdx
+                  )
+                }
+                onChange={(e) =>
+                  handlePreviousYardChange(
+                    selectedPrevYardIdx,
+                    "reason",
+                    e.target.value
+                  )
+                }
+                rows={3}
               />
             </div>
             <div className="md:col-span-3">
               <label className="block text-white/60 text-xs mb-1">
-                yard charge
+                Yard Charge
               </label>
               <textarea
-                className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
+                className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
+                  editingPreviousYard &&
+                  editingYardIndex === selectedPrevYardIdx
+                    ? "focus:border-blue-500 focus:outline-none"
+                    : ""
+                }`}
                 value={previousYards[selectedPrevYardIdx]?.yardCharge || ""}
-                disabled
+                disabled={
+                  !(
+                    editingPreviousYard &&
+                    editingYardIndex === selectedPrevYardIdx
+                  )
+                }
+                onChange={(e) =>
+                  handlePreviousYardChange(
+                    selectedPrevYardIdx,
+                    "yardCharge",
+                    e.target.value
+                  )
+                }
+                rows={3}
               />
             </div>
           </div>
@@ -453,13 +879,17 @@ const YardInfo: React.FC<YardInfoProps> = ({
 
         {/* Price */}
 
-         <div className="relative">
-          <label className="block text-white/60 text-sm mb-2">Yard Price *</label>
+        <div className="relative">
+          <label className="block text-white/60 text-sm mb-2">
+            Yard Price *
+          </label>
           <div className="relative" ref={yardPriceOptionsRef}>
             <input
               type="text"
               className={`appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full bg-[#0a1929] border rounded-lg px-4 py-3 pr-12 text-white focus:outline-none ${
-                fieldErrors.yardPrice ? "border-red-500 focus:border-red-500" : "border-gray-600 focus:border-blue-500"
+                fieldErrors.yardPrice
+                  ? "border-red-500 focus:border-red-500"
+                  : "border-gray-600 focus:border-blue-500"
               }`}
               placeholder="00.00"
               value={formData.yardPrice === 0 ? "" : formData.yardPrice}
@@ -499,7 +929,9 @@ const YardInfo: React.FC<YardInfoProps> = ({
                   {!visiblePriceFields.processingPrice && (
                     <button
                       type="button"
-                      onClick={() => handlePriceFieldSelection("processingPrice")}
+                      onClick={() =>
+                        handlePriceFieldSelection("processingPrice")
+                      }
                       className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
                     >
                       Processing Price
@@ -528,15 +960,17 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 setVisiblePriceFields((prev) => ({
                   ...prev,
                   taxesPrice: false,
-                }))
-                handleInputChange("taxesYardPrice", "")
+                }));
+                handleInputChange("taxesYardPrice", "");
               }}
               className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
               title="Remove payment"
             >
               <X size={16} />
             </button>
-            <label className="block text-white/60 text-sm mb-2">Taxes Price</label>
+            <label className="block text-white/60 text-sm mb-2">
+              Taxes Price
+            </label>
             <input
               type="text"
               className={`
@@ -551,11 +985,15 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 }`}
               placeholder="00.00"
               value={
-                formData.taxesYardPrice === 0 || formData.taxesYardPrice === "0" || formData.taxesYardPrice === "0.00"
+                formData.taxesYardPrice === 0 ||
+                formData.taxesYardPrice === "0" ||
+                formData.taxesYardPrice === "0.00"
                   ? ""
                   : formData.taxesYardPrice
               }
-              onChange={(e) => handleInputChange("taxesYardPrice", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("taxesYardPrice", e.target.value)
+              }
               onBlur={(e) => handlePriceBlur("taxesYardPrice", e.target.value)}
             />
           </div>
@@ -568,15 +1006,17 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 setVisiblePriceFields((prev) => ({
                   ...prev,
                   handlingPrice: false,
-                }))
-                handleInputChange("handlingYardPrice", "")
+                }));
+                handleInputChange("handlingYardPrice", "");
               }}
               className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
               title="Remove payment"
             >
               <X size={16} />
             </button>
-            <label className="block text-white/60 text-sm mb-2">Handling Price</label>
+            <label className="block text-white/60 text-sm mb-2">
+              Handling Price
+            </label>
             <input
               type="text"
               className={`
@@ -597,8 +1037,12 @@ const YardInfo: React.FC<YardInfoProps> = ({
                   ? ""
                   : formData.handlingYardPrice
               }
-              onChange={(e) => handleInputChange("handlingYardPrice", e.target.value)}
-              onBlur={(e) => handlePriceBlur("handlingYardPrice", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("handlingYardPrice", e.target.value)
+              }
+              onBlur={(e) =>
+                handlePriceBlur("handlingYardPrice", e.target.value)
+              }
             />
           </div>
         )}
@@ -610,15 +1054,17 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 setVisiblePriceFields((prev) => ({
                   ...prev,
                   processingPrice: false,
-                }))
-                handleInputChange("processingYardPrice", "")
+                }));
+                handleInputChange("processingYardPrice", "");
               }}
               className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
               title="Remove payment"
             >
               <X size={16} />
             </button>
-            <label className="block text-white/60 text-sm mb-2">Processing Price</label>
+            <label className="block text-white/60 text-sm mb-2">
+              Processing Price
+            </label>
             <input
               type="text"
               className={`
@@ -639,8 +1085,12 @@ const YardInfo: React.FC<YardInfoProps> = ({
                   ? ""
                   : formData.processingYardPrice
               }
-              onChange={(e) => handleInputChange("processingYardPrice", e.target.value)}
-              onBlur={(e) => handlePriceBlur("processingYardPrice", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("processingYardPrice", e.target.value)
+              }
+              onBlur={(e) =>
+                handlePriceBlur("processingYardPrice", e.target.value)
+              }
             />
           </div>
         )}
@@ -652,15 +1102,17 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 setVisiblePriceFields((prev) => ({
                   ...prev,
                   corePrice: false,
-                }))
-                handleInputChange("coreYardPrice", "")
+                }));
+                handleInputChange("coreYardPrice", "");
               }}
               className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
               title="Remove payment"
             >
               <X size={16} />
             </button>
-            <label className="block text-white/60 text-sm mb-2">Core Price</label>
+            <label className="block text-white/60 text-sm mb-2">
+              Core Price
+            </label>
             <input
               type="text"
               className={`
@@ -675,16 +1127,19 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 }`}
               placeholder="00.00"
               value={
-                formData.coreYardPrice === 0 || formData.coreYardPrice === "0" || formData.coreYardPrice === "0.00"
+                formData.coreYardPrice === 0 ||
+                formData.coreYardPrice === "0" ||
+                formData.coreYardPrice === "0.00"
                   ? ""
                   : formData.coreYardPrice
               }
-              onChange={(e) => handleInputChange("coreYardPrice", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("coreYardPrice", e.target.value)
+              }
               onBlur={(e) => handlePriceBlur("coreYardPrice", e.target.value)}
             />
           </div>
         )}
-
 
         {/* Warranty */}
         <div>
@@ -785,41 +1240,44 @@ const YardInfo: React.FC<YardInfoProps> = ({
           </>
         )}
 
-
         <div>
-        <label className="block text-white/60 text-sm mb-2">Yard Charged</label>
-        <div className="relative">
-          <select
-            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-            value={yardCharge}
-            onChange={(e) => setYardCharge(e.target.value)}
-          >
-            <option value="No">No</option>
-            <option value="Yes">Yes</option>
-          </select>
-          <ChevronDown
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-            size={16}
-          />
+          <label className="block text-white/60 text-sm mb-2">
+            Yard Charged
+          </label>
+          <div className="relative">
+            <select
+              className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+              value={yardCharge}
+              onChange={(e) => setYardCharge(e.target.value)}
+            >
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+            <ChevronDown
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+              size={16}
+            />
+          </div>
         </div>
-      </div>
 
-      {yardCharge === "Yes" && (
-        <div>
-          <label className="block text-white/60 text-sm mb-2">Yard Changed Amount</label>
-          <input
-            type="number"
-            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-            placeholder="Enter amount"
-            value={yardChangedAmount}
-            onChange={(e) => setYardChangedAmount(e.target.value)}
-            onBlur={(e) => {
-              const rawValue = e.target.value || "0";
-              const value = parseFloat(rawValue).toFixed(2);
-              setYardChangedAmount(value);
-            }}
-          />
-        </div>
+        {yardCharge === "Yes" && (
+          <div>
+            <label className="block text-white/60 text-sm mb-2">
+              Yard Changed Amount
+            </label>
+            <input
+              type="number"
+              className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+              placeholder="Enter amount"
+              value={yardChangedAmount}
+              onChange={(e) => setYardChangedAmount(e.target.value)}
+              onBlur={(e) => {
+                const rawValue = e.target.value || "0";
+                const value = parseFloat(rawValue).toFixed(2);
+                setYardChangedAmount(value);
+              }}
+            />
+          </div>
         )}
       </div>
     </div>
