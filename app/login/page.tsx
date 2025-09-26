@@ -7,7 +7,7 @@ import { useState } from "react";
 import useAuthStore from "@/store/auth";
 import { URL } from "@/utils//imageUrl";
 import { Eye, EyeClosed } from "lucide-react";
-import { users } from "@/data/users";
+import { users } from "../../data/users";
 // import { Exo } from "next/font/google";
 // const exo = Exo({
 //   subsets: ["latin"],
