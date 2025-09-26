@@ -40,6 +40,6 @@ export const users: User[] = [
     email: "emily@partscentral.com",
     password: "emily@123",
     role: "sales",
-    name: "Emily Davis",
+    name: "Emily",
   },
 ];
