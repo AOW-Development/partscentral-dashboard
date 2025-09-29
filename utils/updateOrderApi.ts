@@ -243,25 +243,7 @@ export const updateOrderFromAdmin = async (
           : {}),
       },
     }),
-    // Add previous yards data
-    yardHistory: previousYards.map((yard) => ({
-      yardName: yard.yardName || "",
-      attnName: yard.attnName || "",
-      yardAddress: yard.yardAddress || "",
-      yardMobile: yard.yardMobile || "",
-      yardEmail: yard.yardEmail || "",
-      yardPrice: parseFloat(yard.yardPrice as string) || 0,
-      yardTaxesPrice: parseFloat(yard.taxesYardPrice as string) || 0,
-      yardHandlingFee: parseFloat(yard.handlingYardPrice as string) || 0,
-      yardProcessingFee: parseFloat(yard.processingYardPrice as string) || 0,
-      yardCorePrice: parseFloat(yard.coreYardPrice as string) || 0,
-      yardWarranty: yard.yardWarranty || "",
-      yardMiles: parseFloat(yard.yardMiles as string) || 0,
-      shipping: yard.yardShipping || "",
-      yardCost: parseFloat(yard.yardCost as string) || 0,
-      reason: yard.reason || "",
-      yardCharge: yard.yardCharge || "",
-    })),
+    // yardHistory is handled by a separate API call now.
   };
 
   // DEBUG: Log yard prices being sent to backend
