@@ -67,7 +67,7 @@ export const createOrderFromAdmin = async (
     billingInfo: {
       firstName: formData.cardHolderName?.split(" ")[0] || "",
       lastName: formData.cardHolderName?.split(" ").slice(1).join(" ") || "",
-      address: formData.billingAddress || formData.shippingAddress || "",
+      address: formData.billingAddress || "",
       city: formData.billingCity || formData.shippingCity || "",
       state: formData.billingState || formData.shippingState || "CA",
       postalCode:
@@ -240,6 +240,8 @@ export const createOrderFromAdmin = async (
       ? new Date(formData.date).toISOString()
       : new Date().toISOString(),
     addressType: formData.shippingAddressType,
+    orderCategoryStatus: formData.orderCategoryStatus || null,
+    problematicIssueType: formData.problematicIssueType || null,
     ...(formData.yardName && {
       yardInfo: {
         yardName: formData.yardName,
