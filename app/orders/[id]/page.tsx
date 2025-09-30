@@ -106,6 +106,8 @@ export type OrderFormData = {
     bolNumber: string;
     owntotalBuy: string;
   };
+  orderCategoryStatus?: string;
+  problematicIssueType?: string;
 };
 // --- End strong types for cart mapping ---
 
@@ -182,6 +184,9 @@ const OrderDetails = () => {
   const [loadingOrder, setLoadingOrder] = useState(true);
   const [grossProfit, setGrossProfit] = useState(0);
   const [showAlternateMobileNumber, setShowAlternateMobileNumber] =
+    useState(false);
+  const [showProblematicModal, setShowProblematicModal] = useState(false);
+  const [showOrderCategoryDropdown, setShowOrderCategoryDropdown] =
     useState(false);
 
   // Payment entries state for dynamic payment fields (only MerchantInfo fields)
@@ -516,6 +521,9 @@ const OrderDetails = () => {
               bolNumber: ownShipping.bolNumber || "",
               owntotalBuy: ownShipping.totalBuy || "",
             },
+            // Order Category Status
+            orderCategoryStatus: data.orderCategoryStatus || "",
+            problematicIssueType: data.problematicIssueType || "",
           };
 
           console.log("DEBUG: Yard price fields being mapped:");
@@ -732,6 +740,8 @@ const OrderDetails = () => {
       bolNumber: "",
       owntotalBuy: "",
     },
+    orderCategoryStatus: "",
+    problematicIssueType: "",
   });
 
   // Auto-show alternate mobile field if data exists
@@ -2859,6 +2869,252 @@ const OrderDetails = () => {
                     <option value="chargeback">ChargeBack</option>
                     <option value="problematic order">Problematic Order</option>
                   </select>
+                  {/* Order Category Status */}
+                  <div className="relative">
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        {/* Custom Dropdown Button */}
+                        <button
+                          className={`bg-gray-500 text-white px-3 py-1 rounded-full text-xs font-medium focus:outline-none flex items-center gap-1`}
+                          onClick={() =>
+                            setShowOrderCategoryDropdown(
+                              !showOrderCategoryDropdown
+                            )
+                          }
+                          onMouseLeave={() => {
+                            setShowOrderCategoryDropdown(false);
+                            setShowProblematicModal(false);
+                          }}
+                        >
+                          {formData.orderCategoryStatus ===
+                            "Problematic Issues" &&
+                          formData.problematicIssueType
+                            ? formData.problematicIssueType
+                            : formData.orderCategoryStatus || "Order Category"}
+                          <svg
+                            className={`w-3 h-3 transition-transform ${
+                              showOrderCategoryDropdown ? "rotate-180" : ""
+                            }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </button>
+
+                        {/* Custom Dropdown Options */}
+                        {showOrderCategoryDropdown && (
+                          <div
+                            className="absolute top-full left-[-50px] mt-0 bg-gray-700 border border-gray-600 rounded-lg shadow-lg z-50 min-w-[160px]"
+                            onMouseEnter={() =>
+                              setShowOrderCategoryDropdown(true)
+                            }
+                            onMouseLeave={() =>
+                              setShowOrderCategoryDropdown(false)
+                            }
+                          >
+                            <div className="py-2">
+                              <button
+                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors"
+                                onClick={() => {
+                                  handleInputChange("orderCategoryStatus", "");
+                                  setShowOrderCategoryDropdown(false);
+                                }}
+                              >
+                                Order Category
+                              </button>
+                              <button
+                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors"
+                                onClick={() => {
+                                  handleInputChange(
+                                    "orderCategoryStatus",
+                                    "Priority"
+                                  );
+                                  setShowOrderCategoryDropdown(false);
+                                }}
+                              >
+                                Priority
+                              </button>
+                              <button
+                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors"
+                                onClick={() => {
+                                  handleInputChange(
+                                    "orderCategoryStatus",
+                                    "Escalation Required"
+                                  );
+                                  setShowOrderCategoryDropdown(false);
+                                }}
+                              >
+                                Escalation Required
+                              </button>
+                              <button
+                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors"
+                                onClick={() => {
+                                  handleInputChange(
+                                    "orderCategoryStatus",
+                                    "Chargeback"
+                                  );
+                                  setShowOrderCategoryDropdown(false);
+                                }}
+                              >
+                                Chargeback
+                              </button>
+                              <button
+                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors"
+                                onClick={() => {
+                                  handleInputChange(
+                                    "orderCategoryStatus",
+                                    "Need To Refund"
+                                  );
+                                  setShowOrderCategoryDropdown(false);
+                                }}
+                              >
+                                Need To Refund
+                              </button>
+                              <button
+                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors"
+                                onClick={() => {
+                                  handleInputChange(
+                                    "orderCategoryStatus",
+                                    "Refunded"
+                                  );
+                                  setShowOrderCategoryDropdown(false);
+                                }}
+                              >
+                                Refunded
+                              </button>
+                              <button
+                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors"
+                                onClick={() => {
+                                  handleInputChange(
+                                    "orderCategoryStatus",
+                                    "Yard Refund"
+                                  );
+                                  setShowOrderCategoryDropdown(false);
+                                }}
+                              >
+                                Yard Refund
+                              </button>
+                              <div
+                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors relative"
+                                onMouseEnter={() =>
+                                  setShowProblematicModal(true)
+                                }
+                                onMouseLeave={() =>
+                                  setShowProblematicModal(false)
+                                }
+                                onClick={() => {
+                                  handleInputChange(
+                                    "orderCategoryStatus",
+                                    "Problematic Issues"
+                                  );
+                                  setShowOrderCategoryDropdown(false);
+                                }}
+                              >
+                                Problematic Issues
+                                {/* Problematic Issues Modal - appears when hovering over this option */}
+                                {showProblematicModal && (
+                                  <div
+                                    className="absolute top-0 -left-[5px] bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-50"
+                                    onMouseEnter={() =>
+                                      setShowProblematicModal(true)
+                                    }
+                                    onMouseLeave={() =>
+                                      setShowProblematicModal(false)
+                                    }
+                                  >
+                                    <div className="py-2">
+                                      <button
+                                        className={`w-full text-left px-3 py-3 text-sm hover:bg-blue-600 transition-colors ${
+                                          formData.problematicIssueType ===
+                                          "Damaged Product"
+                                            ? "bg-blue-600 text-white"
+                                            : "text-white hover:bg-blue-600"
+                                        }`}
+                                        onClick={() => {
+                                          // Add delay before selection
+                                          setTimeout(() => {
+                                            handleInputChange(
+                                              "problematicIssueType",
+                                              "Damaged Product"
+                                            );
+                                            handleInputChange(
+                                              "orderCategoryStatus",
+                                              "Problematic Issues"
+                                            );
+                                            setShowProblematicModal(false);
+                                            setShowOrderCategoryDropdown(false);
+                                          }, 300);
+                                        }}
+                                      >
+                                        Damaged Product
+                                      </button>
+                                      <button
+                                        className={`w-full text-left px-4 py-3 text-sm hover:bg-blue-600 transition-colors ${
+                                          formData.problematicIssueType ===
+                                          "Defective Product"
+                                            ? "bg-blue-600 text-white"
+                                            : "text-white hover:bg-blue-600"
+                                        }`}
+                                        onClick={() => {
+                                          // Add delay before selection
+                                          setTimeout(() => {
+                                            handleInputChange(
+                                              "problematicIssueType",
+                                              "Defective Product"
+                                            );
+                                            handleInputChange(
+                                              "orderCategoryStatus",
+                                              "Problematic Issues"
+                                            );
+                                            setShowProblematicModal(false);
+                                            setShowOrderCategoryDropdown(false);
+                                          }, 300);
+                                        }}
+                                      >
+                                        Defective Product
+                                      </button>
+                                      <button
+                                        className={`w-full text-left px-4 py-3 text-sm hover:bg-blue-600 transition-colors ${
+                                          formData.problematicIssueType ===
+                                          "Wrong Product"
+                                            ? "bg-blue-600 text-white"
+                                            : "text-white hover:bg-blue-600"
+                                        }`}
+                                        onClick={() => {
+                                          // Add delay before selection
+                                          setTimeout(() => {
+                                            handleInputChange(
+                                              "problematicIssueType",
+                                              "Wrong Product"
+                                            );
+                                            handleInputChange(
+                                              "orderCategoryStatus",
+                                              "Problematic Issues"
+                                            );
+                                            setShowProblematicModal(false);
+                                            setShowOrderCategoryDropdown(false);
+                                          }, 300);
+                                        }}
+                                      >
+                                        Wrong Product
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                   <button className="text-white/60 hover:text-white">
                     <svg
                       width="16"
@@ -3828,7 +4084,11 @@ const OrderDetails = () => {
                                   ...prev,
                                   ["taxesPrice"]: false,
                                 }));
-                                handleInputChange("taxesPrice", "");
+                                handleProductInputChange(
+                                  index,
+                                  "taxesPrice",
+                                  ""
+                                );
                               }}
                               className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                               title="Remove payment"
@@ -3890,7 +4150,11 @@ const OrderDetails = () => {
                                   ...prev,
                                   ["handlingPrice"]: false,
                                 }));
-                                handleInputChange("handlingPrice", "");
+                                handleProductInputChange(
+                                  index,
+                                  "handlingPrice",
+                                  ""
+                                );
                               }}
                               className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                               title="Remove payment"
@@ -3947,7 +4211,11 @@ const OrderDetails = () => {
                                   ...prev,
                                   ["processingPrice"]: false,
                                 }));
-                                handleInputChange("processingPrice", "");
+                                handleProductInputChange(
+                                  index,
+                                  "processingPrice",
+                                  ""
+                                );
                               }}
                               className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                               title="Remove payment"
@@ -4004,7 +4272,11 @@ const OrderDetails = () => {
                                   ...prev,
                                   ["corePrice"]: false,
                                 }));
-                                handleInputChange("corePrice", "");
+                                handleProductInputChange(
+                                  index,
+                                  "corePrice",
+                                  ""
+                                );
                               }}
                               className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                               title="Remove payment"
