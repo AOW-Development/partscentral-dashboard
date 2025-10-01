@@ -611,7 +611,7 @@ const OrderDetails = () => {
       }));
       setLoadingOrder(false);
     }
-  }, [orderId]); // State for product variants
+  }, [orderId, loadingOrder]); // State for product variants
 
   // Per-product loading state for variants
   // const [isLoadingVariants, setIsLoadingVariants] = useState<{
@@ -1881,7 +1881,6 @@ const OrderDetails = () => {
           email: formData.email,
           mobile: formData.mobile,
           alternateMobile: formData.alternateMobile,
-          products: formData.products,
           shippingAddress: formData.shippingAddress,
           billingAddress: formData.billingAddress,
           shippingAddressType: formData.shippingAddressType,
@@ -1914,6 +1913,11 @@ const OrderDetails = () => {
           specification: product.specification,
           // warranty: product.warranty,
           milesPromised: product.milesPromised,
+          partPrice: String(product.partPrice || "0"),
+          taxesPrice: String(product.taxesPrice || "0"),
+          handlingPrice: String(product.handlingPrice || "0"),
+          processingPrice: String(product.processingPrice || "0"),
+          corePrice: String(product.corePrice || "0"),
         })),
         yardInfo: {
           name: formData.yardName,
@@ -1922,6 +1926,10 @@ const OrderDetails = () => {
           address: formData.yardAddress,
           email: formData.yardEmail,
           price: formData.yardPrice,
+          yardTaxesPrice: formData.taxesYardPrice,
+          yardHandlingPrice: formData.handlingYardPrice,
+          yardProcessingPrice: formData.processingYardPrice,
+          yardCorePrice: formData.coreYardPrice,
           warranty: formData.yardWarranty,
           miles: formData.yardMiles,
           shipping: formData.yardShipping,
@@ -2013,7 +2021,6 @@ const OrderDetails = () => {
           email: formData.email,
           mobile: formData.mobile,
           alternateMobile: formData.alternateMobile,
-          products: formData.products,
           shippingAddress: formData.shippingAddress,
           billingAddress: formData.billingAddress,
           shippingAddressType: formData.shippingAddressType,
@@ -2054,6 +2061,10 @@ const OrderDetails = () => {
           address: formData.yardAddress,
           email: formData.yardEmail,
           price: formData.yardPrice,
+          yardTaxesPrice: formData.taxesYardPrice,
+          yardHandlingPrice: formData.handlingYardPrice,
+          yardProcessingPrice: formData.processingYardPrice,
+          yardCorePrice: formData.coreYardPrice,
           warranty: formData.yardWarranty,
           miles: formData.yardMiles,
           shipping: formData.yardShipping,
@@ -3021,7 +3032,7 @@ const OrderDetails = () => {
                                 {/* Problematic Issues Modal - appears when hovering over this option */}
                                 {showProblematicModal && (
                                   <div
-                                    className="absolute top-0 -left-[5px] bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-50"
+                                    className="absolute top-0 -left-[160px] right-[160px] bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-50 min-w-[140px]"
                                     onMouseEnter={() =>
                                       setShowProblematicModal(true)
                                     }
