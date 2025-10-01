@@ -68,6 +68,10 @@ interface InvoiceData {
     address: string;
     email: string;
     price: number;
+    yardTaxesPrice: number;
+    yardHandlingPrice: number;
+    yardProcessingPrice: number;
+    yardCorePrice: number;
     warranty: string;
     miles: number;
     shipping: string;
@@ -87,6 +91,14 @@ export async function POST(request: NextRequest) {
   try {
     const invoiceData = await request.json();
     console.log("PO Data is:", invoiceData);
+    console.log("PO yardInfo prices:", {
+      price: invoiceData.yardInfo?.price,
+      yardCost: invoiceData.yardInfo?.yardCost,
+      yardTaxesPrice: invoiceData.yardInfo?.yardTaxesPrice,
+      yardHandlingPrice: invoiceData.yardInfo?.yardHandlingPrice,
+      yardProcessingPrice: invoiceData.yardInfo?.yardProcessingPrice,
+      yardCorePrice: invoiceData.yardInfo?.yardCorePrice,
+    });
 
     if (!invoiceData.yardInfo?.email) {
       return NextResponse.json(
@@ -413,11 +425,114 @@ async function generatePOPDF(data: InvoiceData) {
     }\nPH#${data.customerInfo.mobile || ""}`;
   }
 
+  // Helper to format price safely
+  const formatYardPrice = (price: string | number | undefined): string => {
+    if (!price || price === "0" || price === 0) return "0.00";
+    const num = typeof price === "string" ? parseFloat(price) : price;
+    return isNaN(num) ? "0.00" : num.toFixed(2);
+  };
+
+  // Helper to check if price has value
+  const hasValue = (price: string | number | undefined): boolean => {
+    if (!price) return false;
+    const num = typeof price === "string" ? parseFloat(price) : price;
+    return !isNaN(num) && num > 0;
+  };
+
   let someData = "";
   if (data.yardInfo.shipping == "Yard Shipping") {
-    someData = `$${data.yardInfo.price}(part) + $${data.yardInfo.yardCost}(yard cost)`;
+    const priceComponents: string[] = [];
+
+    // Always include part price if it exists
+    if (hasValue(data.yardInfo.price)) {
+      priceComponents.push(`$${formatYardPrice(data.yardInfo.price)}(part)`);
+    }
+
+    // Include yard cost if it exists
+    if (hasValue(data.yardInfo.yardCost)) {
+      priceComponents.push(
+        `$${formatYardPrice(data.yardInfo.yardCost)}(yard cost)`
+      );
+    }
+
+    // Include taxes if it exists
+    if (hasValue(data.yardInfo.yardTaxesPrice)) {
+      priceComponents.push(
+        `$${formatYardPrice(data.yardInfo.yardTaxesPrice)}(taxes)`
+      );
+    }
+
+    // Include handling if it exists
+    if (hasValue(data.yardInfo.yardHandlingPrice)) {
+      priceComponents.push(
+        `$${formatYardPrice(data.yardInfo.yardHandlingPrice)}(handling)`
+      );
+    }
+
+    // Include processing if it exists
+    if (hasValue(data.yardInfo.yardProcessingPrice)) {
+      priceComponents.push(
+        `$${formatYardPrice(data.yardInfo.yardProcessingPrice)}(processing)`
+      );
+    }
+
+    // Include core if it exists
+    if (hasValue(data.yardInfo.yardCorePrice)) {
+      priceComponents.push(
+        `$${formatYardPrice(data.yardInfo.yardCorePrice)}(core)`
+      );
+    }
+
+    someData =
+      priceComponents.length > 0 ? priceComponents.join(" + ") : "$0.00";
   } else {
-    someData = `$${data.yardInfo.price}(part) + Own Shipping`;
+    const priceComponents: string[] = [];
+
+    // Always include part price if it exists
+    if (hasValue(data.yardInfo.price)) {
+      priceComponents.push(`$${formatYardPrice(data.yardInfo.price)}(part)`);
+    }
+
+    // Include yard cost if it exists
+    if (hasValue(data.yardInfo.yardCost)) {
+      priceComponents.push(
+        `$${formatYardPrice(data.yardInfo.yardCost)}(yard cost)`
+      );
+    }
+
+    // Include taxes if it exists
+    if (hasValue(data.yardInfo.yardTaxesPrice)) {
+      priceComponents.push(
+        `$${formatYardPrice(data.yardInfo.yardTaxesPrice)}(taxes)`
+      );
+    }
+
+    // Include handling if it exists
+    if (hasValue(data.yardInfo.yardHandlingPrice)) {
+      priceComponents.push(
+        `$${formatYardPrice(data.yardInfo.yardHandlingPrice)}(handling)`
+      );
+    }
+
+    // Include processing if it exists
+    if (hasValue(data.yardInfo.yardProcessingPrice)) {
+      priceComponents.push(
+        `$${formatYardPrice(data.yardInfo.yardProcessingPrice)}(processing)`
+      );
+    }
+
+    // Include core if it exists
+    if (hasValue(data.yardInfo.yardCorePrice)) {
+      priceComponents.push(
+        `$${formatYardPrice(data.yardInfo.yardCorePrice)}(core)`
+      );
+    }
+
+    if (priceComponents.length > 0) {
+      someData = priceComponents.join(" + ") + " + Own Shipping";
+    } else {
+      someData = "Own Shipping";
+    }
   }
 
   const boxData = [
