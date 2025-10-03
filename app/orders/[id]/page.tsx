@@ -2296,6 +2296,7 @@ const OrderDetails = () => {
           ? new Date(formData.invoiceConfirmedAt).toISOString()
           : null,
         invoiceStatus: formData.invoiceStatus || "NOT_AVAILABLE",
+        estimatedDeliveryDate: formData.estimatedDeliveryDate || "",
       };
 
       // Map payment entry data to form data for merchant info
