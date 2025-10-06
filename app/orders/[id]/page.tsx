@@ -859,6 +859,11 @@ const OrderDetails = () => {
     setFormData((prev) => ({
       ...prev,
       yardName: "",
+      attnName: "",
+      taxesYardPrice: "",
+      handlingYardPrice: "",
+      processingYardPrice: "",
+      coreYardPrice: "",
       yardAddress: "",
       yardMobile: "",
       yardEmail: "",
