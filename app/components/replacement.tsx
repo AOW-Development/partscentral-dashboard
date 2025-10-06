@@ -45,7 +45,7 @@ const ReplacementForm: React.FC = () => {
       yardShipping: "Yard Shipping",
       yardCost: "75.00",
       reason: "Part not available",
-      yardCharge: "10.00"
+      yardCharge: "10.00",
     },
     {
       yardName: "Previous Yard B",
@@ -60,7 +60,7 @@ const ReplacementForm: React.FC = () => {
       yardShipping: "Own Shipping",
       yardCost: "50.00",
       reason: "Wrong part sent",
-      yardCharge: "5.00"
+      yardCharge: "5.00",
     },
   ];
 
@@ -71,14 +71,18 @@ const ReplacementForm: React.FC = () => {
     corePrice: false,
   });
 
-  const handlePriceFieldSelection = (fieldName: keyof typeof visiblePriceFields) => {
+  const handlePriceFieldSelection = (
+    fieldName: keyof typeof visiblePriceFields
+  ) => {
     setVisiblePriceFields((prev) => ({
       ...prev,
       [fieldName]: true,
     }));
   };
 
-  const handleRemovePriceField = (fieldName: keyof typeof visiblePriceFields) => {
+  const handleRemovePriceField = (
+    fieldName: keyof typeof visiblePriceFields
+  ) => {
     setVisiblePriceFields((prev) => ({
       ...prev,
       [fieldName]: false,
@@ -86,7 +90,10 @@ const ReplacementForm: React.FC = () => {
     setReplacementField(fieldName as keyof typeof replacementData, "");
   };
 
-  const handlePriceBlur = (field: keyof typeof replacementData, value: string) => {
+  const handlePriceBlur = (
+    field: keyof typeof replacementData,
+    value: string
+  ) => {
     const numberValue = parseFloat(value);
     if (!isNaN(numberValue)) {
       const formattedValue = numberValue.toFixed(2);
@@ -100,12 +107,12 @@ const ReplacementForm: React.FC = () => {
     const price = parseFloat(replacementData.replacementPrice) || 0;
     const taxes = parseFloat(replacementData.taxesPrice as string) || 0;
     const handling = parseFloat(replacementData.handlingPrice as string) || 0;
-    const processing = parseFloat(replacementData.processingPrice as string) || 0;
+    const processing =
+      parseFloat(replacementData.processingPrice as string) || 0;
     const core = parseFloat(replacementData.corePrice as string) || 0;
     const cost = parseFloat(replacementData.yardCost as string) || 0;
     return (price + taxes + handling + processing + core + cost).toFixed(2);
   };
-  
 
   return (
     <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -137,7 +144,7 @@ const ReplacementForm: React.FC = () => {
       {replacementData.hasReplacement === "Yes" && (
         <div className="md:col-span-2">
           <p className="text-white/70 mb-4">Re-delivery Tracking Details</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-2 gap-6">
             <input
               type="text"
               placeholder="Carrier Name"
@@ -207,7 +214,9 @@ const ReplacementForm: React.FC = () => {
                   <select
                     className="bg-[#0a1929] border border-gray-600 rounded px-2 py-1 text-white text-xs"
                     value={selectedPrevYardIdx}
-                    onChange={(e) => setSelectedPrevYardIdx(Number(e.target.value))}
+                    onChange={(e) =>
+                      setSelectedPrevYardIdx(Number(e.target.value))
+                    }
                   >
                     {previousYards.map((_, idx) => (
                       <option key={idx} value={idx}>
@@ -217,9 +226,11 @@ const ReplacementForm: React.FC = () => {
                   </select>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
                   <div>
-                    <label className="block text-white/60 text-xs mb-1">Yard Name</label>
+                    <label className="block text-white/60 text-xs mb-1">
+                      Yard Name
+                    </label>
                     <input
                       type="text"
                       className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
@@ -228,7 +239,9 @@ const ReplacementForm: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-white/60 text-xs mb-1">Attn. Name</label>
+                    <label className="block text-white/60 text-xs mb-1">
+                      Attn. Name
+                    </label>
                     <input
                       type="text"
                       className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
@@ -237,106 +250,153 @@ const ReplacementForm: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-white/60 text-xs mb-1">Address</label>
+                    <label className="block text-white/60 text-xs mb-1">
+                      Address
+                    </label>
                     <input
                       type="text"
                       className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                      value={previousYards[selectedPrevYardIdx]?.yardAddress || ""}
+                      value={
+                        previousYards[selectedPrevYardIdx]?.yardAddress || ""
+                      }
                       disabled
                     />
                   </div>
                   <div>
-                    <label className="block text-white/60 text-xs mb-1">Phone</label>
+                    <label className="block text-white/60 text-xs mb-1">
+                      Phone
+                    </label>
                     <input
                       type="text"
                       className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                      value={previousYards[selectedPrevYardIdx]?.yardPhone || ""}
+                      value={
+                        previousYards[selectedPrevYardIdx]?.yardPhone || ""
+                      }
                       disabled
                     />
                   </div>
                   <div>
-                    <label className="block text-white/60 text-xs mb-1">Email</label>
+                    <label className="block text-white/60 text-xs mb-1">
+                      Email
+                    </label>
                     <input
                       type="text"
                       className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                      value={previousYards[selectedPrevYardIdx]?.yardEmail || ""}
+                      value={
+                        previousYards[selectedPrevYardIdx]?.yardEmail || ""
+                      }
                       disabled
                     />
                   </div>
                   <div>
-                    <label className="block text-white/60 text-xs mb-1">Price</label>
+                    <label className="block text-white/60 text-xs mb-1">
+                      Price
+                    </label>
                     <input
                       type="text"
                       className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                      value={previousYards[selectedPrevYardIdx]?.yardPrice || ""}
+                      value={
+                        previousYards[selectedPrevYardIdx]?.yardPrice || ""
+                      }
                       disabled
                     />
                   </div>
                   <div>
-                    <label className="block text-white/60 text-xs mb-1">Taxes Price</label>
+                    <label className="block text-white/60 text-xs mb-1">
+                      Taxes Price
+                    </label>
                     <input
                       type="text"
                       className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                      value={previousYards[selectedPrevYardIdx]?.taxesPrice || ""}
+                      value={
+                        previousYards[selectedPrevYardIdx]?.taxesPrice || ""
+                      }
                       disabled
                     />
                   </div>
                   <div>
-                    <label className="block text-white/60 text-xs mb-1">Handling Price</label>
+                    <label className="block text-white/60 text-xs mb-1">
+                      Handling Price
+                    </label>
                     <input
                       type="text"
                       className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                      value={previousYards[selectedPrevYardIdx]?.handlingPrice || ""}
+                      value={
+                        previousYards[selectedPrevYardIdx]?.handlingPrice || ""
+                      }
                       disabled
                     />
                   </div>
                   <div>
-                    <label className="block text-white/60 text-xs mb-1">Processing Price</label>
+                    <label className="block text-white/60 text-xs mb-1">
+                      Processing Price
+                    </label>
                     <input
                       type="text"
                       className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                      value={previousYards[selectedPrevYardIdx]?.processingPrice || ""}
+                      value={
+                        previousYards[selectedPrevYardIdx]?.processingPrice ||
+                        ""
+                      }
                       disabled
                     />
                   </div>
                   <div>
-                    <label className="block text-white/60 text-xs mb-1">Core Price</label>
+                    <label className="block text-white/60 text-xs mb-1">
+                      Core Price
+                    </label>
                     <input
                       type="text"
                       className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                      value={previousYards[selectedPrevYardIdx]?.corePrice || ""}
+                      value={
+                        previousYards[selectedPrevYardIdx]?.corePrice || ""
+                      }
                       disabled
                     />
                   </div>
                   <div>
-                    <label className="block text-white/60 text-xs mb-1">Warranty</label>
+                    <label className="block text-white/60 text-xs mb-1">
+                      Warranty
+                    </label>
                     <input
                       type="text"
                       className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                      value={previousYards[selectedPrevYardIdx]?.yardWarranty || ""}
+                      value={
+                        previousYards[selectedPrevYardIdx]?.yardWarranty || ""
+                      }
                       disabled
                     />
                   </div>
                   <div>
-                    <label className="block text-white/60 text-xs mb-1">Miles</label>
+                    <label className="block text-white/60 text-xs mb-1">
+                      Miles
+                    </label>
                     <input
                       type="text"
                       className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                      value={previousYards[selectedPrevYardIdx]?.yardMiles || ""}
+                      value={
+                        previousYards[selectedPrevYardIdx]?.yardMiles || ""
+                      }
                       disabled
                     />
                   </div>
                   <div>
-                    <label className="block text-white/60 text-xs mb-1">Shipping</label>
+                    <label className="block text-white/60 text-xs mb-1">
+                      Shipping
+                    </label>
                     <input
                       type="text"
                       className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                      value={previousYards[selectedPrevYardIdx]?.yardShipping || ""}
+                      value={
+                        previousYards[selectedPrevYardIdx]?.yardShipping || ""
+                      }
                       disabled
                     />
                   </div>
                   <div>
-                    <label className="block text-white/60 text-xs mb-1">Yard Cost</label>
+                    <label className="block text-white/60 text-xs mb-1">
+                      Yard Cost
+                    </label>
                     <input
                       type="text"
                       className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
@@ -345,7 +405,9 @@ const ReplacementForm: React.FC = () => {
                     />
                   </div>
                   <div className="md:col-span-3">
-                    <label className="block text-white/60 text-xs mb-1">Reason</label>
+                    <label className="block text-white/60 text-xs mb-1">
+                      Reason
+                    </label>
                     <textarea
                       className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
                       value={previousYards[selectedPrevYardIdx]?.reason || ""}
@@ -353,10 +415,14 @@ const ReplacementForm: React.FC = () => {
                     />
                   </div>
                   <div className="md:col-span-3">
-                    <label className="block text-white/60 text-xs mb-1">Yard Charge</label>
+                    <label className="block text-white/60 text-xs mb-1">
+                      Yard Charge
+                    </label>
                     <textarea
                       className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white"
-                      value={previousYards[selectedPrevYardIdx]?.yardCharge || ""}
+                      value={
+                        previousYards[selectedPrevYardIdx]?.yardCharge || ""
+                      }
                       disabled
                     />
                   </div>
@@ -366,7 +432,7 @@ const ReplacementForm: React.FC = () => {
             <h3 className="text-white text-lg font-semibold mb-4">
               Current Yard Info
             </h3>
-            <div className="relative grid grid-cols-1 md:grid-cols-3 gap-6 bg-[#FFFFFF33] rounded-lg p-2">
+            <div className="relative grid grid-cols-1 md:grid-cols-2 gap-6 bg-[#FFFFFF33] rounded-lg p-2">
               <button
                 className="absolute right-0 top-0 z-10 hover:bg-red-600 bg-red-500 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg"
                 onClick={() => setStatusPopUp(true)}
@@ -375,56 +441,76 @@ const ReplacementForm: React.FC = () => {
               </button>
               {/* Name */}
               <div>
-                <label className="block text-white/60 text-sm mb-2">Yard Name</label>
+                <label className="block text-white/60 text-sm mb-2">
+                  Yard Name
+                </label>
                 <input
                   type="text"
                   className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
                   placeholder="Enter name"
                   value={replacementData.yardName}
-                  onChange={(e) => setReplacementField("yardName", e.target.value)}
+                  onChange={(e) =>
+                    setReplacementField("yardName", e.target.value)
+                  }
                 />
               </div>
               {/* Address */}
               <div>
-                <label className="block text-white/60 text-sm mb-2">Address</label>
+                <label className="block text-white/60 text-sm mb-2">
+                  Address
+                </label>
                 <input
                   type="text"
                   className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
                   placeholder="Enter address"
                   value={replacementData.yardAddress}
-                  onChange={(e) => setReplacementField("yardAddress", e.target.value)}
+                  onChange={(e) =>
+                    setReplacementField("yardAddress", e.target.value)
+                  }
                 />
               </div>
               {/* Phone */}
               <div>
-                <label className="block text-white/60 text-sm mb-2">Phone</label>
+                <label className="block text-white/60 text-sm mb-2">
+                  Phone
+                </label>
                 <input
                   type="tel"
                   className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
                   placeholder="Enter phone number"
                   value={replacementData.yardPhone}
-                  onChange={(e) => setReplacementField("yardPhone", e.target.value)}
+                  onChange={(e) =>
+                    setReplacementField("yardPhone", e.target.value)
+                  }
                 />
               </div>
               {/* Email */}
               <div>
-                <label className="block text-white/60 text-sm mb-2">Email</label>
+                <label className="block text-white/60 text-sm mb-2">
+                  Email
+                </label>
                 <input
                   type="email"
                   className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
                   placeholder="Enter email"
                   value={replacementData.yardEmail}
-                  onChange={(e) => setReplacementField("yardEmail", e.target.value)}
+                  onChange={(e) =>
+                    setReplacementField("yardEmail", e.target.value)
+                  }
                 />
               </div>
               {/* Warranty */}
               <div>
-                <label className="block text-white/60 text-sm mb-2">Warranty</label>
+                <label className="block text-white/60 text-sm mb-2">
+                  Warranty
+                </label>
                 <div className="relative">
                   <select
                     className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
                     value={replacementData.warranty}
-                    onChange={(e) => setReplacementField("warranty", e.target.value)}
+                    onChange={(e) =>
+                      setReplacementField("warranty", e.target.value)
+                    }
                   >
                     <option value="">Select warranty</option>
                     <option>30 Days</option>
@@ -441,12 +527,16 @@ const ReplacementForm: React.FC = () => {
               </div>
               {/* Shipping */}
               <div>
-                <label className="block text-white/60 text-sm mb-2">Shipping</label>
+                <label className="block text-white/60 text-sm mb-2">
+                  Shipping
+                </label>
                 <div className="relative">
                   <select
                     className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
                     value={replacementData.shipping}
-                    onChange={(e) => setReplacementField("shipping", e.target.value)}
+                    onChange={(e) =>
+                      setReplacementField("shipping", e.target.value)
+                    }
                   >
                     <option value="">Select shipping option</option>
                     <option value="Own Shipping">Own Shipping</option>
@@ -460,15 +550,21 @@ const ReplacementForm: React.FC = () => {
               </div>
               {/* Yard Price */}
               <div className="relative">
-                <label className="block text-white/60 text-sm mb-2">Replacement Price *</label>
+                <label className="block text-white/60 text-sm mb-2">
+                  Replacement Price *
+                </label>
                 <div className="relative">
                   <input
                     type="text"
                     className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 pr-12 text-white focus:border-blue-500 focus:outline-none"
                     placeholder="00.00"
                     value={replacementData.replacementPrice}
-                    onChange={(e) => setReplacementField("replacementPrice", e.target.value)}
-                    onBlur={(e) => handlePriceBlur("replacementPrice", e.target.value)}
+                    onChange={(e) =>
+                      setReplacementField("replacementPrice", e.target.value)
+                    }
+                    onBlur={(e) =>
+                      handlePriceBlur("replacementPrice", e.target.value)
+                    }
                   />
                   <button
                     type="button"
@@ -490,14 +586,20 @@ const ReplacementForm: React.FC = () => {
                   >
                     <X size={16} />
                   </button>
-                  <label className="block text-white/60 text-sm mb-2">Taxes Price</label>
+                  <label className="block text-white/60 text-sm mb-2">
+                    Taxes Price
+                  </label>
                   <input
                     type="number"
                     className="w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none border-gray-600 focus:border-blue-500"
                     placeholder="00.00"
                     value={replacementData.taxesPrice as string}
-                    onChange={(e) => setReplacementField("taxesPrice", e.target.value)}
-                    onBlur={(e) => handlePriceBlur("taxesPrice", e.target.value)}
+                    onChange={(e) =>
+                      setReplacementField("taxesPrice", e.target.value)
+                    }
+                    onBlur={(e) =>
+                      handlePriceBlur("taxesPrice", e.target.value)
+                    }
                   />
                 </div>
               )}
@@ -510,14 +612,20 @@ const ReplacementForm: React.FC = () => {
                   >
                     <X size={16} />
                   </button>
-                  <label className="block text-white/60 text-sm mb-2">Handling Price</label>
+                  <label className="block text-white/60 text-sm mb-2">
+                    Handling Price
+                  </label>
                   <input
                     type="number"
                     className="w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none border-gray-600 focus:border-blue-500"
                     placeholder="00.00"
                     value={replacementData.handlingPrice as string}
-                    onChange={(e) => setReplacementField("handlingPrice", e.target.value)}
-                    onBlur={(e) => handlePriceBlur("handlingPrice", e.target.value)}
+                    onChange={(e) =>
+                      setReplacementField("handlingPrice", e.target.value)
+                    }
+                    onBlur={(e) =>
+                      handlePriceBlur("handlingPrice", e.target.value)
+                    }
                   />
                 </div>
               )}
@@ -530,14 +638,20 @@ const ReplacementForm: React.FC = () => {
                   >
                     <X size={16} />
                   </button>
-                  <label className="block text-white/60 text-sm mb-2">Processing Price</label>
+                  <label className="block text-white/60 text-sm mb-2">
+                    Processing Price
+                  </label>
                   <input
                     type="number"
                     className="w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none border-gray-600 focus:border-blue-500"
                     placeholder="00.00"
                     value={replacementData.processingPrice as string}
-                    onChange={(e) => setReplacementField("processingPrice", e.target.value)}
-                    onBlur={(e) => handlePriceBlur("processingPrice", e.target.value)}
+                    onChange={(e) =>
+                      setReplacementField("processingPrice", e.target.value)
+                    }
+                    onBlur={(e) =>
+                      handlePriceBlur("processingPrice", e.target.value)
+                    }
                   />
                 </div>
               )}
@@ -550,32 +664,42 @@ const ReplacementForm: React.FC = () => {
                   >
                     <X size={16} />
                   </button>
-                  <label className="block text-white/60 text-sm mb-2">Core Price</label>
+                  <label className="block text-white/60 text-sm mb-2">
+                    Core Price
+                  </label>
                   <input
                     type="number"
                     className="w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none border-gray-600 focus:border-blue-500"
                     placeholder="00.00"
                     value={replacementData.corePrice as string}
-                    onChange={(e) => setReplacementField("corePrice", e.target.value)}
+                    onChange={(e) =>
+                      setReplacementField("corePrice", e.target.value)
+                    }
                     onBlur={(e) => handlePriceBlur("corePrice", e.target.value)}
                   />
                 </div>
               )}
               {/* Yard Shipping Cost */}
               <div>
-                <label className="block text-white/60 text-sm mb-2">Yard Shipping Cost</label>
+                <label className="block text-white/60 text-sm mb-2">
+                  Yard Shipping Cost
+                </label>
                 <input
                   type="number"
                   className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
                   placeholder="Enter yard cost"
                   value={replacementData.yardCost}
-                  onChange={(e) => setReplacementField("yardCost", e.target.value)}
+                  onChange={(e) =>
+                    setReplacementField("yardCost", e.target.value)
+                  }
                   onBlur={(e) => handlePriceBlur("yardCost", e.target.value)}
                 />
               </div>
               {/* Total Buy */}
               <div>
-                <label className="block text-white/60 text-sm mb-2">Total Buy</label>
+                <label className="block text-white/60 text-sm mb-2">
+                  Total Buy
+                </label>
                 <input
                   type="number"
                   className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
@@ -611,11 +735,11 @@ const ReplacementForm: React.FC = () => {
             </div>
 
             {/* Re-delivery Tracking Details (for "No" option) */}
-            <div className="mt-6">
+            <div className="mt-6 ">
               <h4 className="text-white/70 text-base font-semibold mb-3">
                 Re-delivery Tracking Details
               </h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <input
                   type="text"
                   placeholder="Carrier Name"
@@ -631,7 +755,10 @@ const ReplacementForm: React.FC = () => {
                   className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white"
                   value={replacementData.redeliveryTrackingNumber}
                   onChange={(e) =>
-                    setReplacementField("redeliveryTrackingNumber", e.target.value)
+                    setReplacementField(
+                      "redeliveryTrackingNumber",
+                      e.target.value
+                    )
                   }
                 />
                 <button

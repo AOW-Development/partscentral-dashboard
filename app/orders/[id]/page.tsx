@@ -784,46 +784,44 @@ const OrderDetails = () => {
     }
   }, [formData.company, loadingOrder]);
 
-  // Auto-show additional price fields if data exists
+  // Auto-show additional price fields if data exists - per product
   useEffect(() => {
     if (!loadingOrder) {
       const newVisibleFields = { ...visiblePriceFields };
 
-      // Check if any product has these additional price fields
-      const hasTaxesPrice = formData.products.some(
-        (product) =>
-          product.taxesPrice && parseFloat(product.taxesPrice.toString()) > 0
-      );
-      const hasHandlingPrice = formData.products.some(
-        (product) =>
+      // Check each product individually for additional price fields
+      formData.products.forEach((product, index) => {
+        if (!newVisibleFields[index]) {
+          newVisibleFields[index] = {
+            taxesPrice: false,
+            handlingPrice: false,
+            processingPrice: false,
+            corePrice: false,
+          };
+        }
+
+        if (
+          product.taxesPrice &&
+          parseFloat(product.taxesPrice.toString()) > 0
+        ) {
+          newVisibleFields[index].taxesPrice = true;
+        }
+        if (
           product.handlingPrice &&
           parseFloat(product.handlingPrice.toString()) > 0
-      );
-      const hasProcessingPrice = formData.products.some(
-        (product) =>
+        ) {
+          newVisibleFields[index].handlingPrice = true;
+        }
+        if (
           product.processingPrice &&
           parseFloat(product.processingPrice.toString()) > 0
-      );
-      const hasCorePrice = formData.products.some(
-        (product) =>
-          product.corePrice && parseFloat(product.corePrice.toString()) > 0
-      );
-
-      if (hasTaxesPrice) {
-        newVisibleFields.taxesPrice = true;
-      }
-
-      if (hasHandlingPrice) {
-        newVisibleFields.handlingPrice = true;
-      }
-
-      if (hasProcessingPrice) {
-        newVisibleFields.processingPrice = true;
-      }
-
-      if (hasCorePrice) {
-        newVisibleFields.corePrice = true;
-      }
+        ) {
+          newVisibleFields[index].processingPrice = true;
+        }
+        if (product.corePrice && parseFloat(product.corePrice.toString()) > 0) {
+          newVisibleFields[index].corePrice = true;
+        }
+      });
 
       setVisiblePriceFields(newVisibleFields);
     }
@@ -1214,6 +1212,8 @@ const OrderDetails = () => {
   };
 
   const addProduct = () => {
+    const newProductIndex = formData.products.length;
+
     setFormData((prev) => ({
       ...prev,
       products: [
@@ -1240,6 +1240,17 @@ const OrderDetails = () => {
         },
       ],
     }));
+
+    // Initialize price fields state for the new product
+    setVisiblePriceFields((prev) => ({
+      ...prev,
+      [newProductIndex]: {
+        taxesPrice: false,
+        handlingPrice: false,
+        processingPrice: false,
+        corePrice: false,
+      },
+    }));
   };
 
   const removeProduct = (index: number) => {
@@ -1247,6 +1258,60 @@ const OrderDetails = () => {
       ...prev,
       products: prev.products.filter((_, i) => i !== index),
     }));
+
+    // Clean up price fields state for removed product and reindex remaining products
+    setVisiblePriceFields((prev) => {
+      const newFields = { ...prev };
+      delete newFields[index];
+
+      // Reindex remaining products
+      const reindexedFields: typeof prev = {};
+      Object.keys(newFields).forEach((key) => {
+        const oldIndex = parseInt(key);
+        if (oldIndex > index) {
+          reindexedFields[oldIndex - 1] = newFields[oldIndex];
+        } else if (oldIndex < index) {
+          reindexedFields[oldIndex] = newFields[oldIndex];
+        }
+      });
+
+      return reindexedFields;
+    });
+
+    setShowPriceOptions((prev) => {
+      const newOptions = { ...prev };
+      delete newOptions[index];
+
+      // Reindex remaining products
+      const reindexedOptions: typeof prev = {};
+      Object.keys(newOptions).forEach((key) => {
+        const oldIndex = parseInt(key);
+        if (oldIndex > index) {
+          reindexedOptions[oldIndex - 1] = newOptions[oldIndex];
+        } else if (oldIndex < index) {
+          reindexedOptions[oldIndex] = newOptions[oldIndex];
+        }
+      });
+
+      return reindexedOptions;
+    });
+
+    // Clean up refs for removed product and reindex remaining products
+    const newRefs = { ...priceOptionsRefs.current };
+    delete newRefs[index];
+
+    // Reindex remaining refs
+    const reindexedRefs: typeof priceOptionsRefs.current = {};
+    Object.keys(newRefs).forEach((key) => {
+      const oldIndex = parseInt(key);
+      if (oldIndex > index) {
+        reindexedRefs[oldIndex - 1] = newRefs[oldIndex];
+      } else if (oldIndex < index) {
+        reindexedRefs[oldIndex] = newRefs[oldIndex];
+      }
+    });
+
+    priceOptionsRefs.current = reindexedRefs;
   };
   const [availableYears, setAvailableYears] = useState<{
     [index: number]: string[];
@@ -1471,21 +1536,22 @@ const OrderDetails = () => {
     return `${month}/${rest}`;
   };
 
-  // State for additional price fields visibility
+  // State for additional price fields visibility - per product
   const [visiblePriceFields, setVisiblePriceFields] = useState<{
-    taxesPrice: boolean;
-    handlingPrice: boolean;
-    processingPrice: boolean;
-    corePrice: boolean;
-  }>({
-    taxesPrice: false,
-    handlingPrice: false,
-    processingPrice: false,
-    corePrice: false,
-  });
+    [productIndex: number]: {
+      taxesPrice: boolean;
+      handlingPrice: boolean;
+      processingPrice: boolean;
+      corePrice: boolean;
+    };
+  }>({});
 
-  const [showPriceOptions, setShowPriceOptions] = useState(false);
-  const priceOptionsRef = useRef<HTMLDivElement | null>(null);
+  const [showPriceOptions, setShowPriceOptions] = useState<{
+    [productIndex: number]: boolean;
+  }>({});
+  const priceOptionsRefs = useRef<{
+    [productIndex: number]: HTMLDivElement | null;
+  }>({});
 
   useEffect(() => {
     // Calculate total from products array instead of single price fields
@@ -1530,25 +1596,29 @@ const OrderDetails = () => {
 
   // Debug: Monitor formData.products changes - removed to prevent infinite loop
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside - per product
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (!showPriceOptions) return;
       const targetNode = event.target as Node;
-      if (
-        priceOptionsRef.current &&
-        priceOptionsRef.current.contains(targetNode)
-      ) {
+
+      // Check if click is inside any of the dropdown refs
+      const isInsideAnyDropdown = Object.values(priceOptionsRefs.current).some(
+        (ref) => ref && ref.contains(targetNode)
+      );
+
+      if (isInsideAnyDropdown) {
         return;
       }
-      setShowPriceOptions(false);
+
+      // Close all dropdowns
+      setShowPriceOptions({});
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showPriceOptions]);
+  }, []);
 
   // Field-specific error states
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
@@ -1671,15 +1741,22 @@ const OrderDetails = () => {
     }
   };
 
-  // Handle price field selection
+  // Handle price field selection - per product
   const handlePriceFieldSelection = (
-    fieldName: keyof typeof visiblePriceFields
+    productIndex: number,
+    fieldName: "taxesPrice" | "handlingPrice" | "processingPrice" | "corePrice"
   ) => {
     setVisiblePriceFields((prev) => ({
       ...prev,
-      [fieldName]: true,
+      [productIndex]: {
+        ...prev[productIndex],
+        [fieldName]: true,
+      },
     }));
-    setShowPriceOptions(false);
+    setShowPriceOptions((prev) => ({
+      ...prev,
+      [productIndex]: false,
+    }));
   };
 
   // Validate individual field
@@ -3179,7 +3256,7 @@ const OrderDetails = () => {
                     <label className="block text-white/60 text-sm mb-2">
                       Mobile *
                     </label>
-                    <div className="relative" ref={priceOptionsRef}>
+                    <div className="relative">
                       <input
                         type="tel"
                         className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
@@ -3987,7 +4064,12 @@ const OrderDetails = () => {
                       Part Price *
                     </label>
 
-                    <div className="relative" ref={priceOptionsRef}>
+                    <div
+                      className="relative"
+                      ref={(el) => {
+                        priceOptionsRefs.current[index] = el;
+                      }}
+                    >
                       <input
                         type="text"
                         inputMode="decimal"
@@ -4020,54 +4102,65 @@ const OrderDetails = () => {
                       />
                       <button
                         type="button"
-                        onClick={() => setShowPriceOptions(!showPriceOptions)}
+                        onClick={() =>
+                          setShowPriceOptions((prev) => ({
+                            ...prev,
+                            [index]: !prev[index],
+                          }))
+                        }
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold transition-colors"
                       >
                         <Plus size={14} />
                       </button>
 
                       {/* Dropdown options */}
-                      {showPriceOptions && (
+                      {showPriceOptions[index] && (
                         <div className="absolute top-full left-0 right-0 mt-1 bg-[#0a1929] border border-gray-600 rounded-lg shadow-lg z-10">
                           <div className="py-1">
-                            {!visiblePriceFields.taxesPrice && (
+                            {!visiblePriceFields[index]?.taxesPrice && (
                               <button
                                 type="button"
                                 onClick={() =>
-                                  handlePriceFieldSelection("taxesPrice")
+                                  handlePriceFieldSelection(index, "taxesPrice")
                                 }
                                 className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
                               >
                                 Taxes Price
                               </button>
                             )}
-                            {!visiblePriceFields.handlingPrice && (
+                            {!visiblePriceFields[index]?.handlingPrice && (
                               <button
                                 type="button"
                                 onClick={() =>
-                                  handlePriceFieldSelection("handlingPrice")
+                                  handlePriceFieldSelection(
+                                    index,
+                                    "handlingPrice"
+                                  )
                                 }
                                 className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
                               >
                                 Handling Price
                               </button>
                             )}
-                            {!visiblePriceFields.processingPrice && (
+                            {!visiblePriceFields[index]?.processingPrice && (
                               <button
                                 type="button"
                                 onClick={() =>
-                                  handlePriceFieldSelection("processingPrice")
+                                  handlePriceFieldSelection(
+                                    index,
+                                    "processingPrice"
+                                  )
                                 }
                                 className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
                               >
                                 Processing Price
                               </button>
                             )}
-                            {!visiblePriceFields.corePrice && (
+                            {!visiblePriceFields[index]?.corePrice && (
                               <button
                                 type="button"
                                 onClick={() =>
-                                  handlePriceFieldSelection("corePrice")
+                                  handlePriceFieldSelection(index, "corePrice")
                                 }
                                 className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
                               >
@@ -4087,19 +4180,22 @@ const OrderDetails = () => {
                     </p>
                   </div>
 
-                  {(visiblePriceFields.taxesPrice ||
-                    visiblePriceFields.handlingPrice ||
-                    visiblePriceFields.processingPrice ||
-                    visiblePriceFields.corePrice) && (
+                  {(visiblePriceFields[index]?.taxesPrice ||
+                    visiblePriceFields[index]?.handlingPrice ||
+                    visiblePriceFields[index]?.processingPrice ||
+                    visiblePriceFields[index]?.corePrice) && (
                     <div className="">
-                      {visiblePriceFields.taxesPrice && (
+                      {visiblePriceFields[index]?.taxesPrice && (
                         <div className="relative">
                           {true && (
                             <button
                               onClick={() => {
                                 setVisiblePriceFields((prev) => ({
                                   ...prev,
-                                  ["taxesPrice"]: false,
+                                  [index]: {
+                                    ...prev[index],
+                                    taxesPrice: false,
+                                  },
                                 }));
                                 handleProductInputChange(
                                   index,
@@ -4158,14 +4254,17 @@ const OrderDetails = () => {
                         </div>
                       )}
 
-                      {visiblePriceFields.handlingPrice && (
+                      {visiblePriceFields[index]?.handlingPrice && (
                         <div className="relative">
                           {true && (
                             <button
                               onClick={() => {
                                 setVisiblePriceFields((prev) => ({
                                   ...prev,
-                                  ["handlingPrice"]: false,
+                                  [index]: {
+                                    ...prev[index],
+                                    handlingPrice: false,
+                                  },
                                 }));
                                 handleProductInputChange(
                                   index,
@@ -4219,14 +4318,17 @@ const OrderDetails = () => {
                         </div>
                       )}
 
-                      {visiblePriceFields.processingPrice && (
+                      {visiblePriceFields[index]?.processingPrice && (
                         <div className="relative">
                           {true && (
                             <button
                               onClick={() => {
                                 setVisiblePriceFields((prev) => ({
                                   ...prev,
-                                  ["processingPrice"]: false,
+                                  [index]: {
+                                    ...prev[index],
+                                    processingPrice: false,
+                                  },
                                 }));
                                 handleProductInputChange(
                                   index,
@@ -4280,14 +4382,17 @@ const OrderDetails = () => {
                         </div>
                       )}
 
-                      {visiblePriceFields.corePrice && (
+                      {visiblePriceFields[index]?.corePrice && (
                         <div className="relative">
                           {true && (
                             <button
                               onClick={() => {
                                 setVisiblePriceFields((prev) => ({
                                   ...prev,
-                                  ["corePrice"]: false,
+                                  [index]: {
+                                    ...prev[index],
+                                    corePrice: false,
+                                  },
                                 }));
                                 handleProductInputChange(
                                   index,
