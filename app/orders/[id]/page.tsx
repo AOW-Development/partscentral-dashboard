@@ -32,6 +32,8 @@ export type ProductFormData = {
   productVariants?: GroupedVariant[];
   selectedSubpart?: GroupedVariant | null;
   selectedMileage?: string;
+  vinNumber?: string;
+  notes?: string;
 };
 export type OrderFormData = {
   products: ProductFormData[];
@@ -91,8 +93,7 @@ export type OrderFormData = {
   poStatus: string;
   poSentAt: string;
   poConfirmedAt: string;
-  vinNumber: string;
-  notes: string;
+  
   internalNotes: string;
   ownShippingInfo: {
     productType: string;
@@ -328,7 +329,7 @@ const OrderDetails = () => {
           }
 
           // Map backend cartItems to UI cartItems array with strong typing
-          // Debug logs removed
+          
 
           const products =
             Array.isArray(data.items) && data.items.length > 0
@@ -360,6 +361,8 @@ const OrderDetails = () => {
                     productVariants: [],
                     selectedSubpart: null,
                     selectedMileage: "",
+                    vinNumber: String(item.vinNumber || ""),
+                    notes: String(item.notes || ""),
                   };
                 })
               : data.totalAmount && data.totalAmount > 0
@@ -473,9 +476,7 @@ const OrderDetails = () => {
             trackingNumber: data.trackingNumber || "",
 
             // Notes and metadata
-            notes: data.notes || "",
             internalNotes: data.internalNotes || "",
-            vinNumber: data.vinNumber || "",
             estimatedDeliveryDate: data.estimatedDeliveryDate
               ? new Date(data.estimatedDeliveryDate).toISOString().split("T")[0]
               : "",
@@ -606,6 +607,8 @@ const OrderDetails = () => {
             productVariants: [],
             selectedSubpart: null,
             selectedMileage: "",
+            vinNumber: "",
+            notes: "",
           },
         ],
       }));
@@ -724,8 +727,8 @@ const OrderDetails = () => {
     poStatus: "",
     poSentAt: "",
     poConfirmedAt: "",
-    vinNumber: "",
-    notes: "",
+    // vinNumber: "",
+    // notes: "",
     internalNotes: "",
     warranty: "",
     ownShippingInfo: {
@@ -1968,8 +1971,8 @@ const OrderDetails = () => {
           shippingAddressType: formData.shippingAddressType,
           company: formData.company,
           totalSellingPrice: formData.totalSellingPrice,
-          vinNumber: formData.vinNumber,
-          notes: formData.notes,
+          vinNumber: formData.products[0]?.vinNumber || "",
+          notes: formData.products[0]?.notes || "",
         },
         paymentInfo: {
           cardHolderName: formData.cardHolderName,
@@ -2108,8 +2111,8 @@ const OrderDetails = () => {
           shippingAddressType: formData.shippingAddressType,
           company: formData.company,
           totalSellingPrice: formData.totalSellingPrice,
-          vinNumber: formData.vinNumber,
-          notes: formData.notes,
+          vinNumber: formData.products[0]?.vinNumber || "",
+          notes: formData.products[0]?.notes || "",
         },
         paymentInfo: {
           cardHolderName: formData.cardHolderName,
@@ -4455,7 +4458,7 @@ const OrderDetails = () => {
                       type="text"
                       className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
                       placeholder="VIN Number"
-                      value={formData.vinNumber}
+                      value={product.vinNumber}
                       maxLength={17}
                       pattern="[A-Za-z0-9]{17}"
                       onChange={(e) => {
@@ -4463,7 +4466,7 @@ const OrderDetails = () => {
                         const value = e.target.value
                           .replace(/[^A-Za-z0-9]/g, "")
                           .slice(0, 17);
-                        handleInputChange("vinNumber", value);
+                        handleProductInputChange(index,"vinNumber", value);
                       }}
                     />
                   </div>
@@ -4474,9 +4477,9 @@ const OrderDetails = () => {
                     <textarea
                       className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
                       placeholder="Example : Enter VIN Number .... "
-                      value={formData.notes}
+                      value={product.notes}
                       onChange={(e) =>
-                        handleInputChange("notes", e.target.value)
+                        handleProductInputChange(index, "notes", e.target.value)
                       }
                     />
                   </div>
