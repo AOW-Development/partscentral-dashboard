@@ -20,6 +20,8 @@ export interface DamagedProductForm {
 
 // --- Replacement form data ---
 export interface ReplacementFormData {
+  yardRefund: string;
+  yardRefundAmount: string;
   hasReplacement: string; 
   carrierName: string; 
   trackingNumber: string; 
@@ -75,6 +77,8 @@ const initialFormData: DamagedProductForm = {
 };
 
 const initialReplacementData: ReplacementFormData = {
+  yardRefund: "",
+  yardRefundAmount: "",
   hasReplacement: "",
   carrierName: "",
   trackingNumber: "",
