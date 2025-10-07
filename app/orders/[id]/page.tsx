@@ -128,6 +128,7 @@ import MerchantInfo from "@/app/components/MerchantInfo";
 import OwnShippingInfo from "@/app/components/OwnShippingInfo";
 import Notes from "@/app/components/Notes";
 import DamagedProductForm from "@/app/components/damagedProduct";
+import DefectiveProductForm from "@/app/components/defectiveProduct";
 
 const mapPrismaEnumToWarranty = (enumValue: string): string => {
   switch (enumValue) {
@@ -4934,6 +4935,7 @@ const OrderDetails = () => {
             </div>
 
             <DamagedProductForm />
+            <DefectiveProductForm />
 
             {/* Notes Section */}
             <div className="grid md:grid-cols-2 gap-10 md:mt-10">

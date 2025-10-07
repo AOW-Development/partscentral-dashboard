@@ -71,6 +71,8 @@ const ReplacementForm: React.FC = () => {
     corePrice: false,
   });
 
+  const [showPriceModal, setShowPriceModal] = useState(false);
+
   const handlePriceFieldSelection = (
     fieldName: keyof typeof visiblePriceFields
   ) => {
@@ -78,6 +80,7 @@ const ReplacementForm: React.FC = () => {
       ...prev,
       [fieldName]: true,
     }));
+    setShowPriceModal(false);
   };
 
   const handleRemovePriceField = (
@@ -139,7 +142,6 @@ const ReplacementForm: React.FC = () => {
           />
         </div>
       </div>
-
       {/* --- If Yes → Re-delivery Tracking Details --- */}
       {replacementData.hasReplacement === "Yes" && (
         <div className="md:col-span-2">
@@ -193,6 +195,45 @@ const ReplacementForm: React.FC = () => {
                 // orderId={orderId} // You need to pass this prop from parent
                 // onYardMoved={() => {}} // You need to pass this prop from parent
               />
+            )}
+            <div className="md:col-span-2">
+              <label className="block text-white/60 text-sm mb-2">
+                Yard Refund
+              </label>
+              <select
+                className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white mb-4"
+                value={replacementData.yardRefund}
+                onChange={(e) =>
+                  setReplacementField("yardRefund", e.target.value)
+                }
+              >
+                <option value="">Select</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+              <ChevronDown
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60"
+                size={16}
+              />
+            </div>
+            {replacementData.yardRefund === "Yes" && (
+              <div className="md:col-span-2  mb-4">
+                <label className="block text-white/60 text-sm mb-2">
+                  Yard Refund Amount
+                </label>
+                <input
+                  type="number"
+                  className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white"
+                  value={replacementData.yardRefundAmount}
+                  onChange={(e) =>
+                    setReplacementField("yardRefundAmount", e.target.value)
+                  }
+                />
+                <ChevronDown
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60"
+                  size={16}
+                />
+              </div>
             )}
             <div className="relative flex justify-between items-center mb-4">
               <h3 className="text-white text-lg font-semibold">
@@ -568,11 +609,71 @@ const ReplacementForm: React.FC = () => {
                   />
                   <button
                     type="button"
-                    onClick={() => handlePriceFieldSelection("taxesPrice")}
+                    onClick={() => setShowPriceModal(!showPriceModal)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold transition-colors"
                   >
                     <Plus size={14} />
                   </button>
+
+                  {/* Dropdown Price Selection */}
+                  {showPriceModal && (
+                    <>
+                      {/* Backdrop to close dropdown */}
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setShowPriceModal(false)}
+                      />
+                      <div className="absolute top-full mt-2 right-0 z-20 bg-[#0d1b2a] border border-gray-600 rounded-lg shadow-xl min-w-[200px] py-2">
+                        <div className="px-3 py-2 border-b border-gray-600">
+                          <p className="text-white/70 text-xs font-medium">
+                            Add Price Field
+                          </p>
+                        </div>
+                        <div className="py-1">
+                          {!visiblePriceFields.taxesPrice && (
+                            <button
+                              onClick={() =>
+                                handlePriceFieldSelection("taxesPrice")
+                              }
+                              className="w-full px-4 py-2 text-white text-sm text-left hover:bg-[#122a42] transition-colors"
+                            >
+                              Taxes Price
+                            </button>
+                          )}
+                          {!visiblePriceFields.handlingPrice && (
+                            <button
+                              onClick={() =>
+                                handlePriceFieldSelection("handlingPrice")
+                              }
+                              className="w-full px-4 py-2 text-white text-sm text-left hover:bg-[#122a42] transition-colors"
+                            >
+                              Handling Price
+                            </button>
+                          )}
+                          {!visiblePriceFields.processingPrice && (
+                            <button
+                              onClick={() =>
+                                handlePriceFieldSelection("processingPrice")
+                              }
+                              className="w-full px-4 py-2 text-white text-sm text-left hover:bg-[#122a42] transition-colors"
+                            >
+                              Processing Price
+                            </button>
+                          )}
+                          {!visiblePriceFields.corePrice && (
+                            <button
+                              onClick={() =>
+                                handlePriceFieldSelection("corePrice")
+                              }
+                              className="w-full px-4 py-2 text-white text-sm text-left hover:bg-[#122a42] transition-colors"
+                            >
+                              Core Price
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -581,7 +682,7 @@ const ReplacementForm: React.FC = () => {
                 <div className="relative">
                   <button
                     onClick={() => handleRemovePriceField("taxesPrice")}
-                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                    className="absolute top-[10px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                     title="Remove payment"
                   >
                     <X size={16} />
@@ -607,7 +708,7 @@ const ReplacementForm: React.FC = () => {
                 <div className="relative">
                   <button
                     onClick={() => handleRemovePriceField("handlingPrice")}
-                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                    className="absolute top-[10px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                     title="Remove payment"
                   >
                     <X size={16} />
@@ -633,7 +734,7 @@ const ReplacementForm: React.FC = () => {
                 <div className="relative">
                   <button
                     onClick={() => handleRemovePriceField("processingPrice")}
-                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                    className="absolute top-[10px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                     title="Remove payment"
                   >
                     <X size={16} />
@@ -659,7 +760,7 @@ const ReplacementForm: React.FC = () => {
                 <div className="relative">
                   <button
                     onClick={() => handleRemovePriceField("corePrice")}
-                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                    className="absolute top-[10px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                     title="Remove payment"
                   >
                     <X size={16} />
@@ -707,6 +808,35 @@ const ReplacementForm: React.FC = () => {
                   value={calculateTotalBuy()}
                   disabled
                 />
+              </div>
+            </div>
+            <div className="mt-6 md:col-span-2">
+              <div className="flex justify-end gap-4 items-center mb-2">
+                <button
+                  onClick={() => alert("PO sent!")}
+                  className="bg-blue-600 hover:bg-blue-500 text-white px-10 py-2 rounded-lg font-medium"
+                >
+                  Send PO
+                </button>
+                <div className="flex flex-col gap-1">
+                  <label className="block text-white/60 text-sm mb-2">
+                    PO Status
+                  </label>
+                  <div className="flex items-center justify-between bg-[#0a1929] border border-gray-600 rounded-lg px-2 py-3">
+                    <span className="text-green-400 text-sm">PO Sent</span>
+                    {/* <span className="text-white/60 text-xs">
+                      27Jun25 7:11pm
+                    </span> */}
+                    <input type="date" />
+                  </div>
+                  <div className="flex items-center justify-between bg-[#0a1929] border gap-3 border-gray-600 rounded-lg px-2 py-3">
+                    <span className="text-green-400 text-sm">PO Confirm</span>
+                    {/* <span className="text-white/60 text-xs">
+                      28Jun25 7:11pm
+                    </span> */}
+                    <input type="date" />
+                  </div>
+                </div>
               </div>
             </div>
 
