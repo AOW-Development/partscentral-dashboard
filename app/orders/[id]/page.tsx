@@ -180,6 +180,8 @@ interface CartItem {
 }
 
 const OrderDetails = () => {
+  // ...existing code...
+  const formDataInitializedRef = useRef<string | null>(null);
   const params = useParams();
   const orderId = params.id as string;
   const lastVariantKeys = useRef<{ [index: number]: string }>({});
@@ -547,7 +549,11 @@ const OrderDetails = () => {
           );
 
           console.log("DEBUG: Form data being set:", newFormData);
+          
+          if(formDataInitializedRef.current !== orderId) {
           setFormData(newFormData);
+          formDataInitializedRef.current = orderId;
+          }
           console.log("formData after loading order:", formData);
 
           if (data.customerNotes && typeof data.customerNotes === "string") {
@@ -925,197 +931,197 @@ const OrderDetails = () => {
   };
 
   // Function to check if form data has changed
-  const checkForChanges = (currentData: OrderFormData) => {
-    if (!initialFormData) return false;
+  // const checkForChanges = (currentData: OrderFormData) => {
+  //   if (!initialFormData) return false;
 
-    // More intelligent comparison that ignores formatting differences
-    const normalizeValue = (value: any): any => {
-      if (value === null || value === undefined) return "";
-      if (typeof value === "string") return value.trim();
-      if (typeof value === "number") return value.toString();
-      if (Array.isArray(value)) return value.map(normalizeValue);
-      if (typeof value === "object") {
-        const normalized: any = {};
-        for (const key in value) {
-          normalized[key] = normalizeValue(value[key]);
-        }
-        return normalized;
-      }
-      return value;
-    };
+  //   // More intelligent comparison that ignores formatting differences
+  //   const normalizeValue = (value: any): any => {
+  //     if (value === null || value === undefined) return "";
+  //     if (typeof value === "string") return value.trim();
+  //     if (typeof value === "number") return value.toString();
+  //     if (Array.isArray(value)) return value.map(normalizeValue);
+  //     if (typeof value === "object") {
+  //       const normalized: any = {};
+  //       for (const key in value) {
+  //         normalized[key] = normalizeValue(value[key]);
+  //       }
+  //       return normalized;
+  //     }
+  //     return value;
+  //   };
 
-    // Compare specific fields that matter for user changes
-    const compareFields = (current: any, initial: any, fields: string[]) => {
-      for (const field of fields) {
-        const currentValue = normalizeValue(current[field]);
-        const initialValue = normalizeValue(initial[field]);
-        if (JSON.stringify(currentValue) !== JSON.stringify(initialValue)) {
-          console.log(`DEBUG: Field '${field}' changed:`, {
-            current: currentValue,
-            initial: initialValue,
-          });
-          return true;
-        }
-      }
-      return false;
-    };
+  //   // Compare specific fields that matter for user changes
+  //   const compareFields = (current: any, initial: any, fields: string[]) => {
+  //     for (const field of fields) {
+  //       const currentValue = normalizeValue(current[field]);
+  //       const initialValue = normalizeValue(initial[field]);
+  //       if (JSON.stringify(currentValue) !== JSON.stringify(initialValue)) {
+  //         console.log(`DEBUG: Field '${field}' changed:`, {
+  //           current: currentValue,
+  //           initial: initialValue,
+  //         });
+  //         return true;
+  //       }
+  //     }
+  //     return false;
+  //   };
 
-    // Check important form fields (excluding calculated fields like totalPrice)
-    const importantFields = [
-      "customerName",
-      "email",
-      "mobile",
-      "alternateMobile",
-      "company",
-      "shippingAddress",
-      "billingAddress",
-      "cardHolderName",
-      "cardNumber",
-      "cardDate",
-      "cardCvv",
-      "merchantMethod",
-      "approvalCode",
-      "entity",
-      "charged",
-      "yardName",
-      "yardAddress",
-      "yardMobile",
-      "yardEmail",
-      "yardPrice",
-      "yardWarranty",
-      "yardMiles",
-      "yardShipping",
-      "yardCost",
-      "carrierName",
-      "trackingNumber",
-      "notes",
-      "internalNotes",
-      "vinNumber",
-      "status",
-      "warranty",
-      // Removed totalPrice and totalSellingPrice as they are calculated fields
-    ];
+  //   // Check important form fields (excluding calculated fields like totalPrice)
+  //   const importantFields = [
+  //     "customerName",
+  //     "email",
+  //     "mobile",
+  //     "alternateMobile",
+  //     "company",
+  //     "shippingAddress",
+  //     "billingAddress",
+  //     "cardHolderName",
+  //     "cardNumber",
+  //     "cardDate",
+  //     "cardCvv",
+  //     "merchantMethod",
+  //     "approvalCode",
+  //     "entity",
+  //     "charged",
+  //     "yardName",
+  //     "yardAddress",
+  //     "yardMobile",
+  //     "yardEmail",
+  //     "yardPrice",
+  //     "yardWarranty",
+  //     "yardMiles",
+  //     "yardShipping",
+  //     "yardCost",
+  //     "carrierName",
+  //     "trackingNumber",
+  //     "notes",
+  //     "internalNotes",
+  //     "vinNumber",
+  //     "status",
+  //     "warranty",
+  //     // Removed totalPrice and totalSellingPrice as they are calculated fields
+  //   ];
 
-    const formDataChanged = compareFields(
-      currentData,
-      initialFormData,
-      importantFields
-    );
+  //   const formDataChanged = compareFields(
+  //     currentData,
+  //     initialFormData,
+  //     importantFields
+  //   );
 
-    // Check products array
-    const productsChanged =
-      JSON.stringify(
-        currentData.products.map((p) => ({
-          variantSku: p.variantSku,
-          make: p.make,
-          model: p.model,
-          year: p.year,
-          parts: p.parts,
-          partPrice: p.partPrice,
-          quantity: p.quantity,
-          taxesPrice: p.taxesPrice,
-          handlingPrice: p.handlingPrice,
-          processingPrice: p.processingPrice,
-          corePrice: p.corePrice,
-          specification: p.specification,
-          milesPromised: p.milesPromised,
-        }))
-      ) !==
-      JSON.stringify(
-        initialFormData.products.map((p) => ({
-          variantSku: p.variantSku,
-          make: p.make,
-          model: p.model,
-          year: p.year,
-          parts: p.parts,
-          partPrice: p.partPrice,
-          quantity: p.quantity,
-          taxesPrice: p.taxesPrice,
-          handlingPrice: p.handlingPrice,
-          processingPrice: p.processingPrice,
-          corePrice: p.corePrice,
-          specification: p.specification,
-          milesPromised: p.milesPromised,
-        }))
-      );
+  //   // Check products array
+  //   const productsChanged =
+  //     JSON.stringify(
+  //       currentData.products.map((p) => ({
+  //         variantSku: p.variantSku,
+  //         make: p.make,
+  //         model: p.model,
+  //         year: p.year,
+  //         parts: p.parts,
+  //         partPrice: p.partPrice,
+  //         quantity: p.quantity,
+  //         taxesPrice: p.taxesPrice,
+  //         handlingPrice: p.handlingPrice,
+  //         processingPrice: p.processingPrice,
+  //         corePrice: p.corePrice,
+  //         specification: p.specification,
+  //         milesPromised: p.milesPromised,
+  //       }))
+  //     ) !==
+  //     JSON.stringify(
+  //       initialFormData.products.map((p) => ({
+  //         variantSku: p.variantSku,
+  //         make: p.make,
+  //         model: p.model,
+  //         year: p.year,
+  //         parts: p.parts,
+  //         partPrice: p.partPrice,
+  //         quantity: p.quantity,
+  //         taxesPrice: p.taxesPrice,
+  //         handlingPrice: p.handlingPrice,
+  //         processingPrice: p.processingPrice,
+  //         corePrice: p.corePrice,
+  //         specification: p.specification,
+  //         milesPromised: p.milesPromised,
+  //       }))
+  //     );
 
-    // Check payment entries
-    const paymentEntriesChanged =
-      JSON.stringify(
-        paymentEntries.map((p) => ({
-          merchantMethod: p.merchantMethod,
-          totalPrice: p.totalPrice,
-          approvalCode: p.approvalCode,
-          entity: p.entity,
-          charged: p.charged,
-          cardChargedDate: p.cardChargedDate,
-        }))
-      ) !==
-      JSON.stringify(
-        initialPaymentEntries.map((p) => ({
-          merchantMethod: p.merchantMethod,
-          totalPrice: p.totalPrice,
-          approvalCode: p.approvalCode,
-          entity: p.entity,
-          charged: p.charged,
-          cardChargedDate: p.cardChargedDate,
-        }))
-      );
+  //   // Check payment entries
+  //   const paymentEntriesChanged =
+  //     JSON.stringify(
+  //       paymentEntries.map((p) => ({
+  //         merchantMethod: p.merchantMethod,
+  //         totalPrice: p.totalPrice,
+  //         approvalCode: p.approvalCode,
+  //         entity: p.entity,
+  //         charged: p.charged,
+  //         cardChargedDate: p.cardChargedDate,
+  //       }))
+  //     ) !==
+  //     JSON.stringify(
+  //       initialPaymentEntries.map((p) => ({
+  //         merchantMethod: p.merchantMethod,
+  //         totalPrice: p.totalPrice,
+  //         approvalCode: p.approvalCode,
+  //         entity: p.entity,
+  //         charged: p.charged,
+  //         cardChargedDate: p.cardChargedDate,
+  //       }))
+  //     );
 
-    const hasChanges =
-      formDataChanged || productsChanged || paymentEntriesChanged;
+  //   const hasChanges =
+  //     formDataChanged || productsChanged || paymentEntriesChanged;
 
-    // Debug logging - only log when changes are detected
-    if (hasChanges) {
-      console.log("DEBUG: Changes detected:", {
-        formDataChanged,
-        productsChanged,
-        paymentEntriesChanged,
-      });
-    }
+  //   // Debug logging - only log when changes are detected
+  //   if (hasChanges) {
+  //     console.log("DEBUG: Changes detected:", {
+  //       formDataChanged,
+  //       productsChanged,
+  //       paymentEntriesChanged,
+  //     });
+  //   }
 
-    return hasChanges;
-  };
+  //   return hasChanges;
+  // };
 
   // Track form changes - to be used in form inputs
   // Example: onChange={(e) => { /* existing onChange */; handleFormChange(); }}
 
   // Update hasUnsavedChanges whenever formData changes
-  useEffect(() => {
-    // Only check for changes if we have initial data AND the component is initialized AND we're not loading
-    if (initialFormData && isInitialized && !loadingOrder) {
-      // console.log("DEBUG: Checking for changes - orderId:", orderId);
-      const hasChanges = checkForChanges(formData);
+  // useEffect(() => {
+  //   // Only check for changes if we have initial data AND the component is initialized AND we're not loading
+  //   if (initialFormData && isInitialized && !loadingOrder) {
+  //     // console.log("DEBUG: Checking for changes - orderId:", orderId);
+  //     const hasChanges = checkForChanges(formData);
 
-      // For new orders, only show unsaved changes if user has actually entered meaningful data
-      if (orderId === "create" || orderId === "new") {
-        const hasMeaningfulChanges =
-          hasChanges &&
-          !!(
-            formData.customerName?.trim() ||
-            formData.email?.trim() ||
-            formData.mobile?.trim() ||
-            formData.products.some(
-              (p) => p.partPrice || (p.quantity && p.quantity > 1)
-            ) ||
-            paymentEntries.some((p: any) => p.totalPrice || p.merchantMethod)
-          );
-        // console.log("DEBUG: New order - hasChanges:", hasChanges, "hasMeaningfulChanges:", hasMeaningfulChanges);
-        setHasUnsavedChanges(hasMeaningfulChanges);
-      } else {
-        // For existing orders, show changes if any data has changed
-        // console.log("DEBUG: Existing order - hasChanges:", hasChanges);
-        setHasUnsavedChanges(hasChanges);
-      }
-    }
-  }, [
-    JSON.stringify(formData),
-    initialFormData,
-    orderId,
-    paymentEntries,
-    isInitialized,
-    loadingOrder,
-  ]);
+  //     // For new orders, only show unsaved changes if user has actually entered meaningful data
+  //     if (orderId === "create" || orderId === "new") {
+  //       const hasMeaningfulChanges =
+  //         hasChanges &&
+  //         !!(
+  //           formData.customerName?.trim() ||
+  //           formData.email?.trim() ||
+  //           formData.mobile?.trim() ||
+  //           formData.products.some(
+  //             (p) => p.partPrice || (p.quantity && p.quantity > 1)
+  //           ) ||
+  //           paymentEntries.some((p: any) => p.totalPrice || p.merchantMethod)
+  //         );
+  //       // console.log("DEBUG: New order - hasChanges:", hasChanges, "hasMeaningfulChanges:", hasMeaningfulChanges);
+  //       setHasUnsavedChanges(hasMeaningfulChanges);
+  //     } else {
+  //       // For existing orders, show changes if any data has changed
+  //       // console.log("DEBUG: Existing order - hasChanges:", hasChanges);
+  //       setHasUnsavedChanges(hasChanges);
+  //     }
+  //   }
+  // }, [
+  //   JSON.stringify(formData),
+  //   initialFormData,
+  //   orderId,
+  //   paymentEntries,
+  //   isInitialized,
+  //   loadingOrder,
+  // ]);
 
   // Set initial form data when component mounts or data loads
   useEffect(() => {
