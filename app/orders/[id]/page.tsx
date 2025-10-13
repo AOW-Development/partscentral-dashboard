@@ -4944,10 +4944,10 @@ const OrderDetails = () => {
             {formData.problematicIssueType === "Damaged Product" && (
               <DamagedProductForm />
             )}
-            {formData.problematicIssueType === "Defective Products" && (
+            {formData.problematicIssueType === "Defective Product" && (
               <DefectiveProductForm />
             )}
-            {formData.problematicIssueType === "Wrong Products" && (
+            {formData.problematicIssueType === "Wrong Product" && (
               <WrongProductForm />
             )}
 

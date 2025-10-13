@@ -1,8 +1,8 @@
 import { create } from "zustand";
 
-// ======================================
+
 // COMMON FIELDS - Shared across all problem types
-// ======================================
+
 export interface CommonFields {
   requestFromCustomer: string; // "Refund" | "Replacement"
   returnShipping: string; // "Not required" | "Yard Shipping" | "Own Shipping"
@@ -16,25 +16,25 @@ export interface CommonFields {
   bolFile: File | null; // Bill of Lading file
 }
 
-// ======================================
+
 // DAMAGED PRODUCT - No additional fields beyond common
-// ======================================
+
 export interface DamagedProductFields {
   // Damaged product uses only common fields
 }
 
-// ======================================
+
 // DEFECTIVE PRODUCT - Has problem category and description
-// ======================================
+
 export interface DefectiveProductFields {
   problemCategory: string; // "Other" | "Damaged" | "Wrong Part" | "Defective" | "Missing"
   description: string; // Description of defective parts
   serviceDocument: File[]; // Service document uploads
 }
 
-// ======================================
+
 // WRONG PRODUCT - Has vehicle information
-// ======================================
+
 export interface WrongProductFields {
   make: string; // Vehicle make
   model: string; // Vehicle model
@@ -42,9 +42,9 @@ export interface WrongProductFields {
   specification: string; // Part specification
 }
 
-// ======================================
+
 // REPLACEMENT FORM DATA - Used when requestFromCustomer = "Replacement"
-// ======================================
+
 export interface ReplacementFormData {
   // Does yard have replacement?
   hasReplacement: string; // "Yes" | "No"
@@ -83,9 +83,9 @@ export interface ReplacementFormData {
   redeliveryTrackingNumber: string;
 }
 
-// ======================================
+
 // MAIN STORE STATE
-// ======================================
+
 interface ProblematicPartsState {
   // Track which form is active
   activeFormType: "damaged" | "defective" | "wrong" | null;
@@ -130,9 +130,9 @@ interface ProblematicPartsState {
   resetReplacement: () => void;
 }
 
-// ======================================
+
 // INITIAL STATES
-// ======================================
+
 const initialCommon: CommonFields = {
   requestFromCustomer: "",
   returnShipping: "",
@@ -188,9 +188,8 @@ const initialReplacement: ReplacementFormData = {
   redeliveryTrackingNumber: "",
 };
 
-// ======================================
+
 // ZUSTAND STORE
-// ======================================
 export const useProblematicPartsStore = create<ProblematicPartsState>(
   (set) => ({
     activeFormType: null,

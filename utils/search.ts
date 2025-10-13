@@ -1,4 +1,4 @@
-// ✅ Define types here directly, no imports needed
+// Define types here directly, no imports needed
 export type ProductFormData = {
   variantSku: string;
   make: string;
@@ -88,7 +88,7 @@ export type OrderFormData = {
   };
 };
 
-// ✅ Utils stay the same
+// Utils stay the same
 function normalize(value: any): string {
   if (value === null || value === undefined) return "";
   return String(value).toLowerCase();
