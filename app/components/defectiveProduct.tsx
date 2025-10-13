@@ -1,33 +1,172 @@
 import { Upload, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ReplacementForm from "./replacement";
+import { useProblematicPartsStore } from "@/store/damagedProductStore";
+import {
+  createOrUpdateProblematicPart,
+  buildPayloadFromStore,
+  getProblematicPartsByOrderId,
+} from "@/utils/problematicPartApi";
+import { useParams, useRouter } from "next/navigation";
 
 const DefectiveProductForm = () => {
-  const [formData, setFormData] = useState({
-    problemCategory: "Other",
-    description: "",
-    requestFromCustomer: "",
-    returnShipping: "",
-    customerRefund: "",
-    yardRefund: "",
-    returnShippingPrice: "",
-    amount: "",
-    yardAmount: "",
-    productReturned: "",
-  });
+  // Connect to Zustand store
+  const {
+    common,
+    defective,
+    replacement,
+    orderId,
+    problematicPartId,
+    isSubmitting,
+    submitError,
+    setCommonField,
+    setDefectiveField,
+    setActiveFormType,
+    setOrderId,
+    setSubmitting,
+    setSubmitError,
+    resetAll,
+    loadProblematicPart,
+  } = useProblematicPartsStore();
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const params = useParams();
+  const router = useRouter();
+  const [localLoading, setLocalLoading] = useState(false);
+  const [isLoadingExisting, setIsLoadingExisting] = useState(false);
+
+  // Set active form type, order ID, and fetch existing data on mount
+  useEffect(() => {
+    setActiveFormType("defective");
+
+    // Get order ID from URL params
+    const currentOrderId = params.id as string;
+    if (currentOrderId) {
+      setOrderId(currentOrderId);
+
+      // Fetch existing problematic parts for this order
+      fetchExistingData(currentOrderId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty array - only run once on mount
+
+  const fetchExistingData = async (orderId: string) => {
+    try {
+      setIsLoadingExisting(true);
+      const existingParts = await getProblematicPartsByOrderId(orderId);
+
+      // Get the first problematic part (regardless of type)
+      // One order can only have ONE problematic part
+      if (existingParts.length > 0) {
+        const existingPart = existingParts[0];
+        console.log("Loading existing problematic part:", existingPart);
+        loadProblematicPart(existingPart);
+      }
+    } catch (error) {
+      console.error("Error fetching existing problematic parts:", error);
+    } finally {
+      setIsLoadingExisting(false);
+    }
+  };
+
+  // Handle file uploads (empty for now as requested)
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      // TODO: Implement photo upload logic
+      console.log("Photos selected:", files);
+    }
+  };
+
+  const handleServiceDocUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      // TODO: Implement service document upload logic
+      console.log("Service documents selected:", files);
+    }
+  };
+
+  const handleBOLUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // TODO: Implement BOL upload logic
+      console.log("BOL file selected:", file);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!orderId) {
+      alert("Order ID is missing!");
+      return;
+    }
+
+    // Validate required fields
+    if (!common.requestFromCustomer) {
+      alert("Please select Request From Customer");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      setLocalLoading(true);
+      setSubmitError(null);
+
+      // Build payload from store
+      const payload = buildPayloadFromStore(
+        orderId,
+        "defective",
+        common,
+        defective,
+        common.requestFromCustomer === "Replacement" ? replacement : undefined
+      );
+
+      console.log("Submitting defective product:", payload);
+
+      // Create or update
+      const result = await createOrUpdateProblematicPart(
+        payload,
+        problematicPartId || undefined
+      );
+
+      console.log("Problematic part saved:", result);
+
+      // Show success message
+      alert(
+        problematicPartId
+          ? "Problematic part updated successfully!"
+          : "Problematic part created successfully! Order Closed!"
+      );
+
+      // Only reset form if creating (not updating)
+      if (!problematicPartId) {
+        resetAll();
+      }
+
+      // Reload the data to show updated values
+      if (orderId) {
+        await fetchExistingData(orderId);
+      }
+
+      router.refresh(); // Refresh the current page
+    } catch (error: any) {
+      console.error("Error submitting problematic part:", error);
+      setSubmitError(error.message || "Failed to save problematic part");
+      alert(`Error: ${error.message || "Failed to save problematic part"}`);
+    } finally {
+      setSubmitting(false);
+      setLocalLoading(false);
+    }
   };
 
   return (
     <div className="mt-2">
-      {/* <h2 className="text-white text-lg font-semibold mb-4">
+      <h2 className="text-white text-lg font-semibold mb-4">
         Problematic Parts
-      </h2> */}
+      </h2>
+      {isLoadingExisting && (
+        <div className="bg-[#0a1929] p-6 rounded-lg shadow-lg mb-4">
+          <p className="text-white text-center">Loading existing data...</p>
+        </div>
+      )}
       <div className="bg-[#0a1929] p-6 rounded-lg shadow-lg relative">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-white text-lg font-semibold">
@@ -40,11 +179,11 @@ const DefectiveProductForm = () => {
                 multiple
                 accept="image/*"
                 className="hidden"
-                id="upload-photos"
-                onChange={() => {}}
+                id="upload-photos-defective"
+                onChange={handlePhotoUpload}
               />
               <label
-                htmlFor="upload-photos"
+                htmlFor="upload-photos-defective"
                 className="flex items-center gap-2 cursor-pointer bg-blue-700 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
               >
                 <Upload size={16} />
@@ -57,11 +196,11 @@ const DefectiveProductForm = () => {
                 multiple
                 accept="image/*"
                 className="hidden"
-                id="upload-service-doc"
-                onChange={() => {}}
+                id="upload-service-doc-defective"
+                onChange={handleServiceDocUpload}
               />
               <label
-                htmlFor="upload-service-doc"
+                htmlFor="upload-service-doc-defective"
                 className="flex items-center gap-2 cursor-pointer bg-blue-700 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
               >
                 <Upload size={16} />
@@ -87,11 +226,12 @@ const DefectiveProductForm = () => {
             <div className="relative">
               <select
                 className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white appearance-none"
-                value={formData.problemCategory}
+                value={defective.problemCategory}
                 onChange={(e) =>
-                  handleInputChange("problemCategory", e.target.value)
+                  setDefectiveField("problemCategory", e.target.value)
                 }
               >
+                <option value="">Select</option>
                 <option value="Other">Other</option>
                 <option value="Damaged">Damaged</option>
                 <option value="Wrong Part">Wrong Part</option>
@@ -114,8 +254,8 @@ const DefectiveProductForm = () => {
               type="text"
               className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white"
               placeholder="Description of Defective parts"
-              value={formData.description}
-              onChange={(e) => handleInputChange("description", e.target.value)}
+              value={defective.description}
+              onChange={(e) => setDefectiveField("description", e.target.value)}
             />
           </div>
 
@@ -127,9 +267,9 @@ const DefectiveProductForm = () => {
             <div className="relative">
               <select
                 className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white appearance-none"
-                value={formData.requestFromCustomer}
+                value={common.requestFromCustomer}
                 onChange={(e) =>
-                  handleInputChange("requestFromCustomer", e.target.value)
+                  setCommonField("requestFromCustomer", e.target.value)
                 }
               >
                 <option value="">Select</option>
@@ -151,9 +291,9 @@ const DefectiveProductForm = () => {
             <div className="relative">
               <select
                 className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white appearance-none"
-                value={formData.returnShipping}
+                value={common.returnShipping}
                 onChange={(e) =>
-                  handleInputChange("returnShipping", e.target.value)
+                  setCommonField("returnShipping", e.target.value)
                 }
               >
                 <option value="">Select</option>
@@ -169,72 +309,73 @@ const DefectiveProductForm = () => {
           </div>
 
           {/* Controls above Customer Refund */}
-          {formData.returnShipping !== "Not required" && (
-            <div className="md:col-span-2">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="flex items-center gap-4 ">
-                  <input
-                    type="file"
-                    className="hidden"
-                    id="upload-bol"
-                    onChange={() => {}}
-                  />
-                  <label
-                    htmlFor="upload-bol"
-                    className="flex items-center justify-center gap-2 cursor-pointer border border-gray-500 text-white/90 px-6 py-3 rounded-lg bg-[#253348] hover:bg-[#2e3d55]"
-                  >
-                    <Upload size={16} />
-                    Upload BOL
-                  </label>
-                  <button
-                    onClick={() => alert("Sent!")}
-                    className="px-10 py-3 rounded-full bg-[#0c70a8] hover:bg-[#0e7fbf] text-white font-medium"
-                  >
-                    Send
-                  </button>
-                </div>
-
-                {formData.returnShipping !== "Yard Shipping" && (
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Return Shipping Price
-                    </label>
+          {common.returnShipping !== "Not required" &&
+            common.returnShipping !== "" && (
+              <div className="md:col-span-2">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-4 ">
                     <input
-                      type="number"
-                      placeholder="0.00"
-                      className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white"
-                      value={formData.returnShippingPrice}
-                      onChange={(e) =>
-                        handleInputChange("returnShippingPrice", e.target.value)
-                      }
+                      type="file"
+                      className="hidden"
+                      id="upload-bol-defective"
+                      onChange={handleBOLUpload}
                     />
-                  </div>
-                )}
-                <div className="">
-                  <label className="block text-white/60 text-sm mb-2">
-                    Product returned
-                  </label>
-                  <div className="relative">
-                    <select
-                      className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white appearance-none"
-                      value={formData.productReturned}
-                      onChange={(e) =>
-                        handleInputChange("productReturned", e.target.value)
-                      }
+                    <label
+                      htmlFor="upload-bol-defective"
+                      className="flex items-center justify-center gap-2 cursor-pointer border border-gray-500 text-white/90 px-6 py-3 rounded-lg bg-[#253348] hover:bg-[#2e3d55]"
                     >
-                      <option value="">Yes Or No</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
-                    <ChevronDown
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60"
-                      size={16}
-                    />
+                      <Upload size={16} />
+                      Upload BOL
+                    </label>
+                    <button
+                      onClick={() => alert("Sent!")}
+                      className="px-10 py-3 rounded-full bg-[#0c70a8] hover:bg-[#0e7fbf] text-white font-medium"
+                    >
+                      Send
+                    </button>
+                  </div>
+
+                  {common.returnShipping === "Own Shipping" && (
+                    <div>
+                      <label className="block text-white/60 text-sm mb-2">
+                        Return Shipping Price
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="0.00"
+                        className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white"
+                        value={common.returnShippingPrice}
+                        onChange={(e) =>
+                          setCommonField("returnShippingPrice", e.target.value)
+                        }
+                      />
+                    </div>
+                  )}
+                  <div className="">
+                    <label className="block text-white/60 text-sm mb-2">
+                      Product returned
+                    </label>
+                    <div className="relative">
+                      <select
+                        className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white appearance-none"
+                        value={common.productReturned}
+                        onChange={(e) =>
+                          setCommonField("productReturned", e.target.value)
+                        }
+                      >
+                        <option value="">Yes Or No</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                      </select>
+                      <ChevronDown
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60"
+                        size={16}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* Customer Refund */}
           <div>
@@ -244,9 +385,9 @@ const DefectiveProductForm = () => {
             <div className="relative">
               <select
                 className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white appearance-none"
-                value={formData.customerRefund}
+                value={common.customerRefund}
                 onChange={(e) =>
-                  handleInputChange("customerRefund", e.target.value)
+                  setCommonField("customerRefund", e.target.value)
                 }
               >
                 <option value="">Select</option>
@@ -268,10 +409,8 @@ const DefectiveProductForm = () => {
             <div className="relative">
               <select
                 className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white appearance-none"
-                value={formData.yardRefund}
-                onChange={(e) =>
-                  handleInputChange("yardRefund", e.target.value)
-                }
+                value={common.yardRefund}
+                onChange={(e) => setCommonField("yardRefund", e.target.value)}
               >
                 <option value="">Select</option>
                 <option value="Yes">Yes</option>
@@ -291,8 +430,8 @@ const DefectiveProductForm = () => {
               type="number"
               className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white"
               placeholder="0.00"
-              value={formData.amount}
-              onChange={(e) => handleInputChange("amount", e.target.value)}
+              value={common.amount}
+              onChange={(e) => setCommonField("amount", e.target.value)}
             />
           </div>
 
@@ -305,22 +444,30 @@ const DefectiveProductForm = () => {
               type="number"
               className="w-full bg-[#0d1b2a] border border-gray-600 rounded-lg px-4 py-3 text-white"
               placeholder="0.00"
-              value={formData.yardAmount}
-              onChange={(e) => handleInputChange("yardAmount", e.target.value)}
+              value={common.yardAmount}
+              onChange={(e) => setCommonField("yardAmount", e.target.value)}
             />
           </div>
-          {formData.requestFromCustomer === "Replacement" && (
-            <ReplacementForm />
-          )}
+          {common.requestFromCustomer === "Replacement" && <ReplacementForm />}
         </div>
 
         {/* Order Closed Button */}
         <div className="flex justify-end mt-6">
+          {submitError && (
+            <p className="text-red-500 text-sm mr-4 self-center">
+              {submitError}
+            </p>
+          )}
           <button
-            onClick={() => alert("Order Closed!")}
-            className="bg-green-600 hover:bg-green-500 text-white px-8 py-3 rounded-lg font-medium"
+            onClick={handleSubmit}
+            disabled={isSubmitting || localLoading}
+            className="bg-green-600 hover:bg-green-500 disabled:bg-gray-500 disabled:cursor-not-allowed text-white px-8 py-3 rounded-lg font-medium transition-colors"
           >
-            Order Closed
+            {isSubmitting || localLoading
+              ? "Saving..."
+              : problematicPartId
+              ? "Update & Close Order"
+              : "Submit & Close Order"}
           </button>
         </div>
       </div>

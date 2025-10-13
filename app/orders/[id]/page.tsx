@@ -4935,9 +4935,15 @@ const OrderDetails = () => {
               </button>
             </div>
 
-            <DamagedProductForm />
-            <DefectiveProductForm />
-            <WrongProductForm />
+            {formData.problematicIssueType === "Damaged Product" && (
+              <DamagedProductForm />
+            )}
+            {formData.problematicIssueType === "Defective Products" && (
+              <DefectiveProductForm />
+            )}
+            {formData.problematicIssueType === "Wrong Products" && (
+              <WrongProductForm />
+            )}
 
             {/* Notes Section */}
             <div className="grid md:grid-cols-2 gap-10 md:mt-10">

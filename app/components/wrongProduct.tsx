@@ -1,40 +1,164 @@
 import { Upload, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ReplacementForm from "./replacement";
+import { useProblematicPartsStore } from "@/store/damagedProductStore";
+import {
+  createOrUpdateProblematicPart,
+  buildPayloadFromStore,
+  getProblematicPartsByOrderId,
+} from "@/utils/problematicPartApi";
+import { useParams, useRouter } from "next/navigation";
 
 const WrongProductForm = () => {
-  const [formData, setFormData] = useState({
-    make: "",
-    model: "",
-    year: "",
-    specification: "",
-    requestFromCustomer: "",
-    returnShipping: "",
-    customerRefund: "",
-    yardRefund: "",
-    amount: "",
-    yardAmount: "",
-    returnShippingPrice: "",
-    productReturned: "",
-  });
+  // Connect to Zustand store
+  const {
+    common,
+    wrong,
+    replacement,
+    orderId,
+    problematicPartId,
+    isSubmitting,
+    submitError,
+    setCommonField,
+    setWrongField,
+    setActiveFormType,
+    setOrderId,
+    setSubmitting,
+    setSubmitError,
+    resetAll,
+    loadProblematicPart,
+  } = useProblematicPartsStore();
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const params = useParams();
+  const router = useRouter();
+  const [localLoading, setLocalLoading] = useState(false);
+  const [isLoadingExisting, setIsLoadingExisting] = useState(false);
+
+  // Set active form type, order ID, and fetch existing data on mount
+  useEffect(() => {
+    setActiveFormType("wrong");
+
+    // Get order ID from URL params
+    const currentOrderId = params.id as string;
+    if (currentOrderId) {
+      setOrderId(currentOrderId);
+
+      // Fetch existing problematic parts for this order
+      fetchExistingData(currentOrderId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty array - only run once on mount
+
+  const fetchExistingData = async (orderId: string) => {
+    try {
+      setIsLoadingExisting(true);
+      const existingParts = await getProblematicPartsByOrderId(orderId);
+
+      // Get the first problematic part (regardless of type)
+      // One order can only have ONE problematic part
+      if (existingParts.length > 0) {
+        const existingPart = existingParts[0];
+        console.log("Loading existing problematic part:", existingPart);
+        loadProblematicPart(existingPart);
+      }
+    } catch (error) {
+      console.error("Error fetching existing problematic parts:", error);
+    } finally {
+      setIsLoadingExisting(false);
+    }
   };
 
-  const handleSubmit = () => {
-    console.log("Form submitted:", formData);
-    alert("Order Closed!");
+  // Handle file uploads (empty for now as requested)
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      // TODO: Implement photo upload logic
+      console.log("Photos selected:", files);
+    }
+  };
+
+  const handleBOLUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // TODO: Implement BOL upload logic
+      console.log("BOL file selected:", file);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!orderId) {
+      alert("Order ID is missing!");
+      return;
+    }
+
+    // Validate required fields
+    if (!common.requestFromCustomer) {
+      alert("Please select Request From Customer");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      setLocalLoading(true);
+      setSubmitError(null);
+
+      // Build payload from store
+      const payload = buildPayloadFromStore(
+        orderId,
+        "wrong",
+        common,
+        wrong,
+        common.requestFromCustomer === "Replacement" ? replacement : undefined
+      );
+
+      console.log("Submitting wrong product:", payload);
+
+      // Create or update
+      const result = await createOrUpdateProblematicPart(
+        payload,
+        problematicPartId || undefined
+      );
+
+      console.log("Problematic part saved:", result);
+
+      // Show success message
+      alert(
+        problematicPartId
+          ? "Problematic part updated successfully!"
+          : "Problematic part created successfully! Order Closed!"
+      );
+
+      // Only reset form if creating (not updating)
+      if (!problematicPartId) {
+        resetAll();
+      }
+
+      // Reload the data to show updated values
+      if (orderId) {
+        await fetchExistingData(orderId);
+      }
+
+      router.refresh(); // Refresh the current page
+    } catch (error: any) {
+      console.error("Error submitting problematic part:", error);
+      setSubmitError(error.message || "Failed to save problematic part");
+      alert(`Error: ${error.message || "Failed to save problematic part"}`);
+    } finally {
+      setSubmitting(false);
+      setLocalLoading(false);
+    }
   };
 
   return (
     <div className="mt-2">
-      {/* <h2 className="text-white text-lg font-semibold mb-4">
+      <h2 className="text-white text-lg font-semibold mb-4">
         Problematic Parts
-      </h2> */}
+      </h2>
+      {isLoadingExisting && (
+        <div className="bg-[#0a1929] p-6 rounded-lg shadow-lg mb-4">
+          <p className="text-white text-center">Loading existing data...</p>
+        </div>
+      )}
       <div className="bg-[#0a1929] p-6 rounded-lg shadow-lg relative">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-white text-lg font-semibold">Wrong Product</h3>
@@ -45,11 +169,11 @@ const WrongProductForm = () => {
                 multiple
                 accept="image/*"
                 className="hidden"
-                id="upload-photos"
-                onChange={() => {}}
+                id="upload-photos-wrong"
+                onChange={handlePhotoUpload}
               />
               <label
-                htmlFor="upload-photos"
+                htmlFor="upload-photos-wrong"
                 className="flex items-center gap-2 cursor-pointer bg-blue-700 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
               >
                 <Upload size={16} />
@@ -74,8 +198,8 @@ const WrongProductForm = () => {
               </label>
               <div className="relative">
                 <select
-                  value={formData.make}
-                  onChange={(e) => handleInputChange("make", e.target.value)}
+                  value={wrong.make}
+                  onChange={(e) => setWrongField("make", e.target.value)}
                   className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
                 >
                   <option value="">Select Make</option>
@@ -102,8 +226,8 @@ const WrongProductForm = () => {
               </label>
               <div className="relative">
                 <select
-                  value={formData.model}
-                  onChange={(e) => handleInputChange("model", e.target.value)}
+                  value={wrong.model}
+                  onChange={(e) => setWrongField("model", e.target.value)}
                   className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
                 >
                   <option value="">Select Model</option>
@@ -124,8 +248,8 @@ const WrongProductForm = () => {
               </label>
               <div className="relative">
                 <select
-                  value={formData.year}
-                  onChange={(e) => handleInputChange("year", e.target.value)}
+                  value={wrong.year}
+                  onChange={(e) => setWrongField("year", e.target.value)}
                   className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
                 >
                   <option value="">Select Year</option>
@@ -152,9 +276,9 @@ const WrongProductForm = () => {
               </label>
               <div className="relative">
                 <select
-                  value={formData.specification}
+                  value={wrong.specification}
                   onChange={(e) =>
-                    handleInputChange("specification", e.target.value)
+                    setWrongField("specification", e.target.value)
                   }
                   className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
                 >
@@ -179,9 +303,9 @@ const WrongProductForm = () => {
               </label>
               <div className="relative">
                 <select
-                  value={formData.requestFromCustomer}
+                  value={common.requestFromCustomer}
                   onChange={(e) =>
-                    handleInputChange("requestFromCustomer", e.target.value)
+                    setCommonField("requestFromCustomer", e.target.value)
                   }
                   className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
                 >
@@ -202,9 +326,9 @@ const WrongProductForm = () => {
               </label>
               <div className="relative">
                 <select
-                  value={formData.returnShipping}
+                  value={common.returnShipping}
                   onChange={(e) =>
-                    handleInputChange("returnShipping", e.target.value)
+                    setCommonField("returnShipping", e.target.value)
                   }
                   className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
                 >
@@ -220,20 +344,20 @@ const WrongProductForm = () => {
               </div>
             </div>
             {/* Conditional Return Shipping Fields */}
-            {(formData.returnShipping === "Own Shipping" ||
-              formData.returnShipping === "Yard Shipping") && (
+            {(common.returnShipping === "Own Shipping" ||
+              common.returnShipping === "Yard Shipping") && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:col-span-2">
-                <div className="flex items-end gap-6">
+                <div className="flex items-center gap-6 w-full">
                   <div>
                     <input
                       type="file"
                       accept=".pdf,.jpg,.jpeg,.png"
                       className="hidden"
-                      id="upload-bol"
-                      onChange={() => {}}
+                      id="upload-bol-wrong"
+                      onChange={handleBOLUpload}
                     />
                     <label
-                      htmlFor="upload-bol"
+                      htmlFor="upload-bol-wrong"
                       className="flex items-center gap-2 cursor-pointer bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg border border-gray-600"
                     >
                       <Upload size={16} />
@@ -243,7 +367,7 @@ const WrongProductForm = () => {
 
                   <button
                     onClick={() => alert("Sent!")}
-                    className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-full text-white font-medium transition-colors"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-full text-white font-medium transition-colors"
                   >
                     Send
                   </button>
@@ -256,9 +380,9 @@ const WrongProductForm = () => {
                     </label>
                     <div className="relative">
                       <select
-                        value={formData.productReturned}
+                        value={common.productReturned}
                         onChange={(e) =>
-                          handleInputChange("productReturned", e.target.value)
+                          setCommonField("productReturned", e.target.value)
                         }
                         className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
                       >
@@ -272,19 +396,16 @@ const WrongProductForm = () => {
                       />
                     </div>
                   </div>
-                  {formData.returnShipping === "Own Shipping" && (
+                  {common.returnShipping === "Own Shipping" && (
                     <div className="flex-1">
                       <label className="block text-white text-sm font-medium mb-2">
                         Return Shipping Price
                       </label>
                       <input
                         type="text"
-                        value={formData.returnShippingPrice}
+                        value={common.returnShippingPrice}
                         onChange={(e) =>
-                          handleInputChange(
-                            "returnShippingPrice",
-                            e.target.value
-                          )
+                          setCommonField("returnShippingPrice", e.target.value)
                         }
                         className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
                         placeholder="Enter price"
@@ -295,7 +416,7 @@ const WrongProductForm = () => {
               </div>
             )}
 
-            {formData.requestFromCustomer === "Refund" && (
+            {common.requestFromCustomer === "Refund" && (
               <>
                 <div>
                   <label className="block text-white text-sm font-medium mb-2">
@@ -303,9 +424,9 @@ const WrongProductForm = () => {
                   </label>
                   <div className="relative">
                     <select
-                      value={formData.customerRefund}
+                      value={common.customerRefund}
                       onChange={(e) =>
-                        handleInputChange("customerRefund", e.target.value)
+                        setCommonField("customerRefund", e.target.value)
                       }
                       className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
                     >
@@ -326,9 +447,9 @@ const WrongProductForm = () => {
                   </label>
                   <div className="relative">
                     <select
-                      value={formData.yardRefund}
+                      value={common.yardRefund}
                       onChange={(e) =>
-                        handleInputChange("yardRefund", e.target.value)
+                        setCommonField("yardRefund", e.target.value)
                       }
                       className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
                     >
@@ -349,10 +470,8 @@ const WrongProductForm = () => {
                   </label>
                   <input
                     type="text"
-                    value={formData.amount}
-                    onChange={(e) =>
-                      handleInputChange("amount", e.target.value)
-                    }
+                    value={common.amount}
+                    onChange={(e) => setCommonField("amount", e.target.value)}
                     className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
                     placeholder="Enter amount"
                   />
@@ -364,9 +483,9 @@ const WrongProductForm = () => {
                   </label>
                   <input
                     type="text"
-                    value={formData.yardAmount}
+                    value={common.yardAmount}
                     onChange={(e) =>
-                      handleInputChange("yardAmount", e.target.value)
+                      setCommonField("yardAmount", e.target.value)
                     }
                     className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
                     placeholder="Enter yard amount"
@@ -375,18 +494,26 @@ const WrongProductForm = () => {
               </>
             )}
           </div>
-          {formData.requestFromCustomer === "Replacement" && (
-            <ReplacementForm />
-          )}
+          {common.requestFromCustomer === "Replacement" && <ReplacementForm />}
         </div>
 
         {/* Order Closed Button */}
         <div className="flex justify-end mt-6">
+          {submitError && (
+            <p className="text-red-500 text-sm mr-4 self-center">
+              {submitError}
+            </p>
+          )}
           <button
             onClick={handleSubmit}
-            className="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg text-white font-medium transition-colors"
+            disabled={isSubmitting || localLoading}
+            className="bg-green-600 hover:bg-green-700 disabled:bg-gray-500 disabled:cursor-not-allowed px-6 py-2 rounded-lg text-white font-medium transition-colors"
           >
-            Order Closed
+            {isSubmitting || localLoading
+              ? "Saving..."
+              : problematicPartId
+              ? "Update & Close Order"
+              : "Submit & Close Order"}
           </button>
         </div>
       </div>

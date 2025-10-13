@@ -1,7 +1,7 @@
 "use client";
 import React, { ChangeEvent, useState } from "react";
 import { ChevronDown, Plus, X, Minus } from "lucide-react";
-import { useDamagedProductStore } from "@/store/damagedProductStore";
+import { useProblematicPartsStore } from "@/store/damagedProductStore";
 import MoveYardPopUp from "./MoveYardPopUp"; // Assuming this component exists
 
 interface PreviousYard {
@@ -24,7 +24,8 @@ interface PreviousYard {
 }
 
 const ReplacementForm: React.FC = () => {
-  const { replacementData, setReplacementField } = useDamagedProductStore();
+  const { replacement: replacementData, setReplacementField } =
+    useProblematicPartsStore();
 
   const [showPreviousYard, setShowPreviousYard] = useState(false);
   const [selectedPrevYardIdx, setSelectedPrevYardIdx] = useState(0);
