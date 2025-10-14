@@ -1,5 +1,6 @@
 // pages/api/upload.js
-import { uploadToS3, uploadMultipleToS3 } from '../../lib/s3';
+import { uploadToS3 } from '../lib/awsS3Connect';
+import {NextApiRequest, NextApiResponse} from 'next';
 import formidable from 'formidable';
 import fs from 'fs/promises';
 
@@ -10,7 +11,7 @@ export const config = {
   },
 };
 
-export default async function handler(req, res) {
+export default async function handler(req : NextApiRequest, res : NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -40,7 +41,7 @@ export default async function handler(req, res) {
       
       // Determine folder based on file type
       let folder = 'others';
-      if (file.mimetype.startsWith('image/')) {
+      if (file.mimetype && file.mimetype.startsWith('image/')) {
         folder = 'images';
       } else if (file.mimetype === 'application/pdf') {
         folder = 'pdfs';
@@ -59,7 +60,7 @@ export default async function handler(req, res) {
     // Upload to S3
     const uploadResults = await Promise.all(
       processedFiles.map(file => 
-        uploadToS3(file.buffer, file.filename, file.mimetype, file.folder)
+        uploadToS3(file.buffer, file.filename?? '', file.mimetype ?? '', file.folder)
       )
     );
 
@@ -73,7 +74,7 @@ export default async function handler(req, res) {
     console.error('Upload error:', error);
     return res.status(500).json({ 
       error: 'Upload failed', 
-      message: error.message 
+      message: (error as Error).message 
     });
   }
 }

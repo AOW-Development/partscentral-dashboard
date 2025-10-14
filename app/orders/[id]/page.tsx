@@ -2326,13 +2326,22 @@ const OrderDetails = () => {
     try {
       // Auto-process uploaded picture if it exists and hasn't been processed yet
       if (uploadedPicture && !formData.pictureUrl) {
-        const base64Image = await convertToBase64(uploadedPicture);
+       // Upload to backend
+        const formDataData = new FormData();
+        formDataData.append("file", uploadedPicture);
+
+        const res = await fetch(`${URL}api/upload`, {
+          method: "POST",
+          body: formDataData,
+        });
+        const data = await res.json();
+        const s3Key = data.file.key;
+
         setFormData((prev) => ({
           ...prev,
-          pictureUrl: base64Image,
+          pictureUrl: s3Key,
           pictureStatus: "SENT",
         }));
-
         addCustomerNote(
           `Picture Uploaded – ${uploadedPicture.name} sent to customer (auto-processed during order creation).`,
           "By Agent"
@@ -2669,17 +2678,23 @@ const OrderDetails = () => {
 
   const handleSendPicture = async () => {
     if (uploadedPicture) {
-      // Create a URL for the uploaded file
-      // const pictureUrl = window.URL.createObjectURL(uploadedPicture);
+     
+      // upload to backend
+      const formData = new FormData();
+      formData.append("file", uploadedPicture); ;
 
-      // Convert the file to base64 to send it to the server
-      const base64Image = await convertToBase64(uploadedPicture);
+      const res = await fetch(`${URL}api/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      const data =await res.json() ;
+      const s3Key = data.file.key;
 
       // Update form data with picture information
       setFormData((prev) => ({
         ...prev,
-        pictureUrl: base64Image,
-        pictureStatus: "SENT",
+        pictureUrl: s3Key,
+        pictureStatus: "Yes",
       }));
 
       addCustomerNote(
@@ -2695,14 +2710,6 @@ const OrderDetails = () => {
       }));
       addCustomerNote("Picture – No file selected.", "By Agent");
     }
-  };
-  const convertToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(error);
-    });
   };
 
   // Initialize a base note once

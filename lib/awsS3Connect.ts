@@ -17,7 +17,7 @@ const { Upload } = require('@aws-sdk/lib-storage');
 
 const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME;
 
-async function uploadToS3(fileBuffer,fileName,mimeType, folder='') {
+export async function uploadToS3(fileBuffer:Buffer,fileName:String,mimeType:string, folder='') {
    try {
       const timeStamp = Date.now();
       const key = folder ? `${folder}/${timeStamp}-${fileName}` : `${timeStamp}-${fileName}`;
@@ -45,12 +45,12 @@ async function uploadToS3(fileBuffer,fileName,mimeType, folder='') {
    }
    catch(error) {
       console.error("Error uploading file to S3", error);
-      throw new Error(`S3 upload Error :  ${error.message}`);
+      throw new Error(`S3 upload Error :  ${(error as Error).message}`);
    }
 }
 
 
-async function uploadMultipleToS3(files, folder='') {
+export async function uploadMultipleToS3(files :  Array<{ buffer: Buffer; filename: string; mimetype: string }>, folder='') {
    try {
       const uploadPromises = files.map(file=>uploadToS3(file.buffer, file.filename, file.mimetype, folder));
       const results = await Promise.all(uploadPromises)
@@ -64,7 +64,7 @@ async function uploadMultipleToS3(files, folder='') {
 
 
 // Get a file from s3 
-async function getFromS3(key) {
+async function getFromS3(key : String) {
    try{
       const command =new GetObjectCommand({
          Bucket: BUCKET_NAME,
@@ -81,12 +81,12 @@ async function getFromS3(key) {
    } 
    catch(error) {
       console.error("Error getting file from S3", error);
-      throw new Error(`S3 get Error :  ${error.message}`);
+      throw new Error(`S3 get Error :  ${(error as Error).message}`);
    }
 }
 
 // generrate a presigned url to access a file in s3 for direct access or downlaodiong it
-async function getPresignedUrl(key, expiresIn=3600) {
+async function getPresignedUrl(key : String, expiresIn=3600) {
    try {
       const command = new GetObjectCommand({
          Bucket: BUCKET_NAME,
@@ -97,13 +97,13 @@ async function getPresignedUrl(key, expiresIn=3600) {
    }
    catch (error) {
       console.error("Error generating presigned URL", error);
-      throw new Error(`S3 presigned URL Error :  ${error.message}`);
+      throw new Error(`S3 presigned URL Error :  ${(error as Error).message}`);
    }
 
 }
 
 // delete a file from s3
-async function deleteFromS3(key) {
+async function deleteFromS3(key : String) {
   try {
     const command = new DeleteObjectCommand({
       Bucket: BUCKET_NAME,
@@ -118,13 +118,13 @@ async function deleteFromS3(key) {
     };
   } catch (error) {
     console.error('Error deleting from S3:', error);
-    throw new Error(`S3 Delete Error: ${error.message}`);
+    throw new Error(`S3 Delete Error: ${(error as Error).message}`);
   }
 }
 
 
 // check if file exists in s3 
-async function fileExists(key) {
+async function fileExists(key : String) {
   try {
     const command = new GetObjectCommand({
       Bucket: BUCKET_NAME,
@@ -134,7 +134,7 @@ async function fileExists(key) {
     await s3Client.send(command);
     return true;
   } catch (error) {
-    if (error.name === 'NoSuchKey') {
+    if ((error as Error).name === 'NoSuchKey') {
       return false;
     }
     throw error;
