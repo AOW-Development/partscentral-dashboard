@@ -147,7 +147,7 @@ const mapPrismaEnumToWarranty = (enumValue: string): string => {
       return "";
   }
 };
-
+const API_URL = process.env.NEXT_PUBLIC_API_URL 
 // Import the PreviousYard type from YardInfo
 type PreviousYard = {
   yardName: string;
@@ -2330,7 +2330,7 @@ const OrderDetails = () => {
         const formDataData = new FormData();
         formDataData.append("file", uploadedPicture);
 
-        const res = await fetch(`${URL}api/upload-single`, {
+        const res = await fetch(`${API_URL}/upload-single`, {
           method: "POST",
           body: formDataData,
         });
@@ -2683,7 +2683,7 @@ const OrderDetails = () => {
       const formData = new FormData();
       formData.append("file", uploadedPicture); ;
 
-      const res = await fetch(`${URL}api/upload-single`, {
+      const res = await fetch(`${API_URL}/upload-single`, {
         method: "POST",
         body: formData,
       });
