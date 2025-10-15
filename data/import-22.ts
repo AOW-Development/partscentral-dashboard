@@ -6,7 +6,7 @@ import { join, extname } from 'path';
 
 const prisma = new PrismaClient();
 
-// 1️⃣ HEADER-TO-COLUMN mapping
+//  HEADER-TO-COLUMN mapping
 const headerMap: Record<string, string> = {
   make:             'Make Name' , // also "9" ,   
   model:            'Model Name',

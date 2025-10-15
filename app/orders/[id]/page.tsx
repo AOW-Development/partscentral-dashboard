@@ -2330,7 +2330,7 @@ const OrderDetails = () => {
         const formDataData = new FormData();
         formDataData.append("file", uploadedPicture);
 
-        const res = await fetch(`${URL}api/upload`, {
+        const res = await fetch(`${URL}api/upload-single`, {
           method: "POST",
           body: formDataData,
         });
@@ -2683,7 +2683,7 @@ const OrderDetails = () => {
       const formData = new FormData();
       formData.append("file", uploadedPicture); ;
 
-      const res = await fetch(`${URL}api/upload`, {
+      const res = await fetch(`${URL}api/upload-single`, {
         method: "POST",
         body: formData,
       });
