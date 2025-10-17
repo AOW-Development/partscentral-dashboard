@@ -5,7 +5,6 @@ import Sidebar from "@/app/components/Sidebar";
 import { useParams, usePathname } from "next/navigation";
 import { ChevronDown, X, Plus, Minus, Calendar } from "lucide-react";
 import { toast } from "react-toastify";
-import { getPresignedUrl } from "@/utils/awsS3";
 import Image from "next/image";
 declare global {
   interface Window {
@@ -673,9 +672,25 @@ const OrderDetails = () => {
   
     useEffect(() => {
       if (formData.pictureUrl) {
+    // Instead of direct URL, fetch the presigned URL from backend
+    const fetchPresignedUrl = async () => {
+      try {
+        const response = await fetch(`${API_URL}/presigned-url/${encodeURIComponent(formData.pictureUrl)}`);
+        const data = await response.json();
+        if (data.url) {
+          setImagePreviewUrl(data.url);
+        } else {
+          setImagePreviewUrl(formData.pictureUrl);
+        }
+      } catch (error) {
+        console.log("Failed to get presigned URL, using direct:", error);
         setImagePreviewUrl(formData.pictureUrl);
-        //  getPresignedUrl(formData.pictureUrl).then(url => setImagePreviewUrl(url))
-      } else {
+      }
+    };
+    
+    fetchPresignedUrl();
+  }
+       else {
         setImagePreviewUrl(null);
       }
     }, [formData.pictureUrl]);
@@ -2607,15 +2622,32 @@ const OrderDetails = () => {
   };
 
   const handleSendPicture = async () => {
-    if (uploadedPicture && !formData) {
-      try { 
-      // upload to backend
-      const formData = new FormData();
-      formData.append("file", uploadedPicture); ;
+
+     // If there's no uploaded picture selected but pictureUrl exists, just update status
+  if (!uploadedPicture && formData.pictureUrl && orderId && orderId !== "create" && orderId !== "new") {
+    setFormData((prev) => ({
+      ...prev,
+      pictureStatus: "Yes"
+    }));
+    try {
+      await updateOrderWithPicture(orderId, "Yes", formData.pictureUrl);
+      toast.success("Picture status updated!");
+    } catch (error) {
+      console.error("Error updating picture status:", error);
+      toast.error("Failed to update picture status");
+    }
+    return;
+  }
+
+    if (uploadedPicture && (!formData.pictureUrl || !orderId || orderId === "create" || orderId === "new")) {
+    try { 
+      // Upload to backend
+      const formDataToSend = new FormData();
+      formDataToSend.append("file", uploadedPicture);
      
       const res = await fetch(`${API_URL}/upload-single`, {
         method: "POST",
-        body: formData,
+        body: formDataToSend,
       });
       const data =await res.json() ;
       const s3Key = data.file.key;
@@ -2627,33 +2659,49 @@ const OrderDetails = () => {
         pictureStatus: "Yes",
       }));
 
-      await updateOrderWithPicture(orderId, "Yes", s3Key); ;
+        // If we have an orderId, update database
+      if (orderId && orderId !== "create" && orderId !== "new") {
+        await updateOrderWithPicture(orderId, "Yes", s3Key);
+      }
       addCustomerNote(
         `Picture Uploaded – ${uploadedPicture.name} sent to customer.`,
         "By Agent"
       );
+      toast.success("Picture uploaded successfully!");
     } catch(error) {
       console.error("Error uploading picture:", error);
       toast.error("failed to uplaod picture !")
-    } }
-    else if(!uploadedPicture && formData.pictureUrl){
-      setFormData((prev)=>({
-        ...prev,
-        pictureStatus:"Yes"
-      }));
-      await updateOrderWithPicture(orderId, "No", formData.pictureUrl); ;
+    } 
+  return;
+  }
+    // else if(!uploadedPicture && formData.pictureUrl){
+    //   setFormData((prev)=>({
+    //     ...prev,
+    //     pictureStatus:"Yes"
+    //   }));
+    //   await updateOrderWithPicture(orderId, "No", formData.pictureUrl); ;
+    // }
+    // else {
+    //   // Reset picture status if no file is selected
+    //   setFormData((prev) => ({
+    //     ...prev,
+    //     pictureUrl: "",
+    //     pictureStatus: "No",
+    //   }));
+    //    addCustomerNote("Picture – No file selected.", "By Agent");
+    //    await updateOrderWithPicture(orderId, "No", "");
+    // }
+  
+  // Handle case where we have an orderId and picture but no upload
+  if (orderId && orderId !== "create" && orderId !== "new" && formData.pictureUrl) {
+    try {
+      await updateOrderWithPicture(orderId, formData.pictureStatus, formData.pictureUrl);
+      toast.success("Picture status updated!");
+    } catch (error) {
+      console.error("Error updating picture status:", error);
+      toast.error("Failed to update picture status");
     }
-    else {
-      // Reset picture status if no file is selected
-      setFormData((prev) => ({
-        ...prev,
-        pictureUrl: "",
-        pictureStatus: "No",
-      }));
-       addCustomerNote("Picture – No file selected.", "By Agent");
-       await updateOrderWithPicture(orderId, "No", "");
-    }
-  };
+  } };
 
   // Initialize a base note once
   const initRef = useRef(false);
