@@ -15,7 +15,7 @@ type CartItem = {
   pictureUrl?: string;
   pictureStatus?: string;
   source?: string;
-  [key: string]: any; // For any additional properties
+  [key: string]: any;
 };
 
 const mapWarrantyToPrismaEnum = (warranty: string): string => {
@@ -31,7 +31,7 @@ const mapWarrantyToPrismaEnum = (warranty: string): string => {
     case "1 Year":
       return "WARRANTY_1_YEAR";
     default:
-      return "WARRANTY_30_DAYS"; // Default or handle error
+      return "WARRANTY_30_DAYS";
   }
 };
 
@@ -41,28 +41,18 @@ export const createOrderFromAdmin = async (
   paymentEntries: any[] = [],
   previousYards: any[] = []
 ) => {
-  // Debug: log ownShippingInfo and yardShipping before constructing orderData
-  console.log("DEBUG ownShippingInfo:", formData.ownShippingInfo);
-  console.log("DEBUG yardShipping:", formData.yardShipping);
-
-  console.log("Form data before submission:", {
-    customerNotes: formData.customerNotes,
-    yardNotes: formData.yardNotes,
-  });
   // Prepare order items with required fields
   const orderItems = cartItems.map((item) => ({
-    productVariantId: item.id, // This should be the variant SKU
+    productVariantId: item.id,
     quantity: item.quantity || 1,
     price: item.price,
     warranty: item.warranty,
     milesPromised: item.milesPromised,
     specification: item.specification,
-    // pictureUrl: formData.pictureUrl || "",
-    // pictureStatus: formData.pictureStatus || 'PENDING',
     source: "ADMIN",
   }));
 
-  // Prepare the order data in the exact format expected by the backend
+  // Prepare the order data
   const orderData = {
     billingInfo: {
       firstName: formData.cardHolderName?.split(" ")[0] || "",
@@ -99,7 +89,6 @@ export const createOrderFromAdmin = async (
       phone: formData.mobile || "",
       alternativePhone: formData.alternateMobile,
       firstName: formData.customerName || "unknown name provided",
-      // lastName: formData.cardHolderName?.split(' ').slice(1).join(' ') || '',
       company: formData.company || null,
       address: formData.shippingAddress || "",
       city: formData.shippingCity || "",
@@ -108,34 +97,25 @@ export const createOrderFromAdmin = async (
       country: "US",
       type: formData.shippingAddressType || "RESIDENTIAL",
     },
-    cartItems: cartItems.map((item) => {
-      const sku = item.id;
-      if (!sku) {
-        console.error("Missing SKU for cart item:", item);
-        throw new Error("Product variant SKU is required");
-      }
-      return {
-        id: sku,
-        sku: sku,
-        quantity: item.quantity || 1,
-        price: item.price,
-        taxesPrice: item.taxesPrice || 0,
-        handlingPrice: item.handlingPrice || 0,
-        processingPrice: item.processingPrice || 0,
-        corePrice: item.corePrice || 0,
-        name: `Engine for ${sku.split("-").slice(0, 3).join(" ")}`,
-        milesPromised: item.milesPromised,
-        specification: item.specification || "",
-        productVariantId: sku,
-        // pictureUrl: item.pictureUrl || formData.pictureUrl || '',
-        // pictureStatus: item.pictureStatus || formData.pictureStatus || 'PENDING',
-      };
-    }),
+    cartItems: cartItems.map((item) => ({
+      id: item.id,
+      sku: item.id,
+      quantity: item.quantity || 1,
+      price: item.price,
+      taxesPrice: item.taxesPrice || 0,
+      handlingPrice: item.handlingPrice || 0,
+      processingPrice: item.processingPrice || 0,
+      corePrice: item.corePrice || 0,
+      name: `Engine for ${item.id.split("-").slice(0, 3).join(" ")}`,
+      milesPromised: item.milesPromised,
+      specification: item.specification || "",
+      productVariantId: item.id,
+    })),
     paymentInfo:
       paymentEntries.length > 0
         ? paymentEntries.map((entry) => ({
             ...entry,
-            amount: entry.totalPrice, // Map totalPrice to amount for backend
+            amount: entry.totalPrice,
             cardData: formData.cardNumber
               ? {
                   cardNumber: formData.cardNumber,
@@ -143,7 +123,7 @@ export const createOrderFromAdmin = async (
                   expirationDate: formData.cardDate,
                   securityCode: formData.cardCvv,
                   last4: formData.cardNumber.slice(-4),
-                  brand: "Visa", // Default brand
+                  brand: "Visa",
                 }
               : null,
             alternateCardData: formData.alternateCardNumber
@@ -153,7 +133,7 @@ export const createOrderFromAdmin = async (
                   expirationDate: formData.alternateCardDate,
                   securityCode: formData.alternateCardCvv,
                   last4: formData.alternateCardNumber.slice(-4),
-                  brand: "Visa", // Default brand
+                  brand: "Visa",
                 }
               : null,
           }))
@@ -218,7 +198,6 @@ export const createOrderFromAdmin = async (
     vinNumber: formData.vinNumber,
     notes: formData.notes,
     warranty: mapWarrantyToPrismaEnum(formData.warranty || "30 Days"),
-    // invoice
     invoiceSentAt: formData.invoiceSentAt
       ? new Date(formData.invoiceSentAt).toISOString()
       : null,
@@ -226,8 +205,6 @@ export const createOrderFromAdmin = async (
     invoiceConfirmedAt: formData.invoiceConfirmedAt
       ? new Date(formData.invoiceConfirmedAt).toISOString()
       : null,
-
-    // po
     poSentAt: formData.poSentAt
       ? new Date(formData.poSentAt).toISOString()
       : null,
@@ -235,13 +212,14 @@ export const createOrderFromAdmin = async (
     poConfirmAt: formData.poConfirmedAt
       ? new Date(formData.poConfirmedAt).toISOString()
       : null,
-
     orderDate: formData.date
       ? new Date(formData.date).toISOString()
       : new Date().toISOString(),
     addressType: formData.shippingAddressType,
     orderCategoryStatus: formData.orderCategoryStatus || null,
     problematicIssueType: formData.problematicIssueType || null,
+    pictureStatus: formData.pictureStatus || "PENDING",
+    pictureUrl: formData.pictureUrl || "",
     ...(formData.yardName && {
       yardInfo: {
         yardName: formData.yardName,
@@ -257,7 +235,6 @@ export const createOrderFromAdmin = async (
         yardShippingType: formData.yardShipping || "OWN_SHIPPING",
         yardShippingCost: formData.yardCost || 0,
         reason: formData.reason || "No reason provided",
-
         yardTaxesPrice: formData.taxesYardPrice || 0,
         yardHandlingFee: formData.handlingYardPrice || 0,
         yardProcessingFee: formData.processingYardPrice || 0,
@@ -267,7 +244,6 @@ export const createOrderFromAdmin = async (
           : {}),
       },
     }),
-    // Add previous yards data
     yardHistory: previousYards.map((yard) => ({
       yardName: yard.yardName || "",
       attnName: yard.attnName || "",
@@ -287,23 +263,14 @@ export const createOrderFromAdmin = async (
       yardCharge: yard.yardCharge || "",
     })),
   };
-  console.log("formData.yardName in orderApi:", formData.yardName);
-  try {
-    console.log("DEBUG: Payment Entries received in orderApi:", paymentEntries);
-    console.log("DEBUG: Payment Info being sent:", orderData.paymentInfo);
-    console.log(
-      "DEBUG: Previous Yards (yardHistory) being sent:",
-      previousYards
-    );
-    console.log("Sending order data:", JSON.stringify(orderData, null, 2));
 
-    // Create the order with nested yard info if provided
+  try {
+    console.log("Sending order data:", JSON.stringify(orderData, null, 2));
+    
     const response = await fetch(`${API_URL}/orders`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // You might need to add an Authorization header if your API is protected
-        // 'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(orderData),
     });

@@ -5,7 +5,7 @@ import Sidebar from "@/app/components/Sidebar";
 import { useParams, usePathname } from "next/navigation";
 import { ChevronDown, X, Plus, Minus, Calendar } from "lucide-react";
 import { toast } from "react-toastify";
-
+import { getPresignedUrl } from "@/utils/awsS3";
 import Image from "next/image";
 declare global {
   interface Window {
@@ -116,7 +116,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { URL } from "@/utils/imageUrl";
 import { createOrderFromAdmin, getOrderById } from "@/utils/orderApi";
-import { updateOrderFromAdmin } from "@/utils/updateOrderApi";
+import { updateOrderFromAdmin, updateOrderWithPicture } from "@/utils/updateOrderApi";
 import { getCardType, isValidCardNumber } from "@/utils/cardValidator";
 import { MAKES, MODELS } from "@/vehicleData-dashboard";
 import { fetchYears } from "@/utils/vehicleApi";
@@ -207,6 +207,7 @@ const OrderDetails = () => {
     },
   ]);
 
+  
   // Note: Payment entries are loaded separately and don't override main form card details
 
   useEffect(() => {
@@ -214,18 +215,10 @@ const OrderDetails = () => {
       setLoadingOrder(true);
       getOrderById(orderId)
         .then((data) => {
-          console.log("DEBUG: Full order data received:", data);
-          console.log("DEBUG: Order ID being loaded:", orderId);
-
           const billing = data.billingSnapshot || {};
           const shipping = data.shippingSnapshot || {};
           const yard = data.yardInfo || {};
           const ownShipping = yard.yardOwnShippingInfo || {};
-
-          console.log("DEBUG: Full data received:", data);
-          console.log("DEBUG: data.yardInfo:", data.yardInfo);
-          console.log("DEBUG: yard object:", yard);
-
           const customerNotesArray =
             data.customerNotes && typeof data.customerNotes === "string"
               ? JSON.parse(data.customerNotes)
@@ -241,26 +234,6 @@ const OrderDetails = () => {
 
           setCustomerNotes(customerNotesArray);
           setYardNotes(yardNotesArray);
-
-          console.log("DEBUG: Raw yardHistory from API:", data.yardHistory);
-          console.log("DEBUG: Full order data structure:", data);
-          console.log("DEBUG: Yard data from API:", yard);
-          console.log(
-            "DEBUG: Yard prices - yardTaxesPrice:",
-            yard.yardTaxesPrice
-          );
-          console.log(
-            "DEBUG: Yard prices - yardHandlingFee:",
-            yard.yardHandlingFee
-          );
-          console.log(
-            "DEBUG: Yard prices - yardProcessingFee:",
-            yard.yardProcessingFee
-          );
-          console.log(
-            "DEBUG: Yard prices - yardCorePrice:",
-            yard.yardCorePrice
-          );
 
           const yardHistory = Array.isArray(data.yardHistory)
             ? data.yardHistory.map((item: any) => ({
@@ -285,8 +258,6 @@ const OrderDetails = () => {
                 yardtotalBuy: item.yardtotalBuy || "",
               }))
             : [];
-
-          console.log("DEBUG: Mapped yardHistory:", yardHistory);
           setPreviousYards(yardHistory);
 
           const payments = Array.isArray(data.payments) ? data.payments : [];
@@ -306,27 +277,6 @@ const OrderDetails = () => {
               chargeClicked: p.status === "SUCCEEDED",
             })
           );
-
-          console.log("DEBUG: Mapped payment entries:", mappedPaymentEntries);
-          // console.log(
-          //   "DEBUG: Payment amounts from API:",
-          //   payments.map((p) => ({
-          //     id: p.id,
-          //     amount: p.amount,
-          //     method: p.method,
-          //   }))
-          // );
-          console.log(
-            "DEBUG: First payment for card details:",
-            data.payments?.[0]
-          );
-          console.log("DEBUG: Card details from first payment:", {
-            cardHolderName: data.payments?.[0]?.cardHolderName,
-            cardNumber: data.payments?.[0]?.cardNumber,
-            cardExpiry: data.payments?.[0]?.cardExpiry,
-            cardCvv: data.payments?.[0]?.cardCvv,
-          });
-
           if (mappedPaymentEntries.length > 0) {
             setPaymentEntries(mappedPaymentEntries);
           }
@@ -359,8 +309,8 @@ const OrderDetails = () => {
                         ? String(item.milesPromised)
                         : "",
                     specification: String(item.specification || ""),
-                    pictureUrl: String(item.pictureUrl || ""),
-                    pictureStatus: String(item.pictureStatus || "PENDING"),
+                    // pictureUrl: String(item.pictureUrl || ""),
+                    // pictureStatus: String(item.pictureStatus || "PENDING"),
                     productVariants: [],
                     selectedSubpart: null,
                     selectedMileage: "",
@@ -382,8 +332,8 @@ const OrderDetails = () => {
                     quantity: 1,
                     milesPromised: "",
                     specification: "",
-                    pictureUrl: "",
-                    pictureStatus: "PENDING",
+                    // pictureUrl: "",
+                    // pictureStatus: "PENDING",
                     productVariants: [],
                     selectedSubpart: null,
                     selectedMileage: "",
@@ -468,9 +418,10 @@ const OrderDetails = () => {
 
             // Product info (from first item if available)
             warranty: mapPrismaEnumToWarranty(data.warranty) || "",
-            pictureUrl: data.items?.[0]?.pictureUrl || "",
-            pictureStatus: data.items?.[0]?.pictureStatus || "",
-
+            // pictureUrl: data.items?.[0]?.pictureUrl || "",
+            // pictureStatus: data.items?.[0]?.pictureStatus || "",
+            pictureUrl: data.pictureUrl || "",
+            pictureStatus: data.pictureStatus || "Not availble",
             // Order management
             saleMadeBy: data.saleMadeBy || "",
             carrierName: data.carrierName || "",
@@ -529,26 +480,6 @@ const OrderDetails = () => {
             orderCategoryStatus: data.orderCategoryStatus || "",
             problematicIssueType: data.problematicIssueType || "",
           };
-
-          console.log("DEBUG: Yard price fields being mapped:");
-          console.log(
-            "DEBUG: taxesYardPrice in newFormData:",
-            newFormData.taxesYardPrice
-          );
-          console.log(
-            "DEBUG: handlingYardPrice in newFormData:",
-            newFormData.handlingYardPrice
-          );
-          console.log(
-            "DEBUG: processingYardPrice in newFormData:",
-            newFormData.processingYardPrice
-          );
-          console.log(
-            "DEBUG: coreYardPrice in newFormData:",
-            newFormData.coreYardPrice
-          );
-
-          console.log("DEBUG: Form data being set:", newFormData);
           
           if(formDataInitializedRef.current !== orderId) {
           setFormData(newFormData);
@@ -584,10 +515,10 @@ const OrderDetails = () => {
           console.error("Failed to fetch order details", err);
         })
         .finally(() => {
-          console.log(
-            "DEBUG 4: FormData after setFormData:",
-            formData.products
-          );
+          // console.log(
+          //   "DEBUG 4: FormData after setFormData:",
+          //   formData.products
+          // );
           setLoadingOrder(false);
         });
     } else {
@@ -609,8 +540,8 @@ const OrderDetails = () => {
             quantity: 1,
             milesPromised: "",
             specification: "",
-            pictureUrl: "",
-            pictureStatus: "PENDING",
+            // pictureUrl: "",
+            // pictureStatus: "PENDING",
             productVariants: [],
             selectedSubpart: null,
             selectedMileage: "",
@@ -619,22 +550,8 @@ const OrderDetails = () => {
       }));
       setLoadingOrder(false);
     }
-  }, [orderId, loadingOrder]); // State for product variants
+  }, [orderId]); // State for product variants
 
-  // Per-product loading state for variants
-  // const [isLoadingVariants, setIsLoadingVariants] = useState<{
-  //   [index: number]: boolean;
-  // }>({});
-  // const [variantError, setVariantError] = useState("");
-  // const [cardEntry, setCardEntry] = useState(false);
-
-  // const [statusPopUp, setStatusPopUp] = useState(false);
-
-  // const [formData, setFormData] = useState<OrderFormData>({
-  //   products: [],
-  //       });
-  //   }
-  // }, [orderId]); // State for product variants
 
   // Per-product loading state for variants
   const [isLoadingVariants, setIsLoadingVariants] = useState<{
@@ -654,6 +571,7 @@ const OrderDetails = () => {
   const [initialPaymentEntries, setInitialPaymentEntries] = useState<any[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const router = useRouter();
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [formData, setFormData] = useState<OrderFormData>({
     products: [
       {
@@ -751,6 +669,16 @@ const OrderDetails = () => {
     orderCategoryStatus: "",
     problematicIssueType: "",
   });
+
+  
+    useEffect(() => {
+      if (formData.pictureUrl) {
+        setImagePreviewUrl(formData.pictureUrl);
+        //  getPresignedUrl(formData.pictureUrl).then(url => setImagePreviewUrl(url))
+      } else {
+        setImagePreviewUrl(null);
+      }
+    }, [formData.pictureUrl]);
 
   // Auto-show alternate mobile field if data exists
   useEffect(() => {
@@ -1240,8 +1168,8 @@ const OrderDetails = () => {
           quantity: 1,
           milesPromised: "",
           specification: "",
-          pictureUrl: "",
-          pictureStatus: "PENDING",
+          // pictureUrl: "",
+          // pictureStatus: "PENDING",
           productVariants: [],
           selectedSubpart: null,
           selectedMileage: "",
@@ -2253,8 +2181,8 @@ const OrderDetails = () => {
           quantity: item.quantity || 1,
           milesPromised: item.milesPromised,
           specification: item.specification,
-          pictureUrl: item.pictureUrl || "",
-          pictureStatus: item.pictureStatus || "PENDING",
+          // pictureUrl: item.pictureUrl || "",
+          // pictureStatus: item.pictureStatus || "PENDING",
         }))
         .filter(
           (item) =>
@@ -2294,7 +2222,9 @@ const OrderDetails = () => {
         paymentEntries,
         previousYards
       );
-
+      if(formData.pictureStatus || formData.pictureUrl){
+        await updateOrderWithPicture(orderId, formData.pictureStatus , formData.pictureUrl );
+      }
       toast.success("Order updated successfully");
       setIsProcessing(false);
       console.log("Order updated:", result);
@@ -2340,7 +2270,7 @@ const OrderDetails = () => {
         setFormData((prev) => ({
           ...prev,
           pictureUrl: s3Key,
-          pictureStatus: "SENT",
+          pictureStatus: "Yes",
         }));
         addCustomerNote(
           `Picture Uploaded – ${uploadedPicture.name} sent to customer (auto-processed during order creation).`,
@@ -2361,8 +2291,8 @@ const OrderDetails = () => {
           // warranty: item.warranty,
           milesPromised: item.milesPromised,
           specification: item.specification,
-          pictureUrl: item.pictureUrl || "",
-          pictureStatus: item.pictureStatus || "PENDING",
+          // pictureUrl: item.pictureUrl || "",
+          // pictureStatus: item.pictureStatus || "PENDING",
         }))
         .filter(
           (item) =>
@@ -2677,12 +2607,12 @@ const OrderDetails = () => {
   };
 
   const handleSendPicture = async () => {
-    if (uploadedPicture) {
-     
+    if (uploadedPicture && !formData) {
+      try { 
       // upload to backend
       const formData = new FormData();
       formData.append("file", uploadedPicture); ;
-
+     
       const res = await fetch(`${API_URL}/upload-single`, {
         method: "POST",
         body: formData,
@@ -2697,18 +2627,31 @@ const OrderDetails = () => {
         pictureStatus: "Yes",
       }));
 
+      await updateOrderWithPicture(orderId, "Yes", s3Key); ;
       addCustomerNote(
         `Picture Uploaded – ${uploadedPicture.name} sent to customer.`,
         "By Agent"
       );
-    } else {
+    } catch(error) {
+      console.error("Error uploading picture:", error);
+      toast.error("failed to uplaod picture !")
+    } }
+    else if(!uploadedPicture && formData.pictureUrl){
+      setFormData((prev)=>({
+        ...prev,
+        pictureStatus:"Yes"
+      }));
+      await updateOrderWithPicture(orderId, "No", formData.pictureUrl); ;
+    }
+    else {
       // Reset picture status if no file is selected
       setFormData((prev) => ({
         ...prev,
         pictureUrl: "",
-        pictureStatus: "PENDING",
+        pictureStatus: "No",
       }));
-      addCustomerNote("Picture – No file selected.", "By Agent");
+       addCustomerNote("Picture – No file selected.", "By Agent");
+       await updateOrderWithPicture(orderId, "No", "");
     }
   };
 
@@ -4862,6 +4805,22 @@ const OrderDetails = () => {
                       >
                         Send Picture
                       </button>
+                     {formData.pictureUrl && (
+                        <div className="mt-2 w-full">
+                          <p className="text-white/80 text-sm mb-2">Preview:</p>
+                          <div className="flex justify-center">
+                            <img 
+                              src={imagePreviewUrl || formData.pictureUrl} 
+                              alt="Preview" 
+                              className="max-w-full h-auto max-h-40 rounded border border-gray-600"
+                              onError={(e) => {
+                                // If direct URL fails, you could try to generate presigned URL
+                                console.log("Preview failed, consider using presigned URL");
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

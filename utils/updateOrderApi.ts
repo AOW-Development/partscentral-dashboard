@@ -35,6 +35,36 @@ const mapWarrantyToPrismaEnum = (warranty: string): string => {
   }
 };
 
+
+export const updateOrderWithPicture = async (
+  orderId: string,
+  pictureStatus: string,
+  pictureUrl: string
+) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/${orderId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        pictureStatus,
+        pictureUrl
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || "Failed to update order picture");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error updating order picture:", error);
+    throw error;
+  }
+};
+
 export const updateOrderFromAdmin = async (
   orderId: string,
   formData: any,
@@ -105,8 +135,8 @@ export const updateOrderFromAdmin = async (
         milesPromised: item.milesPromised,
         specification: item.specification || "",
         productVariantId: sku,
-        pictureUrl: item.pictureUrl || "",
-        pictureStatus: item.pictureStatus || "PENDING",
+        // pictureUrl: item.pictureUrl || "",
+        // pictureStatus: item.pictureStatus || "PENDING",
       };
     }),
     paymentInfo:
@@ -245,38 +275,10 @@ export const updateOrderFromAdmin = async (
           : {}),
       },
     }),
-    // yardHistory is handled by a separate API call now.
+    
   };
 
-  // DEBUG: Log yard prices being sent to backend
-  console.log("DEBUG: Yard price fields being sent in updateOrderApi:");
-  console.log("DEBUG: previousYards:", previousYards);
-  console.log(
-    "DEBUG: taxesYard:",
-    previousYards.map((yard: any) => yard.taxesYardPrice)
-  );
-  console.log(
-    "DEBUG: handlingYard:",
-    previousYards.map((yard: any) => yard.handlingYardPrice)
-  );
-  console.log(
-    "DEBUG: processingYard:",
-    previousYards.map((yard: any) => yard.processingYardPrice)
-  );
-  console.log(
-    "DEBUG: coreYard:",
-    previousYards.map((yard: any) => yard.coreYardPrice)
-  );
-
   try {
-    console.log(
-      "DEBUG: Payment Entries received in updateOrderApi:",
-      paymentEntries
-    );
-    console.log(
-      "DEBUG: Previous Yards (yardHistory) being sent:",
-      previousYards
-    );
     const response = await fetch(`${API_URL}/orders/${orderId}`, {
       method: "PUT",
       headers: {
