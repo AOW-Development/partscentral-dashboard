@@ -280,7 +280,7 @@ const DamagedProductForm = () => {
                         }
                         className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
                       >
-                        <option value="">Yes Or No</option>
+                        <option value="">Select</option>
                         <option value="Yes">Yes</option>
                         <option value="No">No</option>
                       </select>
