@@ -78,6 +78,8 @@ export type OrderFormData = {
   yardMiles: string | number;
   yardShipping: string;
   yardCost: string;
+  yardCharge: string;
+  yardChangedAmount: string;
   yardtotalBuy: string | number;
   pictureStatus: string;
   pictureUrl: string;
@@ -462,6 +464,8 @@ const OrderDetails = () => {
             handlingYardPrice: yard.yardHandlingFee?.toString() || "",
             processingYardPrice: yard.yardProcessingFee?.toString() || "",
             coreYardPrice: yard.yardCorePrice?.toString() || "",
+            yardCharge: yard.yardCharge || "",
+            yardChangedAmount: yard.yardChangedAmount || "",
             customerNotes: customerNotesArray,
             yardNotes: yardNotesArray,
             invoiceSentAt: data.invoiceSentAt
@@ -653,6 +657,8 @@ const OrderDetails = () => {
     yardShipping: "",
     yardCost: "",
     yardtotalBuy: "",
+    yardCharge: "",
+    yardChangedAmount: "",
     pictureStatus: "",
     pictureUrl: "",
     carrierName: "",
@@ -759,7 +765,7 @@ const OrderDetails = () => {
     if (!loadingOrder) {
       const newVisibleFields = { ...visiblePriceFields };
 
-      let shouldUpdate = false; 
+      let shouldUpdate = false;
       // Check each product individually for additional price fields
       formData.products.forEach((product, index) => {
         if (!newVisibleFields[index]) {
@@ -797,8 +803,8 @@ const OrderDetails = () => {
           shouldUpdate = true;
         }
       });
-      if (shouldUpdate){
-          setVisiblePriceFields(newVisibleFields);
+      if (shouldUpdate) {
+        setVisiblePriceFields(newVisibleFields);
       }
     }
   }, [loadingOrder]);
@@ -847,6 +853,8 @@ const OrderDetails = () => {
       yardShipping: "",
       yardCost: "",
       yardtotalBuy: "",
+      yardCharge: "",
+      yardChangedAmount: "",
     }));
   };
 
@@ -2686,64 +2694,80 @@ const OrderDetails = () => {
         }));
 
         // If we have an orderId, update database
-      if (orderId && orderId !== "create" && orderId !== "new") {
-        await updateOrderWithPicture(orderId, "Yes", s3Key);
+        if (orderId && orderId !== "create" && orderId !== "new") {
+          await updateOrderWithPicture(orderId, "Yes", s3Key);
+        }
+        addCustomerNote(
+          `Picture Uploaded – ${uploadedPicture.name} sent to customer.`,
+          "By Agent"
+        );
+        toast.success("Picture uploaded successfully!");
+      } catch (error) {
+        console.error("Error uploading picture:", error);
+        toast.error("failed to uplaod picture !");
       }
-      addCustomerNote(
-        `Picture Uploaded – ${uploadedPicture.name} sent to customer.`,
-        "By Agent"
-      );
-      toast.success("Picture uploaded successfully!");
-    } catch(error) {
-      console.error("Error uploading picture:", error);
-      toast.error("failed to uplaod picture !")
-    } 
-  return;
-  }
-    if (uploadedPicture && formData.pictureUrl && orderId && orderId !== "create" && orderId !== "new") {
-          try { 
-            // Upload new picture to backend
-              const formDataToSend = new FormData();
-              formDataToSend.append("file", uploadedPicture);
-            
-            const res = await fetch(`${API_URL}/upload-single`, {
-              method: "POST",
-                body: formDataToSend,
-              });
-              const data = await res.json();
-              const s3Key = data.file.key;
-
-              // Update form data with new picture information
-              setFormData((prev) => ({
-              ...prev,
-              pictureUrl: s3Key,
-                pictureStatus: "Yes",
-              }));
-
-            // Update database with new picture
-              await updateOrderWithPicture(orderId, "Yes", s3Key);
-              addCustomerNote(
-                `Picture Updated – ${uploadedPicture.name} sent to customer.`,
-                "By Agent"
-              );
-              toast.success("Picture updated successfully!");
-            } catch(error) {
-              console.error("Error updating picture:", error);
-              toast.error("Failed to update picture!");
-            } 
-            return;
-  }
-  
-  // Handle case where we have an orderId and picture but no upload
-  if (orderId && orderId !== "create" && orderId !== "new" && formData.pictureUrl) {
-    try {
-      await updateOrderWithPicture(orderId, formData.pictureStatus, formData.pictureUrl);
-      toast.success("Picture status updated!");
-    } catch (error) {
-      console.error("Error updating picture status:", error);
-      toast.error("Failed to update picture status");
+      return;
     }
-  } };
+    if (
+      uploadedPicture &&
+      formData.pictureUrl &&
+      orderId &&
+      orderId !== "create" &&
+      orderId !== "new"
+    ) {
+      try {
+        // Upload new picture to backend
+        const formDataToSend = new FormData();
+        formDataToSend.append("file", uploadedPicture);
+
+        const res = await fetch(`${API_URL}/upload-single`, {
+          method: "POST",
+          body: formDataToSend,
+        });
+        const data = await res.json();
+        const s3Key = data.file.key;
+
+        // Update form data with new picture information
+        setFormData((prev) => ({
+          ...prev,
+          pictureUrl: s3Key,
+          pictureStatus: "Yes",
+        }));
+
+        // Update database with new picture
+        await updateOrderWithPicture(orderId, "Yes", s3Key);
+        addCustomerNote(
+          `Picture Updated – ${uploadedPicture.name} sent to customer.`,
+          "By Agent"
+        );
+        toast.success("Picture updated successfully!");
+      } catch (error) {
+        console.error("Error updating picture:", error);
+        toast.error("Failed to update picture!");
+      }
+      return;
+    }
+
+    // Handle case where we have an orderId and picture but no upload
+    if (
+      orderId &&
+      orderId !== "create" &&
+      orderId !== "new" &&
+      formData.pictureUrl
+    ) {
+      try {
+        await updateOrderWithPicture(
+          orderId,
+          formData.pictureStatus,
+          formData.pictureUrl
+        );
+        toast.success("Picture status updated!");
+      } catch (error) {
+        console.error("Error updating picture status:", error);
+        toast.error("Failed to update picture status");
+      }
+    }
+  };
 
   // Initialize a base note once
   const initRef = useRef(false);
@@ -4797,6 +4821,8 @@ const OrderDetails = () => {
                       yardMiles: formData.yardMiles,
                       yardShipping: formData.yardShipping,
                       yardCost: formData.yardCost,
+                      yardCharge: formData.yardCharge,
+                      yardChangedAmount: formData.yardChangedAmount,
                       yardtotalBuy:
                         formData.yardCost +
                         formData.yardPrice +

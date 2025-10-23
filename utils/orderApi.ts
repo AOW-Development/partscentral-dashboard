@@ -241,6 +241,8 @@ export const createOrderFromAdmin = async (
         yardHandlingFee: formData.handlingYardPrice || 0,
         yardProcessingFee: formData.processingYardPrice || 0,
         yardCorePrice: formData.coreYardPrice || 0,
+        yardCharge: formData.yardCharge || "No",
+        yardChangedAmount: formData.yardChangedAmount || 0,
         ...(formData.yardShipping === "Own Shipping" && formData.ownShippingInfo
           ? { yardOwnShippingInfo: formData.ownShippingInfo }
           : {}),
