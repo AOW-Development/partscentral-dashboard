@@ -31,6 +31,8 @@ export type ProductFormData = {
   productVariants?: GroupedVariant[];
   selectedSubpart?: GroupedVariant | null;
   selectedMileage?: string;
+  vinNumber?: string;
+  notes?: string;
 };
 export type OrderFormData = {
   products: ProductFormData[];
@@ -115,7 +117,10 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { URL } from "@/utils/imageUrl";
 import { createOrderFromAdmin, getOrderById } from "@/utils/orderApi";
-import { updateOrderFromAdmin, updateOrderWithPicture } from "@/utils/updateOrderApi";
+import {
+  updateOrderFromAdmin,
+  updateOrderWithPicture,
+} from "@/utils/updateOrderApi";
 import { getCardType, isValidCardNumber } from "@/utils/cardValidator";
 import { MAKES, MODELS } from "@/vehicleData-dashboard";
 import { fetchYears } from "@/utils/vehicleApi";
@@ -146,7 +151,7 @@ const mapPrismaEnumToWarranty = (enumValue: string): string => {
       return "";
   }
 };
-const API_URL = process.env.NEXT_PUBLIC_API_URL 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 // Import the PreviousYard type from YardInfo
 type PreviousYard = {
   yardName: string;
@@ -185,12 +190,18 @@ const OrderDetails = () => {
   const orderId = params.id as string;
   const lastVariantKeys = useRef<{ [index: number]: string }>({});
   const [loadingOrder, setLoadingOrder] = useState(true);
+  const [loader, setLoader] = useState(true);
   const [grossProfit, setGrossProfit] = useState(0);
   const [showAlternateMobileNumber, setShowAlternateMobileNumber] =
     useState(false);
   const [showProblematicModal, setShowProblematicModal] = useState(false);
   const [showOrderCategoryDropdown, setShowOrderCategoryDropdown] =
     useState(false);
+  useEffect(() => {
+    setTimeout(() => {
+      setLoader(false);
+    }, 1500);
+  }, []);
 
   // Payment entries state for dynamic payment fields (only MerchantInfo fields)
   const [paymentEntries, setPaymentEntries] = useState([
@@ -206,7 +217,6 @@ const OrderDetails = () => {
     },
   ]);
 
-  
   // Note: Payment entries are loaded separately and don't override main form card details
 
   useEffect(() => {
@@ -313,6 +323,8 @@ const OrderDetails = () => {
                     productVariants: [],
                     selectedSubpart: null,
                     selectedMileage: "",
+                    vinNumber: String(item.vinNumber || ""),
+                    notes: String(item.notes || ""),
                   };
                 })
               : data.totalAmount && data.totalAmount > 0
@@ -336,6 +348,8 @@ const OrderDetails = () => {
                     productVariants: [],
                     selectedSubpart: null,
                     selectedMileage: "",
+                    vinNumber: "",
+                    notes: "",
                   },
                 ]
               : formData.products; // Keep existing products if no data available
@@ -367,8 +381,8 @@ const OrderDetails = () => {
 
             // Customer info
             customerName: data.customer?.full_name || "",
-            email: billing.email || "",
-            mobile: billing.phone || "",
+            email: billing.email || data.customer?.email || "",
+            mobile: billing.phone || data.customer?.phone || "",
             alternateMobile: data.customer?.alternativePhone || "",
 
             // Pricing
@@ -479,10 +493,10 @@ const OrderDetails = () => {
             orderCategoryStatus: data.orderCategoryStatus || "",
             problematicIssueType: data.problematicIssueType || "",
           };
-          
-          if(formDataInitializedRef.current !== orderId) {
-          setFormData(newFormData);
-          formDataInitializedRef.current = orderId;
+
+          if (formDataInitializedRef.current !== orderId) {
+            setFormData(newFormData);
+            formDataInitializedRef.current = orderId;
           }
           console.log("formData after loading order:", formData);
 
@@ -544,13 +558,14 @@ const OrderDetails = () => {
             productVariants: [],
             selectedSubpart: null,
             selectedMileage: "",
+            vinNumber: "",
+            notes: "",
           },
         ],
       }));
       setLoadingOrder(false);
     }
   }, [orderId]); // State for product variants
-
 
   // Per-product loading state for variants
   const [isLoadingVariants, setIsLoadingVariants] = useState<{
@@ -592,6 +607,8 @@ const OrderDetails = () => {
         productVariants: [],
         selectedSubpart: null,
         selectedMileage: "",
+        vinNumber: "",
+        notes: "",
       },
     ],
     customerName: "",
@@ -669,31 +686,33 @@ const OrderDetails = () => {
     problematicIssueType: "",
   });
 
-  
-    useEffect(() => {
-      if (formData.pictureUrl) {
-    // Instead of direct URL, fetch the presigned URL from backend
-    const fetchPresignedUrl = async () => {
-      try {
-        const response = await fetch(`${API_URL}/presigned-url/${encodeURIComponent(formData.pictureUrl)}`);
-        const data = await response.json();
-        if (data.url) {
-          setImagePreviewUrl(data.url);
-        } else {
+  useEffect(() => {
+    if (formData.pictureUrl) {
+      // Instead of direct URL, fetch the presigned URL from backend
+      const fetchPresignedUrl = async () => {
+        try {
+          const response = await fetch(
+            `${API_URL}/presigned-url/${encodeURIComponent(
+              formData.pictureUrl
+            )}`
+          );
+          const data = await response.json();
+          if (data.url) {
+            setImagePreviewUrl(data.url);
+          } else {
+            setImagePreviewUrl(formData.pictureUrl);
+          }
+        } catch (error) {
+          console.log("Failed to get presigned URL, using direct:", error);
           setImagePreviewUrl(formData.pictureUrl);
         }
-      } catch (error) {
-        console.log("Failed to get presigned URL, using direct:", error);
-        setImagePreviewUrl(formData.pictureUrl);
-      }
-    };
-    
-    fetchPresignedUrl();
-  }
-       else {
-        setImagePreviewUrl(null);
-      }
-    }, [formData.pictureUrl]);
+      };
+
+      fetchPresignedUrl();
+    } else {
+      setImagePreviewUrl(null);
+    }
+  }, [formData.pictureUrl]);
 
   // Auto-show alternate mobile field if data exists
   useEffect(() => {
@@ -1188,6 +1207,8 @@ const OrderDetails = () => {
           productVariants: [],
           selectedSubpart: null,
           selectedMileage: "",
+          vinNumber: "",
+          notes: "",
         },
       ],
     }));
@@ -1296,33 +1317,18 @@ const OrderDetails = () => {
         (v) => v.miles === selectedMiles
       );
       if (variant) {
-        // Exact match found, use that SKU/price
+        // Exact match found from dropdown selection, use that SKU/price
         handleProductInputChange(index, "variantSku", variant.sku);
         handleProductInputChange(
           index,
           "partPrice",
           variant.discountedPrice?.toString() || variant.actualprice.toString()
         );
-      } else if (product.selectedSubpart.variants.length > 0) {
-        // No exact match: use first variant for SKU/price, but keep custom miles
-        const fallbackVariant = product.selectedSubpart.variants[0];
-        handleProductInputChange(index, "variantSku", fallbackVariant.sku);
-        handleProductInputChange(
-          index,
-          "partPrice",
-          fallbackVariant.discountedPrice?.toString() ||
-            fallbackVariant.actualprice.toString()
-        );
-      } else {
-        // No variants at all, clear SKU/price
-        handleProductInputChange(index, "variantSku", "");
-        handleProductInputChange(index, "partPrice", "");
       }
-    } else {
-      // No subpart selected, clear SKU/price
-      handleProductInputChange(index, "variantSku", "");
-      handleProductInputChange(index, "partPrice", "");
+      // If no exact match, don't update price - allow manual entry
+      // This prevents price from changing when user types custom mileage
     }
+    // If no subpart selected, don't clear existing price - preserve manual entries
   };
 
   // Handle specification selection
@@ -1671,7 +1677,7 @@ const OrderDetails = () => {
     setPaymentEntries((prevEntries) => [
       ...prevEntries,
       {
-        id: Date.now(), // Use timestamp as unique ID
+        id: Date.now(), // Use timestamp as temporary ID (negative to avoid DB ID conflicts)
         merchantMethod: "",
         totalPrice: "",
         approvalCode: "",
@@ -1892,6 +1898,8 @@ const OrderDetails = () => {
   // };
   const [invoiceDate, setInvoiceData] = useState(false);
   const [poDate, setPoData] = useState(false);
+  const [isLoadingInvoice, setIsLoadingInvoice] = useState(false);
+  const [isLoadingPo, setIsLoadingPo] = useState(false);
   // Send invoice function
   const handleSendInvoice = async () => {
     // if (!validateAllFields()) {
@@ -1899,7 +1907,7 @@ const OrderDetails = () => {
     //   return;
     // }
 
-    setIsLoading(true);
+    setIsLoadingInvoice(true);
     setMessage(null);
     // toast.success("Invoice sent successfully! Check the email for the invoice.");
     setInvoiceData(true);
@@ -2031,7 +2039,7 @@ const OrderDetails = () => {
           : "Failed to send invoice. Please try again."
       );
     } finally {
-      setIsLoading(false);
+      setIsLoadingInvoice(false);
     }
   };
   const handleSendPO = async () => {
@@ -2040,7 +2048,7 @@ const OrderDetails = () => {
     //   return;
     // }
 
-    setIsLoading(true);
+    setIsLoadingPo(true);
     setMessage(null);
     setPoData(true);
     TIME1 = new Date();
@@ -2164,7 +2172,7 @@ const OrderDetails = () => {
           : "Failed to send PO. Please try again."
       );
     } finally {
-      setIsLoading(false);
+      setIsLoadingPo(false);
     }
   };
   const handleSave = async () => {
@@ -2196,6 +2204,8 @@ const OrderDetails = () => {
           quantity: item.quantity || 1,
           milesPromised: item.milesPromised,
           specification: item.specification,
+          vinNumber: item.vinNumber || "",
+          notes: item.notes || "",
           // pictureUrl: item.pictureUrl || "",
           // pictureStatus: item.pictureStatus || "PENDING",
         }))
@@ -2237,8 +2247,12 @@ const OrderDetails = () => {
         paymentEntries,
         previousYards
       );
-      if(formData.pictureStatus || formData.pictureUrl){
-        await updateOrderWithPicture(orderId, formData.pictureStatus , formData.pictureUrl );
+      if (formData.pictureStatus || formData.pictureUrl) {
+        await updateOrderWithPicture(
+          orderId,
+          formData.pictureStatus,
+          formData.pictureUrl
+        );
       }
       toast.success("Order updated successfully");
       setIsProcessing(false);
@@ -2271,7 +2285,7 @@ const OrderDetails = () => {
     try {
       // Auto-process uploaded picture if it exists and hasn't been processed yet
       if (uploadedPicture && !formData.pictureUrl) {
-       // Upload to backend
+        // Upload to backend
         const formDataData = new FormData();
         formDataData.append("file", uploadedPicture);
 
@@ -2306,6 +2320,8 @@ const OrderDetails = () => {
           // warranty: item.warranty,
           milesPromised: item.milesPromised,
           specification: item.specification,
+          vinNumber: item.vinNumber || "",
+          notes: item.notes || "",
           // pictureUrl: item.pictureUrl || "",
           // pictureStatus: item.pictureStatus || "PENDING",
         }))
@@ -2622,58 +2638,69 @@ const OrderDetails = () => {
   };
 
   const handleSendPicture = async () => {
-
-     // If there's no uploaded picture selected but pictureUrl exists, just update status
-  if (!uploadedPicture && formData.pictureUrl && orderId && orderId !== "create" && orderId !== "new") {
-    setFormData((prev) => ({
-      ...prev,
-      pictureStatus: "Yes"
-    }));
-    try {
-      await updateOrderWithPicture(orderId, "Yes", formData.pictureUrl);
-      toast.success("Picture status updated!");
-    } catch (error) {
-      console.error("Error updating picture status:", error);
-      toast.error("Failed to update picture status");
-    }
-    return;
-  }
-
-    if (uploadedPicture && (!formData.pictureUrl || !orderId || orderId === "create" || orderId === "new")) {
-    try { 
-      // Upload to backend
-      const formDataToSend = new FormData();
-      formDataToSend.append("file", uploadedPicture);
-     
-      const res = await fetch(`${API_URL}/upload-single`, {
-        method: "POST",
-        body: formDataToSend,
-      });
-      const data =await res.json() ;
-      const s3Key = data.file.key;
-
-      // Update form data with picture information
+    // If there's no uploaded picture selected but pictureUrl exists, just update status
+    if (
+      !uploadedPicture &&
+      formData.pictureUrl &&
+      orderId &&
+      orderId !== "create" &&
+      orderId !== "new"
+    ) {
       setFormData((prev) => ({
         ...prev,
-        pictureUrl: s3Key,
         pictureStatus: "Yes",
       }));
+      try {
+        await updateOrderWithPicture(orderId, "Yes", formData.pictureUrl);
+        toast.success("Picture status updated!");
+      } catch (error) {
+        console.error("Error updating picture status:", error);
+        toast.error("Failed to update picture status");
+      }
+      return;
+    }
+
+    if (
+      uploadedPicture &&
+      (!formData.pictureUrl ||
+        !orderId ||
+        orderId === "create" ||
+        orderId === "new")
+    ) {
+      try {
+        // Upload to backend
+        const formDataToSend = new FormData();
+        formDataToSend.append("file", uploadedPicture);
+
+        const res = await fetch(`${API_URL}/upload-single`, {
+          method: "POST",
+          body: formDataToSend,
+        });
+        const data = await res.json();
+        const s3Key = data.file.key;
+
+        // Update form data with picture information
+        setFormData((prev) => ({
+          ...prev,
+          pictureUrl: s3Key,
+          pictureStatus: "Yes",
+        }));
 
         // If we have an orderId, update database
-      if (orderId && orderId !== "create" && orderId !== "new") {
-        await updateOrderWithPicture(orderId, "Yes", s3Key);
+        if (orderId && orderId !== "create" && orderId !== "new") {
+          await updateOrderWithPicture(orderId, "Yes", s3Key);
+        }
+        addCustomerNote(
+          `Picture Uploaded – ${uploadedPicture.name} sent to customer.`,
+          "By Agent"
+        );
+        toast.success("Picture uploaded successfully!");
+      } catch (error) {
+        console.error("Error uploading picture:", error);
+        toast.error("failed to uplaod picture !");
       }
-      addCustomerNote(
-        `Picture Uploaded – ${uploadedPicture.name} sent to customer.`,
-        "By Agent"
-      );
-      toast.success("Picture uploaded successfully!");
-    } catch(error) {
-      console.error("Error uploading picture:", error);
-      toast.error("failed to uplaod picture !")
-    } 
-  return;
-  }
+      return;
+    }
     // else if(!uploadedPicture && formData.pictureUrl){
     //   setFormData((prev)=>({
     //     ...prev,
@@ -2691,17 +2718,27 @@ const OrderDetails = () => {
     //    addCustomerNote("Picture – No file selected.", "By Agent");
     //    await updateOrderWithPicture(orderId, "No", "");
     // }
-  
-  // Handle case where we have an orderId and picture but no upload
-  if (orderId && orderId !== "create" && orderId !== "new" && formData.pictureUrl) {
-    try {
-      await updateOrderWithPicture(orderId, formData.pictureStatus, formData.pictureUrl);
-      toast.success("Picture status updated!");
-    } catch (error) {
-      console.error("Error updating picture status:", error);
-      toast.error("Failed to update picture status");
+
+    // Handle case where we have an orderId and picture but no upload
+    if (
+      orderId &&
+      orderId !== "create" &&
+      orderId !== "new" &&
+      formData.pictureUrl
+    ) {
+      try {
+        await updateOrderWithPicture(
+          orderId,
+          formData.pictureStatus,
+          formData.pictureUrl
+        );
+        toast.success("Picture status updated!");
+      } catch (error) {
+        console.error("Error updating picture status:", error);
+        toast.error("Failed to update picture status");
+      }
     }
-  } };
+  };
 
   // Initialize a base note once
   const initRef = useRef(false);
@@ -2811,1698 +2848,1780 @@ const OrderDetails = () => {
           <Header />
           <main className="pt-[60px] lg:pt-[40px] min-h-screen px-4 md:px-8">
             {/* Header with breadcrumb and close button */}
-            <div className="flex items-center justify-between mb-20">
-              <div className="flex items-center gap-2 text-sm">
-                <button
-                  onClick={() => handleNavigation("/orders")}
-                  className="text-white/60 hover:text-white"
-                >
-                  <span>Orders</span>
-                </button>
-                <span className="text-white/60">›</span>
-                <span className="text-white">Order Details</span>
-              </div>
-              <button
-                onClick={() => handleNavigation("/orders")}
-                className="text-white/60 hover:text-white"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Message Display */}
-            {message && (
-              <div
-                className={`mb-10 p-4 rounded-lg ${
-                  message.type === "success"
-                    ? "bg-green-500/20 border border-green-500 text-green-400"
-                    : "bg-red-500/20 border border-red-500 text-red-400"
-                }`}
-              >
-                {message.text}
-              </div>
-            )}
-
-            {/* Customer Profile Section */}
-            <div className="bg-[#0a1929] rounded-lg p-6 mb-6">
-              <div className="grid grid-cols-1 md:flex items-center justify-between mb-4">
-                <div className="relative flex items-center gap-4">
-                  <div className="absolute top-[-60px] md:left-5 rounded-full bg-gradient-to-br from-pink-400 to-orange-400 flex items-center justify-center">
-                    <Image
-                      src={URL + "dummyImg.png"}
-                      alt="Customer"
-                      width={120}
-                      height={120}
-                      className="rounded-full object-cover"
-                    />
-                    <label className="absolute bottom-0 right-0 bg-blue-600 rounded-full p-1 cursor-pointer">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          if (e.target.files && e.target.files[0]) {
-                            setUploadedPicture(e.target.files[0]);
-                          }
-                        }}
-                      />
-                      <svg
-                        width="18"
-                        height="18"
-                        fill="currentColor"
-                        className="text-white"
-                      >
-                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-                      </svg>
-                    </label>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-1 gap-2 mt-20">
-                    <input
-                      type="text"
-                      className="md:text-xl font-semibold text-white bg-transparent border-b border-gray-600 focus:outline-none focus:border-blue-500"
-                      placeholder="Customer Name"
-                      value={formData.customerName}
-                      onChange={(e) =>
-                        handleInputChange("customerName", e.target.value)
-                      }
-                    />
-                    <input
-                      type="text"
-                      className="text-white/60 bg-transparent border-b border-gray-600 focus:outline-none focus:border-blue-500 mt-20 md:mt-0"
-                      placeholder="Order Number"
-                      value={formData.id}
-                      onChange={(e) => handleInputChange("id", e.target.value)}
-                    />
-                  </div>
+            {loader ? (
+              <div className="flex items-center justify-center min-h-[calc(100vh-100px)]">
+                <div className="text-center">
+                  <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mb-4"></div>
+                  <p className="text-white/60 text-lg">
+                    Loading order details...
+                  </p>
                 </div>
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between mt-2 gap-3">
-                  <h2 className="text-white mr-10 mb-10 mt-10">
-                    Gross Profit: ${grossProfit.toFixed(2)}
-                  </h2>
-                  <input
-                    type="date"
-                    className="text-white/60 text-sm bg-transparent border-b border-gray-600 focus:outline-none focus:border-blue-500"
-                    placeholder="Date"
-                    value={formData.date}
-                    onChange={(e) => handleInputChange("date", e.target.value)}
-                  />
-                  <select
-                    className={`bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-medium focus:outline-none`}
-                    value={formData.source}
-                    onChange={(e) =>
-                      handleInputChange("source", e.target.value)
-                    }
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-20">
+                  <div className="flex items-center gap-2 text-sm">
+                    <button
+                      onClick={() => handleNavigation("/orders")}
+                      className="text-white/60 hover:text-white"
+                    >
+                      <span>Orders</span>
+                    </button>
+                    <span className="text-white/60">›</span>
+                    <span className="text-white">Order Details</span>
+                  </div>
+                  <button
+                    onClick={() => handleNavigation("/orders")}
+                    className="text-white/60 hover:text-white"
                   >
-                    <option value="">Source</option>
-                    <option value="Inbound Call">Inbound Call</option>
-                    <option value="meta ads">Meta Ads</option>
-                    <option value="meta organic">Meta Organic</option>
-                    <option value="ucpc google ads">UCPC G Ads</option>
-                    <option value="ucpc organic">UCPC Organic</option>
-                    <option value="upr google ads">UPR G Ads</option>
-                    <option value="upr organic">UPR Organic</option>
-                    <option value="uap google ads">UAP G Ads</option>
-                    <option value="uap organic">UAP Organic</option>
-                    <option value="ap google ads">AP G Ads</option>
-                    <option value="ap organic">AP Organic</option>
-                  </select>
-                  <select
-                    className={`bg-gray-500 text-white px-3 py-1 rounded-full text-xs font-medium focus:outline-none`}
-                    value={formData.status}
-                    onChange={(e) =>
-                      handleInputChange("status", e.target.value)
-                    }
-                  >
-                    <option value="order created">Order Created</option>
-                    <option value="invoice sent">Invoice Sent</option>
-                    <option value="invoice confirmed">Invoice Confirmed</option>
-                    <option value="unpaid">Unpaid</option>
-                    <option value="PAID">Paid</option>
-                    <option value="balance due">Balance Due</option>
-                    <option value="yard located">Yard Located</option>
-                    <option value="po sent">PO Sent</option>
-                    <option value="po confirmed">PO Confirmed</option>
-                    <option value="picture sent">Picture Sent</option>
-                    <option value="tracking sent">Tracking Sent</option>
-                    <option value="get w/d">Get W/D</option>
-                    <option value="create bol">Create BOL</option>
-                    <option value="send bol">Send BOL</option>
-                    <option value="confirm bol">Confirm BOL</option>
-                    <option value="cx picked the part">
-                      CX Picked the part
-                    </option>
-                    <option value="delivery appointment done">
-                      Delivery Appointment done
-                    </option>
-                    <option value="transit">transit</option>
-                    <option value="DELIVERED">Delivered</option>
-                    <option value="CANCELLED">Cancelled</option>
-                    <option value="REFUNDED">Refunded</option>
-                    <option value="send po">Send PO</option>
-                    <option value="need to refund">Need to Refund</option>
-                    <option value="re-quote">Re-Quote</option>
-                    <option value="relocate">Relocate</option>
-                    <option value="wwex tracking">WWEX Tracking</option>
-                    <option value="yard payment">Yard Payment</option>
-                    <option value="locate yard">Locate Yard</option>
-                    <option value="declined-cx">Declined-CX</option>
-                    <option value="chargeback">ChargeBack</option>
-                    <option value="problematic order">Problematic Order</option>
-                  </select>
-                  {/* Order Category Status */}
-                  <div className="relative">
-                    <div className="flex items-center gap-2">
-                      <div className="relative">
-                        {/* Custom Dropdown Button */}
-                        <button
-                          className={`bg-gray-500 text-white px-3 py-1 rounded-full text-xs font-medium focus:outline-none flex items-center gap-1`}
-                          onClick={() =>
-                            setShowOrderCategoryDropdown(
-                              !showOrderCategoryDropdown
-                            )
-                          }
-                          onMouseLeave={() => {
-                            setShowOrderCategoryDropdown(false);
-                            setShowProblematicModal(false);
-                          }}
-                        >
-                          {formData.orderCategoryStatus ===
-                            "Problematic Issues" &&
-                          formData.problematicIssueType
-                            ? formData.problematicIssueType
-                            : formData.orderCategoryStatus || "Order Category"}
-                          <svg
-                            className={`w-3 h-3 transition-transform ${
-                              showOrderCategoryDropdown ? "rotate-180" : ""
-                            }`}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 9l-7 7-7-7"
-                            />
-                          </svg>
-                        </button>
+                    <X size={20} />
+                  </button>
+                </div>
 
-                        {/* Custom Dropdown Options */}
-                        {showOrderCategoryDropdown && (
-                          <div
-                            className="absolute top-full left-[-50px] mt-0 bg-gray-700 border border-gray-600 rounded-lg shadow-lg z-50 min-w-[160px]"
-                            onMouseEnter={() =>
-                              setShowOrderCategoryDropdown(true)
-                            }
-                            onMouseLeave={() =>
-                              setShowOrderCategoryDropdown(false)
-                            }
+                {/* Message Display */}
+                {message && (
+                  <div
+                    className={`mb-10 p-4 rounded-lg ${
+                      message.type === "success"
+                        ? "bg-green-500/20 border border-green-500 text-green-400"
+                        : "bg-red-500/20 border border-red-500 text-red-400"
+                    }`}
+                  >
+                    {message.text}
+                  </div>
+                )}
+
+                {/* Customer Profile Section */}
+                <div className="bg-[#0a1929] rounded-lg p-6 mb-6">
+                  <div className="grid grid-cols-1 md:flex items-center justify-between mb-4">
+                    <div className="relative flex items-center gap-4">
+                      <div className="absolute top-[-60px] md:left-5 rounded-full bg-gradient-to-br from-pink-400 to-orange-400 flex items-center justify-center">
+                        <Image
+                          src={URL + "dummyImg.png"}
+                          alt="Customer"
+                          width={120}
+                          height={120}
+                          className="rounded-full object-cover"
+                        />
+                        <label className="absolute bottom-0 right-0 bg-blue-600 rounded-full p-1 cursor-pointer">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files[0]) {
+                                setUploadedPicture(e.target.files[0]);
+                              }
+                            }}
+                          />
+                          <svg
+                            width="18"
+                            height="18"
+                            fill="currentColor"
+                            className="text-white"
                           >
-                            <div className="py-2">
-                              <button
-                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors"
-                                onClick={() => {
-                                  handleInputChange("orderCategoryStatus", "");
-                                  setShowOrderCategoryDropdown(false);
-                                }}
+                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                          </svg>
+                        </label>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-1 gap-2 mt-20">
+                        <input
+                          type="text"
+                          className="md:text-xl font-semibold text-white bg-transparent border-b border-gray-600 focus:outline-none focus:border-blue-500"
+                          placeholder="Customer Name"
+                          value={formData.customerName}
+                          onChange={(e) =>
+                            handleInputChange("customerName", e.target.value)
+                          }
+                        />
+                        <input
+                          type="text"
+                          className="text-white/60 bg-transparent border-b border-gray-600 focus:outline-none focus:border-blue-500 mt-20 md:mt-0"
+                          placeholder="Order Number"
+                          value={formData.id}
+                          onChange={(e) =>
+                            handleInputChange("id", e.target.value)
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between mt-2 gap-3">
+                      <h2 className="text-white mr-10 mb-10 mt-10">
+                        Gross Profit: ${grossProfit.toFixed(2)}
+                      </h2>
+                      <input
+                        type="date"
+                        className="text-white/60 text-sm bg-transparent border-b border-gray-600 focus:outline-none focus:border-blue-500"
+                        placeholder="Date"
+                        value={formData.date}
+                        onChange={(e) =>
+                          handleInputChange("date", e.target.value)
+                        }
+                      />
+                      <select
+                        className={`bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-medium focus:outline-none`}
+                        value={formData.source}
+                        onChange={(e) =>
+                          handleInputChange("source", e.target.value)
+                        }
+                      >
+                        <option value="">Source</option>
+                        <option value="Inbound Call">Inbound Call</option>
+                        <option value="meta ads">Meta Ads</option>
+                        <option value="meta organic">Meta Organic</option>
+                        <option value="ucpc google ads">UCPC G Ads</option>
+                        <option value="ucpc organic">UCPC Organic</option>
+                        <option value="upr google ads">UPR G Ads</option>
+                        <option value="upr organic">UPR Organic</option>
+                        <option value="uap google ads">UAP G Ads</option>
+                        <option value="uap organic">UAP Organic</option>
+                        <option value="ap google ads">AP G Ads</option>
+                        <option value="ap organic">AP Organic</option>
+                      </select>
+                      <select
+                        className={`bg-gray-500 text-white px-3 py-1 rounded-full text-xs font-medium focus:outline-none`}
+                        value={formData.status}
+                        onChange={(e) =>
+                          handleInputChange("status", e.target.value)
+                        }
+                      >
+                        <option value="order created">Order Created</option>
+                        <option value="invoice sent">Invoice Sent</option>
+                        <option value="invoice confirmed">
+                          Invoice Confirmed
+                        </option>
+                        <option value="unpaid">Unpaid</option>
+                        <option value="PAID">Paid</option>
+                        <option value="balance due">Balance Due</option>
+                        <option value="yard located">Yard Located</option>
+                        <option value="po sent">PO Sent</option>
+                        <option value="po confirmed">PO Confirmed</option>
+                        <option value="picture sent">Picture Sent</option>
+                        <option value="tracking sent">Tracking Sent</option>
+                        <option value="get w/d">Get W/D</option>
+                        <option value="create bol">Create BOL</option>
+                        <option value="send bol">Send BOL</option>
+                        <option value="confirm bol">Confirm BOL</option>
+                        <option value="cx picked the part">
+                          CX Picked the part
+                        </option>
+                        <option value="delivery appointment done">
+                          Delivery Appointment done
+                        </option>
+                        <option value="transit">transit</option>
+                        <option value="DELIVERED">Delivered</option>
+                        <option value="CANCELLED">Cancelled</option>
+                        <option value="REFUNDED">Refunded</option>
+                        <option value="send po">Send PO</option>
+                        <option value="need to refund">Need to Refund</option>
+                        <option value="re-quote">Re-Quote</option>
+                        <option value="relocate">Relocate</option>
+                        <option value="wwex tracking">WWEX Tracking</option>
+                        <option value="yard payment">Yard Payment</option>
+                        <option value="locate yard">Locate Yard</option>
+                        <option value="declined-cx">Declined-CX</option>
+                        <option value="chargeback">ChargeBack</option>
+                        <option value="problematic order">
+                          Problematic Order
+                        </option>
+                      </select>
+                      {/* Order Category Status */}
+                      <div className="relative">
+                        <div className="flex items-center gap-2">
+                          <div className="relative">
+                            {/* Custom Dropdown Button */}
+                            <button
+                              className={`bg-gray-500 text-white px-3 py-1 rounded-full text-xs font-medium focus:outline-none flex items-center gap-1`}
+                              onClick={() =>
+                                setShowOrderCategoryDropdown(
+                                  !showOrderCategoryDropdown
+                                )
+                              }
+                              onMouseLeave={() => {
+                                setShowOrderCategoryDropdown(false);
+                                setShowProblematicModal(false);
+                              }}
+                            >
+                              {formData.orderCategoryStatus ===
+                                "Problematic Issues" &&
+                              formData.problematicIssueType
+                                ? formData.problematicIssueType
+                                : formData.orderCategoryStatus ||
+                                  "Order Category"}
+                              <svg
+                                className={`w-3 h-3 transition-transform ${
+                                  showOrderCategoryDropdown ? "rotate-180" : ""
+                                }`}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
                               >
-                                Order Category
-                              </button>
-                              <button
-                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors"
-                                onClick={() => {
-                                  handleInputChange(
-                                    "orderCategoryStatus",
-                                    "Priority"
-                                  );
-                                  setShowOrderCategoryDropdown(false);
-                                }}
-                              >
-                                Priority
-                              </button>
-                              <button
-                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors"
-                                onClick={() => {
-                                  handleInputChange(
-                                    "orderCategoryStatus",
-                                    "Escalation Required"
-                                  );
-                                  setShowOrderCategoryDropdown(false);
-                                }}
-                              >
-                                Escalation Required
-                              </button>
-                              <button
-                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors"
-                                onClick={() => {
-                                  handleInputChange(
-                                    "orderCategoryStatus",
-                                    "Chargeback"
-                                  );
-                                  setShowOrderCategoryDropdown(false);
-                                }}
-                              >
-                                Chargeback
-                              </button>
-                              <button
-                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors"
-                                onClick={() => {
-                                  handleInputChange(
-                                    "orderCategoryStatus",
-                                    "Need To Refund"
-                                  );
-                                  setShowOrderCategoryDropdown(false);
-                                }}
-                              >
-                                Need To Refund
-                              </button>
-                              <button
-                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors"
-                                onClick={() => {
-                                  handleInputChange(
-                                    "orderCategoryStatus",
-                                    "Refunded"
-                                  );
-                                  setShowOrderCategoryDropdown(false);
-                                }}
-                              >
-                                Refunded
-                              </button>
-                              <button
-                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors"
-                                onClick={() => {
-                                  handleInputChange(
-                                    "orderCategoryStatus",
-                                    "Yard Refund"
-                                  );
-                                  setShowOrderCategoryDropdown(false);
-                                }}
-                              >
-                                Yard Refund
-                              </button>
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 9l-7 7-7-7"
+                                />
+                              </svg>
+                            </button>
+
+                            {/* Custom Dropdown Options */}
+                            {showOrderCategoryDropdown && (
                               <div
-                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors relative"
+                                className="absolute top-full left-[-50px] mt-0 bg-gray-700 border border-gray-600 rounded-lg shadow-lg z-50 min-w-[160px]"
                                 onMouseEnter={() =>
-                                  setShowProblematicModal(true)
+                                  setShowOrderCategoryDropdown(true)
                                 }
                                 onMouseLeave={() =>
-                                  setShowProblematicModal(false)
+                                  setShowOrderCategoryDropdown(false)
                                 }
-                                onClick={() => {
-                                  handleInputChange(
-                                    "orderCategoryStatus",
-                                    "Problematic Issues"
-                                  );
-                                  setShowOrderCategoryDropdown(false);
-                                }}
                               >
-                                Problematic Issues
-                                {/* Problematic Issues Modal - appears when hovering over this option */}
-                                {showProblematicModal && (
+                                <div className="py-2">
+                                  <button
+                                    className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors"
+                                    onClick={() => {
+                                      handleInputChange(
+                                        "orderCategoryStatus",
+                                        ""
+                                      );
+                                      setShowOrderCategoryDropdown(false);
+                                    }}
+                                  >
+                                    Order Category
+                                  </button>
+                                  <button
+                                    className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors"
+                                    onClick={() => {
+                                      handleInputChange(
+                                        "orderCategoryStatus",
+                                        "Priority"
+                                      );
+                                      setShowOrderCategoryDropdown(false);
+                                    }}
+                                  >
+                                    Priority
+                                  </button>
+                                  <button
+                                    className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors"
+                                    onClick={() => {
+                                      handleInputChange(
+                                        "orderCategoryStatus",
+                                        "Escalation Required"
+                                      );
+                                      setShowOrderCategoryDropdown(false);
+                                    }}
+                                  >
+                                    Escalation Required
+                                  </button>
+                                  <button
+                                    className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors"
+                                    onClick={() => {
+                                      handleInputChange(
+                                        "orderCategoryStatus",
+                                        "Chargeback"
+                                      );
+                                      setShowOrderCategoryDropdown(false);
+                                    }}
+                                  >
+                                    Chargeback
+                                  </button>
+                                  <button
+                                    className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors"
+                                    onClick={() => {
+                                      handleInputChange(
+                                        "orderCategoryStatus",
+                                        "Need To Refund"
+                                      );
+                                      setShowOrderCategoryDropdown(false);
+                                    }}
+                                  >
+                                    Need To Refund
+                                  </button>
+                                  <button
+                                    className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors"
+                                    onClick={() => {
+                                      handleInputChange(
+                                        "orderCategoryStatus",
+                                        "Refunded"
+                                      );
+                                      setShowOrderCategoryDropdown(false);
+                                    }}
+                                  >
+                                    Refunded
+                                  </button>
+                                  <button
+                                    className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors"
+                                    onClick={() => {
+                                      handleInputChange(
+                                        "orderCategoryStatus",
+                                        "Yard Refund"
+                                      );
+                                      setShowOrderCategoryDropdown(false);
+                                    }}
+                                  >
+                                    Yard Refund
+                                  </button>
                                   <div
-                                    className="absolute top-0 -left-[160px] right-[160px] bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-50 min-w-[140px]"
+                                    className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 transition-colors relative"
                                     onMouseEnter={() =>
                                       setShowProblematicModal(true)
                                     }
                                     onMouseLeave={() =>
                                       setShowProblematicModal(false)
                                     }
+                                    onClick={() => {
+                                      handleInputChange(
+                                        "orderCategoryStatus",
+                                        "Problematic Issues"
+                                      );
+                                      setShowOrderCategoryDropdown(false);
+                                    }}
                                   >
-                                    <div className="py-2">
-                                      <button
-                                        className={`w-full text-left px-3 py-3 text-sm hover:bg-blue-600 transition-colors ${
-                                          formData.problematicIssueType ===
-                                          "Damaged Product"
-                                            ? "bg-blue-600 text-white"
-                                            : "text-white hover:bg-blue-600"
-                                        }`}
-                                        onClick={() => {
-                                          // Add delay before selection
-                                          setTimeout(() => {
-                                            handleInputChange(
-                                              "problematicIssueType",
+                                    Problematic Issues
+                                    {/* Problematic Issues Modal - appears when hovering over this option */}
+                                    {showProblematicModal && (
+                                      <div
+                                        className="absolute top-0 -left-[160px] right-[160px] bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-50 min-w-[140px]"
+                                        onMouseEnter={() =>
+                                          setShowProblematicModal(true)
+                                        }
+                                        onMouseLeave={() =>
+                                          setShowProblematicModal(false)
+                                        }
+                                      >
+                                        <div className="py-2">
+                                          <button
+                                            className={`w-full text-left px-3 py-3 text-sm hover:bg-blue-600 transition-colors ${
+                                              formData.problematicIssueType ===
                                               "Damaged Product"
-                                            );
-                                            handleInputChange(
-                                              "orderCategoryStatus",
-                                              "Problematic Issues"
-                                            );
-                                            setShowProblematicModal(false);
-                                            setShowOrderCategoryDropdown(false);
-                                          }, 300);
-                                        }}
-                                      >
-                                        Damaged Product
-                                      </button>
-                                      <button
-                                        className={`w-full text-left px-4 py-3 text-sm hover:bg-blue-600 transition-colors ${
-                                          formData.problematicIssueType ===
-                                          "Defective Product"
-                                            ? "bg-blue-600 text-white"
-                                            : "text-white hover:bg-blue-600"
-                                        }`}
-                                        onClick={() => {
-                                          // Add delay before selection
-                                          setTimeout(() => {
-                                            handleInputChange(
-                                              "problematicIssueType",
+                                                ? "bg-blue-600 text-white"
+                                                : "text-white hover:bg-blue-600"
+                                            }`}
+                                            onClick={() => {
+                                              // Add delay before selection
+                                              setTimeout(() => {
+                                                handleInputChange(
+                                                  "problematicIssueType",
+                                                  "Damaged Product"
+                                                );
+                                                handleInputChange(
+                                                  "orderCategoryStatus",
+                                                  "Problematic Issues"
+                                                );
+                                                setShowProblematicModal(false);
+                                                setShowOrderCategoryDropdown(
+                                                  false
+                                                );
+                                              }, 300);
+                                            }}
+                                          >
+                                            Damaged Product
+                                          </button>
+                                          <button
+                                            className={`w-full text-left px-4 py-3 text-sm hover:bg-blue-600 transition-colors ${
+                                              formData.problematicIssueType ===
                                               "Defective Product"
-                                            );
-                                            handleInputChange(
-                                              "orderCategoryStatus",
-                                              "Problematic Issues"
-                                            );
-                                            setShowProblematicModal(false);
-                                            setShowOrderCategoryDropdown(false);
-                                          }, 300);
-                                        }}
-                                      >
-                                        Defective Product
-                                      </button>
-                                      <button
-                                        className={`w-full text-left px-4 py-3 text-sm hover:bg-blue-600 transition-colors ${
-                                          formData.problematicIssueType ===
-                                          "Wrong Product"
-                                            ? "bg-blue-600 text-white"
-                                            : "text-white hover:bg-blue-600"
-                                        }`}
-                                        onClick={() => {
-                                          // Add delay before selection
-                                          setTimeout(() => {
-                                            handleInputChange(
-                                              "problematicIssueType",
+                                                ? "bg-blue-600 text-white"
+                                                : "text-white hover:bg-blue-600"
+                                            }`}
+                                            onClick={() => {
+                                              // Add delay before selection
+                                              setTimeout(() => {
+                                                handleInputChange(
+                                                  "problematicIssueType",
+                                                  "Defective Product"
+                                                );
+                                                handleInputChange(
+                                                  "orderCategoryStatus",
+                                                  "Problematic Issues"
+                                                );
+                                                setShowProblematicModal(false);
+                                                setShowOrderCategoryDropdown(
+                                                  false
+                                                );
+                                              }, 300);
+                                            }}
+                                          >
+                                            Defective Product
+                                          </button>
+                                          <button
+                                            className={`w-full text-left px-4 py-3 text-sm hover:bg-blue-600 transition-colors ${
+                                              formData.problematicIssueType ===
                                               "Wrong Product"
-                                            );
-                                            handleInputChange(
-                                              "orderCategoryStatus",
-                                              "Problematic Issues"
-                                            );
-                                            setShowProblematicModal(false);
-                                            setShowOrderCategoryDropdown(false);
-                                          }, 300);
-                                        }}
-                                      >
-                                        Wrong Product
-                                      </button>
-                                    </div>
+                                                ? "bg-blue-600 text-white"
+                                                : "text-white hover:bg-blue-600"
+                                            }`}
+                                            onClick={() => {
+                                              // Add delay before selection
+                                              setTimeout(() => {
+                                                handleInputChange(
+                                                  "problematicIssueType",
+                                                  "Wrong Product"
+                                                );
+                                                handleInputChange(
+                                                  "orderCategoryStatus",
+                                                  "Problematic Issues"
+                                                );
+                                                setShowProblematicModal(false);
+                                                setShowOrderCategoryDropdown(
+                                                  false
+                                                );
+                                              }, 300);
+                                            }}
+                                          >
+                                            Wrong Product
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
-                                )}
+                                </div>
                               </div>
-                            </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <button className="text-white/60 hover:text-white">
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                        >
+                          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Form Fields Grid */}
+                  <div className="space-y-8">
+                    {/* Top Section - Contact & Address */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {/* Row 1 */}
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Email *
+                        </label>
+                        <input
+                          type="email"
+                          className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                            fieldErrors.email
+                              ? "border-red-500 focus:border-red-500"
+                              : "border-gray-600 focus:border-blue-500"
+                          }`}
+                          placeholder="Enter email"
+                          value={formData.email}
+                          onChange={(e) =>
+                            handleInputChange("email", e.target.value)
+                          }
+                        />
+                        <p
+                          className={`text-red-400 text-xs mt-1 h-4 ${
+                            fieldErrors.email ? "" : "invisible"
+                          }`}
+                        >
+                          {fieldErrors.email || "placeholder"}
+                        </p>
+                      </div>
+                      <div className="relative">
+                        <label className="block text-white/60 text-sm mb-2">
+                          Mobile *
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="tel"
+                            className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                              fieldErrors.mobile
+                                ? "border-red-500 focus:border-red-500"
+                                : "border-gray-600 focus:border-blue-500"
+                            }`}
+                            placeholder="Enter mobile number"
+                            value={formData.mobile}
+                            onChange={(e) =>
+                              handleInputChange("mobile", e.target.value)
+                            }
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowAlternateMobileNumber(true)}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold transition-colors"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+                        <p
+                          className={`text-red-400 text-xs mt-1 h-4 ${
+                            fieldErrors.mobile ? "" : "invisible"
+                          }`}
+                        >
+                          {fieldErrors.mobile || "placeholder"}
+                        </p>
+                      </div>
+                      {showAlternateMobileNumber && (
+                        <div className="relative">
+                          <label className="block text-white/60 text-sm mb-2">
+                            Alternate Mobile
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="tel"
+                              className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                                fieldErrors.alternateMobile
+                                  ? "border-red-500 focus:border-red-500"
+                                  : "border-gray-600 focus:border-blue-500"
+                              }`}
+                              placeholder="Enter alternate mobile number"
+                              value={formData.alternateMobile}
+                              onChange={(e) =>
+                                handleInputChange(
+                                  "alternateMobile",
+                                  e.target.value
+                                )
+                              }
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowAlternateMobileNumber(false);
+                                handleInputChange("alternateMobile", "");
+                              }}
+                              className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold transition-colors"
+                            >
+                              <Minus size={14} />
+                            </button>
+                          </div>
+                          <p
+                            className={`text-red-400 text-xs mt-1 h-4 ${
+                              fieldErrors.mobile ? "" : "invisible"
+                            }`}
+                          >
+                            {fieldErrors.mobile || "placeholder"}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* Row 2 */}
+                    <div className="col-span-1">
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Shipping Address Type
+                        </label>
+                        <div className="relative">
+                          <select
+                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                            value={formData.shippingAddressType}
+                            onChange={(e) => {
+                              handleInputChange(
+                                "shippingAddressType",
+                                e.target.value
+                              );
+                              if (e.target.value === "Commercial") {
+                                setShowCompany(true);
+                              } else {
+                                setShowCompany(false);
+                              }
+                            }}
+                          >
+                            <option value="">Select address type</option>
+                            <option value="Yet to Update">Yet to Update</option>
+                            <option value="Residential">Residential</option>
+                            {/* <option value="Non Residential">
+                            Non Residential
+                          </option> */}
+                            <option value="Terminal">Terminal</option>
+                            <option value="Commercial">Commercial</option>
+                          </select>
+                          <ChevronDown
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                            size={16}
+                          />
+                        </div>
+                        {showCompany && (
+                          <div className="mt-2 relative">
+                            <label className=" block text-white/60 text-sm mb-2">
+                              Company Name
+                            </label>
+                            <input
+                              type="text"
+                              className="block bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
+                              placeholder="Company name"
+                              value={formData.company}
+                              onChange={(e) =>
+                                handleInputChange("company", e.target.value)
+                              }
+                            />
                           </div>
                         )}
                       </div>
                     </div>
-                  </div>
-                  <button className="text-white/60 hover:text-white">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              {/* Form Fields Grid */}
-              <div className="space-y-8">
-                {/* Top Section - Contact & Address */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {/* Row 1 */}
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Email *
-                    </label>
-                    <input
-                      type="email"
-                      className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                        fieldErrors.email
-                          ? "border-red-500 focus:border-red-500"
-                          : "border-gray-600 focus:border-blue-500"
-                      }`}
-                      placeholder="Enter email"
-                      value={formData.email}
-                      onChange={(e) =>
-                        handleInputChange("email", e.target.value)
-                      }
-                    />
-                    <p
-                      className={`text-red-400 text-xs mt-1 h-4 ${
-                        fieldErrors.email ? "" : "invisible"
-                      }`}
-                    >
-                      {fieldErrors.email || "placeholder"}
-                    </p>
-                  </div>
-                  <div className="relative">
-                    <label className="block text-white/60 text-sm mb-2">
-                      Mobile *
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="tel"
-                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                          fieldErrors.mobile
+                    <div>
+                      <label className="block text-white/60 text-sm mb-2">
+                        Shipping Address
+                      </label>
+                      <textarea
+                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none h-20 resize-none ${
+                          fieldErrors.shippingAddress
                             ? "border-red-500 focus:border-red-500"
                             : "border-gray-600 focus:border-blue-500"
                         }`}
-                        placeholder="Enter mobile number"
-                        value={formData.mobile}
+                        placeholder="Enter shipping address"
+                        value={formData.shippingAddress}
                         onChange={(e) =>
-                          handleInputChange("mobile", e.target.value)
+                          handleInputChange("shippingAddress", e.target.value)
                         }
                       />
-                      <button
-                        type="button"
-                        onClick={() => setShowAlternateMobileNumber(true)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold transition-colors"
+                      <p
+                        className={`text-red-400 text-xs mt-1 h-4 ${
+                          fieldErrors.shippingAddress ? "" : "invisible"
+                        }`}
                       >
-                        <Plus size={14} />
-                      </button>
+                        {fieldErrors.shippingAddress || "placeholder"}
+                      </p>
                     </div>
-                    <p
-                      className={`text-red-400 text-xs mt-1 h-4 ${
-                        fieldErrors.mobile ? "" : "invisible"
-                      }`}
-                    >
-                      {fieldErrors.mobile || "placeholder"}
-                    </p>
-                  </div>
-                  {showAlternateMobileNumber && (
-                    <div className="relative">
+                    <div>
                       <label className="block text-white/60 text-sm mb-2">
-                        Alternate Mobile
+                        Billing Address *
                       </label>
-                      <div className="relative">
-                        <input
-                          type="tel"
-                          className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                            fieldErrors.alternateMobile
-                              ? "border-red-500 focus:border-red-500"
-                              : "border-gray-600 focus:border-blue-500"
-                          }`}
-                          placeholder="Enter alternate mobile number"
-                          value={formData.alternateMobile}
-                          onChange={(e) =>
-                            handleInputChange("alternateMobile", e.target.value)
-                          }
-                        />
+                      <textarea
+                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none h-20 resize-none ${
+                          fieldErrors.billingAddress
+                            ? "border-red-500 focus:border-red-500"
+                            : "border-gray-600 focus:border-blue-500"
+                        }`}
+                        placeholder="Enter billing address"
+                        value={formData.billingAddress}
+                        onChange={(e) =>
+                          handleInputChange("billingAddress", e.target.value)
+                        }
+                      />
+                      <p
+                        className={`text-red-400 text-xs mt-1 h-4 ${
+                          fieldErrors.billingAddress ? "" : "invisible"
+                        }`}
+                      >
+                        {fieldErrors.billingAddress || "placeholder"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Middle Section - Payment & Warranty */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-white text-lg font-semibold mb-2">
+                          Card Info
+                        </h3>
                         <button
-                          type="button"
                           onClick={() => {
-                            setShowAlternateMobileNumber(false);
-                            handleInputChange("alternateMobile", "");
+                            setCardEntry(true);
                           }}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold transition-colors"
+                          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
                         >
-                          <Minus size={14} />
+                          Add New Card
                         </button>
                       </div>
-                      <p
-                        className={`text-red-400 text-xs mt-1 h-4 ${
-                          fieldErrors.mobile ? "" : "invisible"
-                        }`}
-                      >
-                        {fieldErrors.mobile || "placeholder"}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
+                      <div className="grid grid-cols-1 lg:grid-cols-4  gap-1">
+                        <div>
+                          <input
+                            type="text"
+                            className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
+                            placeholder="Card holder name"
+                            value={formData.cardHolderName}
+                            onChange={(e) =>
+                              handleInputChange(
+                                "cardHolderName",
+                                e.target.value
+                              )
+                            }
+                          />
+                          <p className="text-red-400 text-xs mt-1 h-4 invisible">
+                            placeholder
+                          </p>
+                        </div>
+                        <div>
+                          <input
+                            type="text"
+                            className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
+                            placeholder="Card Number"
+                            value={formData.cardNumber}
+                            inputMode="numeric"
+                            maxLength={19}
+                            onChange={(e) => {
+                              // Remove all non-digits first
+                              const digitsOnly = e.target.value.replace(
+                                /\D/g,
+                                ""
+                              );
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Row 2 */}
-                <div className="col-span-1">
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Shipping Address Type
-                    </label>
-                    <div className="relative">
-                      <select
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                        value={formData.shippingAddressType}
-                        onChange={(e) => {
-                          handleInputChange(
-                            "shippingAddressType",
-                            e.target.value
-                          );
-                          if (e.target.value === "Commercial") {
-                            setShowCompany(true);
-                          } else {
-                            setShowCompany(false);
-                          }
-                        }}
-                      >
-                        <option value="">Select address type</option>
-                        <option value="Yet to Update">Yet to Update</option>
-                        <option value="Residential">Residential</option>
-                        {/* <option value="Non Residential">
-                            Non Residential
-                          </option> */}
-                        <option value="Terminal">Terminal</option>
-                        <option value="Commercial">Commercial</option>
-                      </select>
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                        size={16}
-                      />
-                    </div>
-                    {showCompany && (
-                      <div className="mt-2 relative">
-                        <label className=" block text-white/60 text-sm mb-2">
-                          Company Name
-                        </label>
-                        <input
-                          type="text"
-                          className="block bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
-                          placeholder="Company name"
-                          value={formData.company}
-                          onChange={(e) =>
-                            handleInputChange("company", e.target.value)
-                          }
-                        />
+                              // Limit to 16 digits maximum
+                              if (digitsOnly.length <= 16) {
+                                const formatted = formatCardNumber(digitsOnly);
+                                handleInputChange("cardNumber", formatted);
+                              }
+                            }}
+                            onBlur={(e) => {
+                              const err = validateField(
+                                "cardNumber",
+                                e.target.value
+                              );
+                              if (err)
+                                setFieldErrors((prev) => ({
+                                  ...prev,
+                                  cardNumber: err,
+                                }));
+                            }}
+                          />
+                          <p
+                            className={`text-red-400 text-xs mt-1 h-4 ${
+                              fieldErrors.cardNumber ? "" : "invisible"
+                            }`}
+                          >
+                            {fieldErrors.cardNumber || "placeholder"}
+                          </p>
+                          {!fieldErrors.cardNumber && formData.cardNumber && (
+                            <p className="text-white/60 text-xs">
+                              Detected card:{" "}
+                              {getCardType(formData.cardNumber) || "Unknown"}
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <input
+                            type="text"
+                            className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
+                            placeholder="Expire Date"
+                            value={formData.cardDate}
+                            inputMode="numeric"
+                            maxLength={7}
+                            onChange={(e) => {
+                              const formatted = formatExpiryDate(
+                                e.target.value
+                              );
+                              handleInputChange("cardDate", formatted);
+                            }}
+                            onBlur={(e) => {
+                              const err = validateField(
+                                "cardDate",
+                                e.target.value
+                              );
+                              if (err)
+                                setFieldErrors((prev) => ({
+                                  ...prev,
+                                  cardDate: err,
+                                }));
+                            }}
+                          />
+                          <p
+                            className={`text-red-400 text-xs mt-1 h-4 ${
+                              fieldErrors.cardDate ? "" : "invisible"
+                            }`}
+                          >
+                            {fieldErrors.cardDate || "placeholder"}
+                          </p>
+                        </div>
+                        <div>
+                          <input
+                            type="text"
+                            className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
+                            placeholder="CVV"
+                            value={formData.cardCvv}
+                            inputMode="numeric"
+                            maxLength={
+                              getCardType(formData.cardNumber) ===
+                              "American Express"
+                                ? 4
+                                : 3
+                            }
+                            onChange={(e) => {
+                              const expected =
+                                getCardType(formData.cardNumber) ===
+                                "American Express"
+                                  ? 4
+                                  : 3;
+                              const digits = e.target.value
+                                .replace(/\D/g, "")
+                                .slice(0, expected);
+                              handleInputChange("cardCvv", digits);
+                            }}
+                            onBlur={(e) => {
+                              const err = validateField(
+                                "cardCvv",
+                                e.target.value
+                              );
+                              if (err)
+                                setFieldErrors((prev) => ({
+                                  ...prev,
+                                  cardCvv: err,
+                                }));
+                            }}
+                          />
+                          <p
+                            className={`text-red-400 text-xs mt-1 h-4 ${
+                              fieldErrors.cardCvv ? "" : "invisible"
+                            }`}
+                          >
+                            {fieldErrors.cardCvv || "placeholder"}
+                          </p>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-white/60 text-sm mb-2">
-                    Shipping Address
-                  </label>
-                  <textarea
-                    className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none h-20 resize-none ${
-                      fieldErrors.shippingAddress
-                        ? "border-red-500 focus:border-red-500"
-                        : "border-gray-600 focus:border-blue-500"
-                    }`}
-                    placeholder="Enter shipping address"
-                    value={formData.shippingAddress}
-                    onChange={(e) =>
-                      handleInputChange("shippingAddress", e.target.value)
-                    }
-                  />
-                  <p
-                    className={`text-red-400 text-xs mt-1 h-4 ${
-                      fieldErrors.shippingAddress ? "" : "invisible"
-                    }`}
-                  >
-                    {fieldErrors.shippingAddress || "placeholder"}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-white/60 text-sm mb-2">
-                    Billing Address *
-                  </label>
-                  <textarea
-                    className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none h-20 resize-none ${
-                      fieldErrors.billingAddress
-                        ? "border-red-500 focus:border-red-500"
-                        : "border-gray-600 focus:border-blue-500"
-                    }`}
-                    placeholder="Enter billing address"
-                    value={formData.billingAddress}
-                    onChange={(e) =>
-                      handleInputChange("billingAddress", e.target.value)
-                    }
-                  />
-                  <p
-                    className={`text-red-400 text-xs mt-1 h-4 ${
-                      fieldErrors.billingAddress ? "" : "invisible"
-                    }`}
-                  >
-                    {fieldErrors.billingAddress || "placeholder"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Middle Section - Payment & Warranty */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-white text-lg font-semibold mb-2">
-                      Card Info
-                    </h3>
-                    <button
-                      onClick={() => {
-                        setCardEntry(true);
-                      }}
-                      className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-                    >
-                      Add New Card
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-1 lg:grid-cols-4  gap-1">
-                    <div>
-                      <input
-                        type="text"
-                        className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
-                        placeholder="Card holder name"
-                        value={formData.cardHolderName}
-                        onChange={(e) =>
-                          handleInputChange("cardHolderName", e.target.value)
-                        }
-                      />
-                      <p className="text-red-400 text-xs mt-1 h-4 invisible">
-                        placeholder
-                      </p>
-                    </div>
-                    <div>
-                      <input
-                        type="text"
-                        className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
-                        placeholder="Card Number"
-                        value={formData.cardNumber}
-                        inputMode="numeric"
-                        maxLength={19}
-                        onChange={(e) => {
-                          // Remove all non-digits first
-                          const digitsOnly = e.target.value.replace(/\D/g, "");
-
-                          // Limit to 16 digits maximum
-                          if (digitsOnly.length <= 16) {
-                            const formatted = formatCardNumber(digitsOnly);
-                            handleInputChange("cardNumber", formatted);
-                          }
-                        }}
-                        onBlur={(e) => {
-                          const err = validateField(
-                            "cardNumber",
-                            e.target.value
-                          );
-                          if (err)
-                            setFieldErrors((prev) => ({
-                              ...prev,
-                              cardNumber: err,
-                            }));
-                        }}
-                      />
-                      <p
-                        className={`text-red-400 text-xs mt-1 h-4 ${
-                          fieldErrors.cardNumber ? "" : "invisible"
-                        }`}
-                      >
-                        {fieldErrors.cardNumber || "placeholder"}
-                      </p>
-                      {!fieldErrors.cardNumber && formData.cardNumber && (
-                        <p className="text-white/60 text-xs">
-                          Detected card:{" "}
-                          {getCardType(formData.cardNumber) || "Unknown"}
-                        </p>
+                      {cardEntry && (
+                        <div className="relative grid grid-cols-1 lg:grid-cols-4  gap-1">
+                          <div>
+                            <input
+                              type="text"
+                              className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
+                              placeholder="Card holder name"
+                              value={formData.alternateCardHolderName}
+                              onChange={(e) =>
+                                handleInputChange(
+                                  "alternateCardHolderName",
+                                  e.target.value
+                                )
+                              }
+                            />
+                            <p className="text-red-400 text-xs mt-1 h-4 invisible">
+                              placeholder
+                            </p>
+                          </div>
+                          <div>
+                            <input
+                              type="text"
+                              className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
+                              placeholder="Card Number"
+                              value={formData.alternateCardNumber}
+                              inputMode="numeric"
+                              maxLength={19}
+                              onChange={(e) => {
+                                const formatted = formatCardNumber(
+                                  e.target.value
+                                );
+                                handleInputChange(
+                                  "alternateCardNumber",
+                                  formatted
+                                );
+                              }}
+                              onBlur={(e) => {
+                                const err = validateField(
+                                  "alternateCardNumber",
+                                  e.target.value
+                                );
+                                if (err)
+                                  setFieldErrors((prev) => ({
+                                    ...prev,
+                                    alternateCardNumber: err,
+                                  }));
+                              }}
+                            />
+                            <p
+                              className={`text-red-400 text-xs mt-1 h-4 ${
+                                fieldErrors.alternateCardNumber
+                                  ? ""
+                                  : "invisible"
+                              }`}
+                            >
+                              {fieldErrors.alternateCardNumber || "placeholder"}
+                            </p>
+                            {!fieldErrors.alternateCardNumber &&
+                              formData.alternateCardNumber && (
+                                <p className="text-white/60 text-xs">
+                                  Detected card:{" "}
+                                  {getCardType(formData.alternateCardNumber) ||
+                                    "Unknown"}
+                                </p>
+                              )}
+                          </div>
+                          <div>
+                            <input
+                              type="text"
+                              className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
+                              placeholder="Expire Date"
+                              value={formData.alternateCardDate}
+                              inputMode="numeric"
+                              maxLength={7}
+                              onChange={(e) => {
+                                const formatted = formatExpiryDate(
+                                  e.target.value
+                                );
+                                handleInputChange(
+                                  "alternateCardDate",
+                                  formatted
+                                );
+                              }}
+                              onBlur={(e) => {
+                                const err = validateField(
+                                  "alternateCardDate",
+                                  e.target.value
+                                );
+                                if (err)
+                                  setFieldErrors((prev) => ({
+                                    ...prev,
+                                    alternateCardDate: err,
+                                  }));
+                              }}
+                            />
+                            <p
+                              className={`text-red-400 text-xs mt-1 h-4 ${
+                                fieldErrors.alternateCardDate ? "" : "invisible"
+                              }`}
+                            >
+                              {fieldErrors.alternateCardDate || "placeholder"}
+                            </p>
+                          </div>
+                          <div>
+                            <input
+                              type="text"
+                              className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
+                              placeholder="CVV"
+                              value={formData.alternateCardCvv}
+                              inputMode="numeric"
+                              maxLength={
+                                getCardType(formData.alternateCardNumber) ===
+                                "American Express"
+                                  ? 4
+                                  : 3
+                              }
+                              onChange={(e) => {
+                                const expected =
+                                  getCardType(formData.alternateCardNumber) ===
+                                  "American Express"
+                                    ? 4
+                                    : 3;
+                                const digits = e.target.value
+                                  .replace(/\D/g, "")
+                                  .slice(0, expected);
+                                handleInputChange("alternateCardCvv", digits);
+                              }}
+                              onBlur={(e) => {
+                                const err = validateField(
+                                  "alternateCardCvv",
+                                  e.target.value
+                                );
+                                if (err)
+                                  setFieldErrors((prev) => ({
+                                    ...prev,
+                                    alternateCardCvv: err,
+                                  }));
+                              }}
+                            />
+                            <p
+                              className={`text-red-400 text-xs mt-1 h-4 ${
+                                fieldErrors.alternateCardCvv ? "" : "invisible"
+                              }`}
+                            >
+                              {fieldErrors.alternateCardCvv || "placeholder"}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCardEntry(false);
+                              setFormData((prev) => ({
+                                ...prev,
+                                alternateCardNumber: "",
+                                alternateCardHolderName: "",
+                                alternateCardDate: "",
+                                alternateCardCvv: "",
+                              }));
+                            }}
+                            className=" absolute right-0 top-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-2 rounded-full  flex items-center justify-center text-sm font-bold transition-colors"
+                          >
+                            Remove
+                          </button>
+                        </div>
                       )}
                     </div>
                     <div>
-                      <input
-                        type="text"
-                        className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
-                        placeholder="Expire Date"
-                        value={formData.cardDate}
-                        inputMode="numeric"
-                        maxLength={7}
-                        onChange={(e) => {
-                          const formatted = formatExpiryDate(e.target.value);
-                          handleInputChange("cardDate", formatted);
-                        }}
-                        onBlur={(e) => {
-                          const err = validateField("cardDate", e.target.value);
-                          if (err)
-                            setFieldErrors((prev) => ({
-                              ...prev,
-                              cardDate: err,
-                            }));
-                        }}
-                      />
-                      <p
-                        className={`text-red-400 text-xs mt-1 h-4 ${
-                          fieldErrors.cardDate ? "" : "invisible"
-                        }`}
-                      >
-                        {fieldErrors.cardDate || "placeholder"}
-                      </p>
+                      <label className="block text-white/60 text-sm mb-2">
+                        Warranty *
+                      </label>
+                      <div className="relative">
+                        <select
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                          value={formData.warranty}
+                          onChange={(e) =>
+                            handleInputChange("warranty", e.target.value)
+                          }
+                        >
+                          <option value="">Select warranty</option>
+                          <option>30 Days</option>
+                          <option>60 Days</option>
+                          <option>90 Days</option>
+                          <option>6 Months</option>
+                          <option>1 Year</option>
+                        </select>
+                        <ChevronDown
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                          size={16}
+                        />
+                      </div>
                     </div>
                     <div>
-                      <input
-                        type="text"
-                        className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
-                        placeholder="CVV"
-                        value={formData.cardCvv}
-                        inputMode="numeric"
-                        maxLength={
-                          getCardType(formData.cardNumber) ===
-                          "American Express"
-                            ? 4
-                            : 3
-                        }
-                        onChange={(e) => {
-                          const expected =
-                            getCardType(formData.cardNumber) ===
-                            "American Express"
-                              ? 4
-                              : 3;
-                          const digits = e.target.value
-                            .replace(/\D/g, "")
-                            .slice(0, expected);
-                          handleInputChange("cardCvv", digits);
-                        }}
-                        onBlur={(e) => {
-                          const err = validateField("cardCvv", e.target.value);
-                          if (err)
-                            setFieldErrors((prev) => ({
-                              ...prev,
-                              cardCvv: err,
-                            }));
-                        }}
-                      />
-                      <p
-                        className={`text-red-400 text-xs mt-1 h-4 ${
-                          fieldErrors.cardCvv ? "" : "invisible"
-                        }`}
-                      >
-                        {fieldErrors.cardCvv || "placeholder"}
-                      </p>
-                    </div>
-                  </div>
-                  {cardEntry && (
-                    <div className="relative grid grid-cols-1 lg:grid-cols-4  gap-1">
-                      <div>
-                        <input
-                          type="text"
-                          className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
-                          placeholder="Card holder name"
-                          value={formData.alternateCardHolderName}
+                      <label className="block text-white/60 text-sm mb-2">
+                        Sale Made By *
+                      </label>
+                      <div className="relative">
+                        <select
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
+                          value={formData.saleMadeBy}
                           onChange={(e) =>
-                            handleInputChange(
-                              "alternateCardHolderName",
-                              e.target.value
-                            )
+                            handleInputChange("saleMadeBy", e.target.value)
                           }
-                        />
-                        <p className="text-red-400 text-xs mt-1 h-4 invisible">
-                          placeholder
-                        </p>
-                      </div>
-                      <div>
-                        <input
-                          type="text"
-                          className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
-                          placeholder="Card Number"
-                          value={formData.alternateCardNumber}
-                          inputMode="numeric"
-                          maxLength={19}
-                          onChange={(e) => {
-                            const formatted = formatCardNumber(e.target.value);
-                            handleInputChange("alternateCardNumber", formatted);
-                          }}
-                          onBlur={(e) => {
-                            const err = validateField(
-                              "alternateCardNumber",
-                              e.target.value
-                            );
-                            if (err)
-                              setFieldErrors((prev) => ({
-                                ...prev,
-                                alternateCardNumber: err,
-                              }));
-                          }}
-                        />
-                        <p
-                          className={`text-red-400 text-xs mt-1 h-4 ${
-                            fieldErrors.alternateCardNumber ? "" : "invisible"
-                          }`}
                         >
-                          {fieldErrors.alternateCardNumber || "placeholder"}
-                        </p>
-                        {!fieldErrors.alternateCardNumber &&
-                          formData.alternateCardNumber && (
-                            <p className="text-white/60 text-xs">
-                              Detected card:{" "}
-                              {getCardType(formData.alternateCardNumber) ||
-                                "Unknown"}
-                            </p>
-                          )}
-                      </div>
-                      <div>
-                        <input
-                          type="text"
-                          className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
-                          placeholder="Expire Date"
-                          value={formData.alternateCardDate}
-                          inputMode="numeric"
-                          maxLength={7}
-                          onChange={(e) => {
-                            const formatted = formatExpiryDate(e.target.value);
-                            handleInputChange("alternateCardDate", formatted);
-                          }}
-                          onBlur={(e) => {
-                            const err = validateField(
-                              "alternateCardDate",
-                              e.target.value
-                            );
-                            if (err)
-                              setFieldErrors((prev) => ({
-                                ...prev,
-                                alternateCardDate: err,
-                              }));
-                          }}
+                          <option value="">Select person</option>
+                          <option>Zack Tyler</option>
+                          <option>Sean David</option>
+                          <option>Ben Johnson</option>
+                          <option>Danny Ocean</option>
+                          <option>Reymond</option>
+                          <option>Lisa</option>
+                          <option>Bruce Moris</option>
+                          <option>Alex Steel</option>
+                          <option>Jordan</option>
+                        </select>
+                        <ChevronDown
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                          size={16}
                         />
-                        <p
-                          className={`text-red-400 text-xs mt-1 h-4 ${
-                            fieldErrors.alternateCardDate ? "" : "invisible"
-                          }`}
-                        >
-                          {fieldErrors.alternateCardDate || "placeholder"}
-                        </p>
                       </div>
-                      <div>
-                        <input
-                          type="text"
-                          className="bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 focus:outline-none text-sm"
-                          placeholder="CVV"
-                          value={formData.alternateCardCvv}
-                          inputMode="numeric"
-                          maxLength={
-                            getCardType(formData.alternateCardNumber) ===
-                            "American Express"
-                              ? 4
-                              : 3
-                          }
-                          onChange={(e) => {
-                            const expected =
-                              getCardType(formData.alternateCardNumber) ===
-                              "American Express"
-                                ? 4
-                                : 3;
-                            const digits = e.target.value
-                              .replace(/\D/g, "")
-                              .slice(0, expected);
-                            handleInputChange("alternateCardCvv", digits);
-                          }}
-                          onBlur={(e) => {
-                            const err = validateField(
-                              "alternateCardCvv",
-                              e.target.value
-                            );
-                            if (err)
-                              setFieldErrors((prev) => ({
-                                ...prev,
-                                alternateCardCvv: err,
-                              }));
-                          }}
-                        />
-                        <p
-                          className={`text-red-400 text-xs mt-1 h-4 ${
-                            fieldErrors.alternateCardCvv ? "" : "invisible"
-                          }`}
-                        >
-                          {fieldErrors.alternateCardCvv || "placeholder"}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCardEntry(false);
-                          setFormData((prev) => ({
-                            ...prev,
-                            alternateCardNumber: "",
-                            alternateCardHolderName: "",
-                            alternateCardDate: "",
-                            alternateCardCvv: "",
-                          }));
-                        }}
-                        className=" absolute right-0 top-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-2 rounded-full  flex items-center justify-center text-sm font-bold transition-colors"
-                      >
-                        Remove
-                      </button>
                     </div>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-white/60 text-sm mb-2">
-                    Warranty *
-                  </label>
-                  <div className="relative">
-                    <select
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                      value={formData.warranty}
-                      onChange={(e) =>
-                        handleInputChange("warranty", e.target.value)
-                      }
-                    >
-                      <option value="">Select warranty</option>
-                      <option>30 Days</option>
-                      <option>60 Days</option>
-                      <option>90 Days</option>
-                      <option>6 Months</option>
-                      <option>1 Year</option>
-                    </select>
-                    <ChevronDown
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                      size={16}
-                    />
                   </div>
-                </div>
-                <div>
-                  <label className="block text-white/60 text-sm mb-2">
-                    Sale Made By *
-                  </label>
-                  <div className="relative">
-                    <select
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-                      value={formData.saleMadeBy}
-                      onChange={(e) =>
-                        handleInputChange("saleMadeBy", e.target.value)
-                      }
-                    >
-                      <option value="">Select person</option>
-                      <option>Zack Tyler</option>
-                      <option>Sean David</option>
-                      <option>Ben Johnson</option>
-                      <option>Danny Ocean</option>
-                      <option>Reymond</option>
-                      <option>Lisa</option>
-                      <option>Bruce Moris</option>
-                      <option>Alex Steel</option>
-                      <option>Jordan</option>
-                    </select>
-                    <ChevronDown
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                      size={16}
-                    />
-                  </div>
-                </div>
-              </div>
 
-              {/* Product Details Section - Before Send Invoice Button */}
-              <div className="flex items-center justify-between my-4">
-                <h3 className="text-white text-lg font-semibold mb-2">
-                  Product Info
-                </h3>
-                <button
-                  onClick={addProduct}
-                  className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-                >
-                  Add New Product
-                </button>
-              </div>
-              {formData.products.map((product, index) => (
-                <div
-                  key={index}
-                  className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 bg-[#0f1e35] rounded-lg p-4 shadow-lg  gap-6 my-2"
-                >
-                  {formData.products.length > 1 && (
+                  {/* Product Details Section - Before Send Invoice Button */}
+                  <div className="flex items-center justify-between my-4">
+                    <h3 className="text-white text-lg font-semibold mb-2">
+                      Product Info
+                    </h3>
                     <button
-                      onClick={() => removeProduct(index)}
-                      className="absolute right-0 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                      title="Remove product"
+                      onClick={addProduct}
+                      className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
                     >
-                      <X size={16} />
+                      Add New Product
                     </button>
-                  )}
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Make
-                    </label>
-                    <div className="relative">
-                      <select
-                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
-                          fieldErrors.make
-                            ? "border-red-500 focus:border-red-500"
-                            : "border-gray-600 focus:border-blue-500"
-                        }`}
-                        value={product.make}
-                        onChange={(e) => {
-                          handleProductInputChange(
-                            index,
-                            "make",
-                            e.target.value
-                          );
-                          fetchProductVariants(product, index);
-                        }}
-                      >
-                        <option value="">Select make</option>
-                        {MAKES.map((make) => (
-                          <option key={make} value={make}>
-                            {make.charAt(0).toUpperCase() +
-                              make.slice(1).toLowerCase()}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                        size={16}
-                      />
-                    </div>
-                    <p
-                      className={`text-red-400 text-xs mt-1 h-4 ${
-                        fieldErrors.make ? "" : "invisible"
-                      }`}
-                    >
-                      {fieldErrors.make || "placeholder"}
-                    </p>
                   </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Model
-                    </label>
-                    <div className="relative">
-                      <select
-                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
-                          fieldErrors.model
-                            ? "border-red-500 focus:border-red-500"
-                            : "border-gray-600 focus:border-blue-500"
-                        }`}
-                        value={product.model}
-                        onChange={(e) => {
-                          handleProductInputChange(
-                            index,
-                            "model",
-                            e.target.value
-                          );
-                          fetchProductVariants(product, index);
-                        }}
-                        disabled={!product.make}
-                      >
-                        <option value="">Select model</option>
-                        {(MODELS[product.make] || []).map((model) => (
-                          <option key={model} value={model}>
-                            {model}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                        size={16}
-                      />
-                    </div>
-                    <p
-                      className={`text-red-400 text-xs mt-1 h-4 ${
-                        fieldErrors.model ? "" : "invisible"
-                      }`}
+                  {formData.products.map((product, index) => (
+                    <div
+                      key={index}
+                      className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 bg-[#0f1e35] rounded-lg p-4 shadow-lg  gap-6 my-2"
                     >
-                      {fieldErrors.model || "placeholder"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Year
-                    </label>
-                    <div className="relative">
-                      <select
-                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
-                          fieldErrors.year
-                            ? "border-red-500 focus:border-red-500"
-                            : "border-gray-600 focus:border-blue-500"
-                        }`}
-                        value={product.year}
-                        onChange={(e) => {
-                          handleProductInputChange(
-                            index,
-                            "year",
-                            e.target.value
-                          );
-                          fetchProductVariants(product, index);
-                        }}
-                        disabled={
-                          !product.model || availableYears[index]?.length === 0
-                        }
-                      >
-                        <option value="">Select year</option>
-                        {/* {availableYears.map((year) => (
+                      {formData.products.length > 1 && (
+                        <button
+                          onClick={() => removeProduct(index)}
+                          className="absolute right-0 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                          title="Remove product"
+                        >
+                          <X size={16} />
+                        </button>
+                      )}
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Make
+                        </label>
+                        <div className="relative">
+                          <select
+                            className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
+                              fieldErrors.make
+                                ? "border-red-500 focus:border-red-500"
+                                : "border-gray-600 focus:border-blue-500"
+                            }`}
+                            value={product.make}
+                            onChange={(e) => {
+                              handleProductInputChange(
+                                index,
+                                "make",
+                                e.target.value
+                              );
+                              fetchProductVariants(product, index);
+                            }}
+                          >
+                            <option value="">Select make</option>
+                            {MAKES.map((make) => (
+                              <option key={make} value={make}>
+                                {make.charAt(0).toUpperCase() +
+                                  make.slice(1).toLowerCase()}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                            size={16}
+                          />
+                        </div>
+                        <p
+                          className={`text-red-400 text-xs mt-1 h-4 ${
+                            fieldErrors.make ? "" : "invisible"
+                          }`}
+                        >
+                          {fieldErrors.make || "placeholder"}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Model
+                        </label>
+                        <div className="relative">
+                          <select
+                            className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
+                              fieldErrors.model
+                                ? "border-red-500 focus:border-red-500"
+                                : "border-gray-600 focus:border-blue-500"
+                            }`}
+                            value={product.model}
+                            onChange={(e) => {
+                              handleProductInputChange(
+                                index,
+                                "model",
+                                e.target.value
+                              );
+                              fetchProductVariants(product, index);
+                            }}
+                            disabled={!product.make}
+                          >
+                            <option value="">Select model</option>
+                            {(MODELS[product.make] || []).map((model) => (
+                              <option key={model} value={model}>
+                                {model}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                            size={16}
+                          />
+                        </div>
+                        <p
+                          className={`text-red-400 text-xs mt-1 h-4 ${
+                            fieldErrors.model ? "" : "invisible"
+                          }`}
+                        >
+                          {fieldErrors.model || "placeholder"}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Year
+                        </label>
+                        <div className="relative">
+                          <select
+                            className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
+                              fieldErrors.year
+                                ? "border-red-500 focus:border-red-500"
+                                : "border-gray-600 focus:border-blue-500"
+                            }`}
+                            value={product.year}
+                            onChange={(e) => {
+                              handleProductInputChange(
+                                index,
+                                "year",
+                                e.target.value
+                              );
+                              fetchProductVariants(product, index);
+                            }}
+                            disabled={
+                              !product.model ||
+                              availableYears[index]?.length === 0
+                            }
+                          >
+                            <option value="">Select year</option>
+                            {/* {availableYears.map((year) => (
                           <option key={year} value={year}>
                             {year}
                           </option>
                         ))} */}
-                        {availableYears[index]?.map((year) => (
-                          <option key={year} value={year}>
-                            {year}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                        size={16}
-                      />
-                    </div>
-                    <p
-                      className={`text-red-400 text-xs mt-1 h-4 ${
-                        fieldErrors.year ? "" : "invisible"
-                      }`}
-                    >
-                      {fieldErrors.year || "placeholder"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Parts
-                    </label>
-                    <div className="relative">
-                      <select
-                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
-                          fieldErrors.parts
-                            ? "border-red-500 focus:border-red-500"
-                            : "border-gray-600 focus:border-blue-500"
-                        }`}
-                        value={product.parts}
-                        onChange={(e) => {
-                          // Only update state, let useEffect handle fetch/reset
-                          handleProductInputChange(
-                            index,
-                            "parts",
-                            e.target.value
-                          );
-                        }}
-                      >
-                        <option value="">Select parts</option>
-                        <option>Engine</option>
-                        <option>Transmission</option>
-                      </select>
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                        size={16}
-                      />
-                    </div>
-                    <p
-                      className={`text-red-400 text-xs mt-1 h-4 ${
-                        fieldErrors.parts ? "" : "invisible"
-                      }`}
-                    >
-                      {fieldErrors.parts || "placeholder"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Specification
-                    </label>
-                    <div className="relative">
-                      <select
-                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
-                          fieldErrors.specification
-                            ? "border-red-500 focus:border-red-500"
-                            : "border-gray-600 focus:border-blue-500"
-                        }`}
-                        value={product.specification}
-                        onChange={(e) => handleSpecificationChange(e, index)}
-                        disabled={!product.productVariants?.length}
-                      >
-                        <option value="">Select Specification</option>
-                        {(() => {
-                          console.log(" Rendering specs for product:", product);
-                          console.log(
-                            " ProductVariants:",
-                            product.productVariants
-                          );
-                          return product.productVariants?.map(
-                            (variant, idx) => (
-                              <option key={idx} value={variant.subPart.name}>
-                                {variant.subPart.name}
+                            {availableYears[index]?.map((year) => (
+                              <option key={year} value={year}>
+                                {year}
                               </option>
-                            )
-                          );
-                        })()}
-                      </select>
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
-                        size={16}
-                      />
-                    </div>
-                    {fieldErrors.specification && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {fieldErrors.specification}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2">
-                      Miles Promised
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none pr-10"
-                        value={product.milesPromised}
-                        onChange={(e) => handleMileageChange(e, index)}
-                        placeholder="Enter miles or select from dropdown"
-                        list={`miles-suggestions-${index}`}
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                      />
-                      <ChevronDown
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 pointer-events-none"
-                        size={16}
-                      />
-                      <datalist id={`miles-suggestions-${index}`}>
-                        {product.selectedSubpart?.variants.map(
-                          (variant, idx) => (
-                            <option key={idx} value={variant.miles}>
-                              {variant.miles} miles
-                            </option>
-                          )
+                            ))}
+                          </select>
+                          <ChevronDown
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                            size={16}
+                          />
+                        </div>
+                        <p
+                          className={`text-red-400 text-xs mt-1 h-4 ${
+                            fieldErrors.year ? "" : "invisible"
+                          }`}
+                        >
+                          {fieldErrors.year || "placeholder"}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Parts
+                        </label>
+                        <div className="relative">
+                          <select
+                            className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
+                              fieldErrors.parts
+                                ? "border-red-500 focus:border-red-500"
+                                : "border-gray-600 focus:border-blue-500"
+                            }`}
+                            value={product.parts}
+                            onChange={(e) => {
+                              // Only update state, let useEffect handle fetch/reset
+                              handleProductInputChange(
+                                index,
+                                "parts",
+                                e.target.value
+                              );
+                            }}
+                          >
+                            <option value="">Select parts</option>
+                            <option>Engine</option>
+                            <option>Transmission</option>
+                          </select>
+                          <ChevronDown
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                            size={16}
+                          />
+                        </div>
+                        <p
+                          className={`text-red-400 text-xs mt-1 h-4 ${
+                            fieldErrors.parts ? "" : "invisible"
+                          }`}
+                        >
+                          {fieldErrors.parts || "placeholder"}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Specification
+                        </label>
+                        <div className="relative">
+                          <select
+                            className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none appearance-none ${
+                              fieldErrors.specification
+                                ? "border-red-500 focus:border-red-500"
+                                : "border-gray-600 focus:border-blue-500"
+                            }`}
+                            value={product.specification}
+                            onChange={(e) =>
+                              handleSpecificationChange(e, index)
+                            }
+                            disabled={!product.productVariants?.length}
+                          >
+                            <option value="">Select Specification</option>
+                            {(() => {
+                              console.log(
+                                " Rendering specs for product:",
+                                product
+                              );
+                              console.log(
+                                " ProductVariants:",
+                                product.productVariants
+                              );
+                              return product.productVariants?.map(
+                                (variant, idx) => (
+                                  <option
+                                    key={idx}
+                                    value={variant.subPart.name}
+                                  >
+                                    {variant.subPart.name}
+                                  </option>
+                                )
+                              );
+                            })()}
+                          </select>
+                          <ChevronDown
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60"
+                            size={16}
+                          />
+                        </div>
+                        {fieldErrors.specification && (
+                          <p className="text-red-400 text-xs mt-1">
+                            {fieldErrors.specification}
+                          </p>
                         )}
-                      </datalist>
-                    </div>
-                  </div>
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2">
+                          Miles Promised
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none pr-10"
+                            value={product.milesPromised}
+                            onChange={(e) => handleMileageChange(e, index)}
+                            placeholder="Enter miles or select from dropdown"
+                            list={`miles-suggestions-${index}`}
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                          />
+                          <ChevronDown
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 pointer-events-none"
+                            size={16}
+                          />
+                          <datalist id={`miles-suggestions-${index}`}>
+                            {product.selectedSubpart?.variants.map(
+                              (variant, idx) => (
+                                <option key={idx} value={variant.miles}>
+                                  {variant.miles} miles
+                                </option>
+                              )
+                            )}
+                          </datalist>
+                        </div>
+                      </div>
 
-                  <div className="relative">
-                    <label className="block text-white/60 text-sm mb-2">
-                      Part Price *
-                    </label>
+                      <div className="relative">
+                        <label className="block text-white/60 text-sm mb-2">
+                          Part Price *
+                        </label>
 
-                    <div
-                      className="relative"
-                      ref={(el) => {
-                        priceOptionsRefs.current[index] = el;
-                      }}
-                    >
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 pr-12 text-white focus:outline-none ${
-                          fieldErrors.partPrice
-                            ? "border-red-500 focus:border-red-500"
-                            : "border-gray-600 focus:border-blue-500"
-                        }`}
-                        placeholder="00.00"
-                        value={product.partPrice}
-                        onChange={(e) =>
-                          handleProductInputChange(
-                            index,
-                            "partPrice",
-                            e.target.value
-                          )
-                        }
-                        onBlur={(e) => {
-                          let rawValue = e.target.value.trim();
-                          if (rawValue) {
-                            // Only format if it’s a valid number
-                            const formatted = Number(rawValue).toFixed(2);
+                        <div
+                          className="relative"
+                          ref={(el) => {
+                            priceOptionsRefs.current[index] = el;
+                          }}
+                        >
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 pr-12 text-white focus:outline-none ${
+                              fieldErrors.partPrice
+                                ? "border-red-500 focus:border-red-500"
+                                : "border-gray-600 focus:border-blue-500"
+                            }`}
+                            placeholder="00.00"
+                            value={product.partPrice}
+                            onChange={(e) =>
+                              handleProductInputChange(
+                                index,
+                                "partPrice",
+                                e.target.value
+                              )
+                            }
+                            onBlur={(e) => {
+                              let rawValue = e.target.value.trim();
+                              if (rawValue) {
+                                // Only format if it’s a valid number
+                                const formatted = Number(rawValue).toFixed(2);
+                                handleProductInputChange(
+                                  index,
+                                  "partPrice",
+                                  formatted
+                                );
+                              }
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowPriceOptions((prev) => ({
+                                ...prev,
+                                [index]: !prev[index],
+                              }))
+                            }
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold transition-colors"
+                          >
+                            <Plus size={14} />
+                          </button>
+
+                          {/* Dropdown options */}
+                          {showPriceOptions[index] && (
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-[#0a1929] border border-gray-600 rounded-lg shadow-lg z-10">
+                              <div className="py-1">
+                                {!visiblePriceFields[index]?.taxesPrice && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handlePriceFieldSelection(
+                                        index,
+                                        "taxesPrice"
+                                      )
+                                    }
+                                    className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
+                                  >
+                                    Taxes Price
+                                  </button>
+                                )}
+                                {!visiblePriceFields[index]?.handlingPrice && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handlePriceFieldSelection(
+                                        index,
+                                        "handlingPrice"
+                                      )
+                                    }
+                                    className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
+                                  >
+                                    Handling Price
+                                  </button>
+                                )}
+                                {!visiblePriceFields[index]
+                                  ?.processingPrice && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handlePriceFieldSelection(
+                                        index,
+                                        "processingPrice"
+                                      )
+                                    }
+                                    className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
+                                  >
+                                    Processing Price
+                                  </button>
+                                )}
+                                {!visiblePriceFields[index]?.corePrice && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handlePriceFieldSelection(
+                                        index,
+                                        "corePrice"
+                                      )
+                                    }
+                                    className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
+                                  >
+                                    Core Price
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <p
+                          className={`text-red-400 text-xs mt-1 h-4 ${
+                            fieldErrors.partPrice ? "" : "invisible"
+                          }`}
+                        >
+                          {fieldErrors.partPrice || "placeholder"}
+                        </p>
+                      </div>
+
+                      {(visiblePriceFields[index]?.taxesPrice ||
+                        visiblePriceFields[index]?.handlingPrice ||
+                        visiblePriceFields[index]?.processingPrice ||
+                        visiblePriceFields[index]?.corePrice) && (
+                        <div className="">
+                          {visiblePriceFields[index]?.taxesPrice && (
+                            <div className="relative">
+                              {true && (
+                                <button
+                                  onClick={() => {
+                                    setVisiblePriceFields((prev) => ({
+                                      ...prev,
+                                      [index]: {
+                                        ...prev[index],
+                                        taxesPrice: false,
+                                      },
+                                    }));
+                                    handleProductInputChange(
+                                      index,
+                                      "taxesPrice",
+                                      ""
+                                    );
+                                  }}
+                                  className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                                  title="Remove payment"
+                                >
+                                  <X size={16} />
+                                </button>
+                              )}
+                              <label className="block text-white/60 text-sm mb-2">
+                                Taxes Price
+                              </label>
+                              <input
+                                type="number"
+                                className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                                  fieldErrors.taxesPrice
+                                    ? "border-red-500 focus:border-red-500"
+                                    : "border-gray-600 focus:border-blue-500"
+                                }`}
+                                placeholder="00.00"
+                                value={product.taxesPrice}
+                                onChange={(e) =>
+                                  handleProductInputChange(
+                                    index,
+                                    "taxesPrice",
+                                    e.target.value
+                                  )
+                                }
+                                // onBlur={(e) => {
+                                //   const rawValue = e.target.value || "0"; // always string
+                                //   const value = parseFloat(rawValue).toFixed(2); // value is string
+                                //   handleInputChange("taxesPrice", value);
+                                // }}
+                                onBlur={(e) => {
+                                  let rawValue = e.target.value.trim();
+                                  if (rawValue) {
+                                    // Only format if it’s a valid number
+                                    const formatted =
+                                      Number(rawValue).toFixed(2);
+                                    handleProductInputChange(
+                                      index,
+                                      "taxesPrice",
+                                      formatted
+                                    );
+                                  }
+                                }}
+                              />
+                              {fieldErrors.taxesPrice && (
+                                <p className="text-red-400 text-xs mt-1">
+                                  {fieldErrors.taxesPrice}
+                                </p>
+                              )}
+                            </div>
+                          )}
+
+                          {visiblePriceFields[index]?.handlingPrice && (
+                            <div className="relative">
+                              {true && (
+                                <button
+                                  onClick={() => {
+                                    setVisiblePriceFields((prev) => ({
+                                      ...prev,
+                                      [index]: {
+                                        ...prev[index],
+                                        handlingPrice: false,
+                                      },
+                                    }));
+                                    handleProductInputChange(
+                                      index,
+                                      "handlingPrice",
+                                      ""
+                                    );
+                                  }}
+                                  className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                                  title="Remove payment"
+                                >
+                                  <X size={16} />
+                                </button>
+                              )}
+                              <label className="block text-white/60 text-sm mb-2">
+                                Handling Price
+                              </label>
+                              <input
+                                type="number"
+                                className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                                  fieldErrors.handlingPrice
+                                    ? "border-red-500 focus:border-red-500"
+                                    : "border-gray-600 focus:border-blue-500"
+                                }`}
+                                placeholder="00.00"
+                                value={product.handlingPrice}
+                                onChange={(e) =>
+                                  handleProductInputChange(
+                                    index,
+                                    "handlingPrice",
+                                    e.target.value
+                                  )
+                                }
+                                onBlur={(e) => {
+                                  let rawValue = e.target.value.trim();
+                                  if (rawValue) {
+                                    // Only format if it’s a valid number
+                                    const formatted =
+                                      Number(rawValue).toFixed(2);
+                                    handleProductInputChange(
+                                      index,
+                                      "handlingPrice",
+                                      formatted
+                                    );
+                                  }
+                                }}
+                              />
+                              {fieldErrors.handlingPrice && (
+                                <p className="text-red-400 text-xs mt-1">
+                                  {fieldErrors.handlingPrice}
+                                </p>
+                              )}
+                            </div>
+                          )}
+
+                          {visiblePriceFields[index]?.processingPrice && (
+                            <div className="relative">
+                              {true && (
+                                <button
+                                  onClick={() => {
+                                    setVisiblePriceFields((prev) => ({
+                                      ...prev,
+                                      [index]: {
+                                        ...prev[index],
+                                        processingPrice: false,
+                                      },
+                                    }));
+                                    handleProductInputChange(
+                                      index,
+                                      "processingPrice",
+                                      ""
+                                    );
+                                  }}
+                                  className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                                  title="Remove payment"
+                                >
+                                  <X size={16} />
+                                </button>
+                              )}
+                              <label className="block text-white/60 text-sm mb-2">
+                                Processing Price
+                              </label>
+                              <input
+                                type="number"
+                                className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                                  fieldErrors.processingPrice
+                                    ? "border-red-500 focus:border-red-500"
+                                    : "border-gray-600 focus:border-blue-500"
+                                }`}
+                                placeholder="00.00"
+                                value={product.processingPrice}
+                                onChange={(e) =>
+                                  handleProductInputChange(
+                                    index,
+                                    "processingPrice",
+                                    e.target.value
+                                  )
+                                }
+                                onBlur={(e) => {
+                                  let rawValue = e.target.value.trim();
+                                  if (rawValue) {
+                                    // Only format if it’s a valid number
+                                    const formatted =
+                                      Number(rawValue).toFixed(2);
+                                    handleProductInputChange(
+                                      index,
+                                      "processingPrice",
+                                      formatted
+                                    );
+                                  }
+                                }}
+                              />
+                              {fieldErrors.processingPrice && (
+                                <p className="text-red-400 text-xs mt-1">
+                                  {fieldErrors.processingPrice}
+                                </p>
+                              )}
+                            </div>
+                          )}
+
+                          {visiblePriceFields[index]?.corePrice && (
+                            <div className="relative">
+                              {true && (
+                                <button
+                                  onClick={() => {
+                                    setVisiblePriceFields((prev) => ({
+                                      ...prev,
+                                      [index]: {
+                                        ...prev[index],
+                                        corePrice: false,
+                                      },
+                                    }));
+                                    handleProductInputChange(
+                                      index,
+                                      "corePrice",
+                                      ""
+                                    );
+                                  }}
+                                  className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                                  title="Remove payment"
+                                >
+                                  <X size={16} />
+                                </button>
+                              )}
+                              <label className="block text-white/60 text-sm mb-2">
+                                Core Price
+                              </label>
+                              <input
+                                type="number"
+                                className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
+                                  fieldErrors.corePrice
+                                    ? "border-red-500 focus:border-red-500"
+                                    : "border-gray-600 focus:border-blue-500"
+                                }`}
+                                placeholder="00.00"
+                                value={product.corePrice}
+                                onChange={(e) =>
+                                  handleProductInputChange(
+                                    index,
+                                    "corePrice",
+                                    e.target.value
+                                  )
+                                }
+                                onBlur={(e) => {
+                                  let rawValue = e.target.value.trim();
+                                  if (rawValue) {
+                                    // Only format if it’s a valid number
+                                    const formatted =
+                                      Number(rawValue).toFixed(2);
+                                    handleProductInputChange(
+                                      index,
+                                      "corePrice",
+                                      formatted
+                                    );
+                                  }
+                                }}
+                              />
+                              {fieldErrors.corePrice && (
+                                <p className="text-red-400 text-xs mt-1">
+                                  {fieldErrors.corePrice}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2 ">
+                          VIN Number
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                          placeholder="VIN Number"
+                          value={product.vinNumber || ""}
+                          maxLength={17}
+                          pattern="[A-Za-z0-9]{17}"
+                          onChange={(e) => {
+                            // Only allow alphanumeric and max 17 chars
+                            const value = e.target.value
+                              .replace(/[^A-Za-z0-9]/g, "")
+                              .slice(0, 17);
+                            handleProductInputChange(index, "vinNumber", value);
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-white/60 text-sm mb-2 mt-0 ">
+                          Note
+                        </label>
+                        <textarea
+                          className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                          placeholder="Example : Enter VIN Number .... "
+                          value={product.notes || ""}
+                          onChange={(e) =>
                             handleProductInputChange(
                               index,
-                              "partPrice",
-                              formatted
-                            );
+                              "notes",
+                              e.target.value
+                            )
                           }
-                        }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-6 mt-2">
+                    <div>
+                      <label className="block text-white/60 text-sm mb-2">
+                        Total Selling Price
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                        placeholder="Total Selling Price"
+                        value={formData.totalSellingPrice}
+                        readOnly
                       />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setShowPriceOptions((prev) => ({
-                            ...prev,
-                            [index]: !prev[index],
-                          }))
-                        }
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold transition-colors"
-                      >
-                        <Plus size={14} />
-                      </button>
-
-                      {/* Dropdown options */}
-                      {showPriceOptions[index] && (
-                        <div className="absolute top-full left-0 right-0 mt-1 bg-[#0a1929] border border-gray-600 rounded-lg shadow-lg z-10">
-                          <div className="py-1">
-                            {!visiblePriceFields[index]?.taxesPrice && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handlePriceFieldSelection(index, "taxesPrice")
-                                }
-                                className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
-                              >
-                                Taxes Price
-                              </button>
-                            )}
-                            {!visiblePriceFields[index]?.handlingPrice && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handlePriceFieldSelection(
-                                    index,
-                                    "handlingPrice"
-                                  )
-                                }
-                                className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
-                              >
-                                Handling Price
-                              </button>
-                            )}
-                            {!visiblePriceFields[index]?.processingPrice && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handlePriceFieldSelection(
-                                    index,
-                                    "processingPrice"
-                                  )
-                                }
-                                className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
-                              >
-                                Processing Price
-                              </button>
-                            )}
-                            {!visiblePriceFields[index]?.corePrice && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handlePriceFieldSelection(index, "corePrice")
-                                }
-                                className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 transition-colors"
-                              >
-                                Core Price
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      )}
                     </div>
-                    <p
-                      className={`text-red-400 text-xs mt-1 h-4 ${
-                        fieldErrors.partPrice ? "" : "invisible"
-                      }`}
-                    >
-                      {fieldErrors.partPrice || "placeholder"}
-                    </p>
-                  </div>
-
-                  {(visiblePriceFields[index]?.taxesPrice ||
-                    visiblePriceFields[index]?.handlingPrice ||
-                    visiblePriceFields[index]?.processingPrice ||
-                    visiblePriceFields[index]?.corePrice) && (
-                    <div className="">
-                      {visiblePriceFields[index]?.taxesPrice && (
-                        <div className="relative">
-                          {true && (
-                            <button
-                              onClick={() => {
-                                setVisiblePriceFields((prev) => ({
-                                  ...prev,
-                                  [index]: {
-                                    ...prev[index],
-                                    taxesPrice: false,
-                                  },
-                                }));
-                                handleProductInputChange(
-                                  index,
-                                  "taxesPrice",
-                                  ""
-                                );
-                              }}
-                              className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                              title="Remove payment"
-                            >
-                              <X size={16} />
-                            </button>
-                          )}
-                          <label className="block text-white/60 text-sm mb-2">
-                            Taxes Price
-                          </label>
-                          <input
-                            type="number"
-                            className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                              fieldErrors.taxesPrice
-                                ? "border-red-500 focus:border-red-500"
-                                : "border-gray-600 focus:border-blue-500"
-                            }`}
-                            placeholder="00.00"
-                            value={product.taxesPrice}
-                            onChange={(e) =>
-                              handleProductInputChange(
-                                index,
-                                "taxesPrice",
-                                e.target.value
-                              )
-                            }
-                            // onBlur={(e) => {
-                            //   const rawValue = e.target.value || "0"; // always string
-                            //   const value = parseFloat(rawValue).toFixed(2); // value is string
-                            //   handleInputChange("taxesPrice", value);
-                            // }}
-                            onBlur={(e) => {
-                              let rawValue = e.target.value.trim();
-                              if (rawValue) {
-                                // Only format if it’s a valid number
-                                const formatted = Number(rawValue).toFixed(2);
-                                handleProductInputChange(
-                                  index,
-                                  "taxesPrice",
-                                  formatted
-                                );
-                              }
-                            }}
-                          />
-                          {fieldErrors.taxesPrice && (
-                            <p className="text-red-400 text-xs mt-1">
-                              {fieldErrors.taxesPrice}
-                            </p>
-                          )}
-                        </div>
-                      )}
-
-                      {visiblePriceFields[index]?.handlingPrice && (
-                        <div className="relative">
-                          {true && (
-                            <button
-                              onClick={() => {
-                                setVisiblePriceFields((prev) => ({
-                                  ...prev,
-                                  [index]: {
-                                    ...prev[index],
-                                    handlingPrice: false,
-                                  },
-                                }));
-                                handleProductInputChange(
-                                  index,
-                                  "handlingPrice",
-                                  ""
-                                );
-                              }}
-                              className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                              title="Remove payment"
-                            >
-                              <X size={16} />
-                            </button>
-                          )}
-                          <label className="block text-white/60 text-sm mb-2">
-                            Handling Price
-                          </label>
-                          <input
-                            type="number"
-                            className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                              fieldErrors.handlingPrice
-                                ? "border-red-500 focus:border-red-500"
-                                : "border-gray-600 focus:border-blue-500"
-                            }`}
-                            placeholder="00.00"
-                            value={product.handlingPrice}
-                            onChange={(e) =>
-                              handleProductInputChange(
-                                index,
-                                "handlingPrice",
-                                e.target.value
-                              )
-                            }
-                            onBlur={(e) => {
-                              let rawValue = e.target.value.trim();
-                              if (rawValue) {
-                                // Only format if it’s a valid number
-                                const formatted = Number(rawValue).toFixed(2);
-                                handleProductInputChange(
-                                  index,
-                                  "handlingPrice",
-                                  formatted
-                                );
-                              }
-                            }}
-                          />
-                          {fieldErrors.handlingPrice && (
-                            <p className="text-red-400 text-xs mt-1">
-                              {fieldErrors.handlingPrice}
-                            </p>
-                          )}
-                        </div>
-                      )}
-
-                      {visiblePriceFields[index]?.processingPrice && (
-                        <div className="relative">
-                          {true && (
-                            <button
-                              onClick={() => {
-                                setVisiblePriceFields((prev) => ({
-                                  ...prev,
-                                  [index]: {
-                                    ...prev[index],
-                                    processingPrice: false,
-                                  },
-                                }));
-                                handleProductInputChange(
-                                  index,
-                                  "processingPrice",
-                                  ""
-                                );
-                              }}
-                              className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                              title="Remove payment"
-                            >
-                              <X size={16} />
-                            </button>
-                          )}
-                          <label className="block text-white/60 text-sm mb-2">
-                            Processing Price
-                          </label>
-                          <input
-                            type="number"
-                            className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                              fieldErrors.processingPrice
-                                ? "border-red-500 focus:border-red-500"
-                                : "border-gray-600 focus:border-blue-500"
-                            }`}
-                            placeholder="00.00"
-                            value={product.processingPrice}
-                            onChange={(e) =>
-                              handleProductInputChange(
-                                index,
-                                "processingPrice",
-                                e.target.value
-                              )
-                            }
-                            onBlur={(e) => {
-                              let rawValue = e.target.value.trim();
-                              if (rawValue) {
-                                // Only format if it’s a valid number
-                                const formatted = Number(rawValue).toFixed(2);
-                                handleProductInputChange(
-                                  index,
-                                  "processingPrice",
-                                  formatted
-                                );
-                              }
-                            }}
-                          />
-                          {fieldErrors.processingPrice && (
-                            <p className="text-red-400 text-xs mt-1">
-                              {fieldErrors.processingPrice}
-                            </p>
-                          )}
-                        </div>
-                      )}
-
-                      {visiblePriceFields[index]?.corePrice && (
-                        <div className="relative">
-                          {true && (
-                            <button
-                              onClick={() => {
-                                setVisiblePriceFields((prev) => ({
-                                  ...prev,
-                                  [index]: {
-                                    ...prev[index],
-                                    corePrice: false,
-                                  },
-                                }));
-                                handleProductInputChange(
-                                  index,
-                                  "corePrice",
-                                  ""
-                                );
-                              }}
-                              className="absolute -top-[-20px] -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                              title="Remove payment"
-                            >
-                              <X size={16} />
-                            </button>
-                          )}
-                          <label className="block text-white/60 text-sm mb-2">
-                            Core Price
-                          </label>
-                          <input
-                            type="number"
-                            className={`w-full bg-[#0a1929] border rounded-lg px-4 py-3 text-white focus:outline-none ${
-                              fieldErrors.corePrice
-                                ? "border-red-500 focus:border-red-500"
-                                : "border-gray-600 focus:border-blue-500"
-                            }`}
-                            placeholder="00.00"
-                            value={product.corePrice}
-                            onChange={(e) =>
-                              handleProductInputChange(
-                                index,
-                                "corePrice",
-                                e.target.value
-                              )
-                            }
-                            onBlur={(e) => {
-                              let rawValue = e.target.value.trim();
-                              if (rawValue) {
-                                // Only format if it’s a valid number
-                                const formatted = Number(rawValue).toFixed(2);
-                                handleProductInputChange(
-                                  index,
-                                  "corePrice",
-                                  formatted
-                                );
-                              }
-                            }}
-                          />
-                          {fieldErrors.corePrice && (
-                            <p className="text-red-400 text-xs mt-1">
-                              {fieldErrors.corePrice}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2 ">
-                      VIN Number
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                      placeholder="VIN Number"
-                      value={formData.vinNumber}
-                      maxLength={17}
-                      pattern="[A-Za-z0-9]{17}"
-                      onChange={(e) => {
-                        // Only allow alphanumeric and max 17 chars
-                        const value = e.target.value
-                          .replace(/[^A-Za-z0-9]/g, "")
-                          .slice(0, 17);
-                        handleInputChange("vinNumber", value);
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-white/60 text-sm mb-2 mt-0 ">
-                      Note
-                    </label>
-                    <textarea
-                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                      placeholder="Example : Enter VIN Number .... "
-                      value={formData.notes}
-                      onChange={(e) =>
-                        handleInputChange("notes", e.target.value)
-                      }
-                    />
-                  </div>
-                </div>
-              ))}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-6 mt-2">
-                <div>
-                  <label className="block text-white/60 text-sm mb-2">
-                    Total Selling Price
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                    placeholder="Total Selling Price"
-                    value={formData.totalSellingPrice}
-                    readOnly
-                  />
-                </div>
-                {/* <div>
+                    {/* <div>
                   <label className="block text-white/60 text-sm mb-2">
                     VIN Number
                   </label>
@@ -4522,191 +4641,194 @@ const OrderDetails = () => {
                     }}
                   />
                 </div> */}
-                <div>
-                  <label className="block text-white/60 text-sm mb-2">
-                    Internal Notes
-                  </label>
-                  <textarea
-                    className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                    placeholder="Example : Enter VIN Number .... "
-                    value={formData.internalNotes}
-                    onChange={(e) =>
-                      handleInputChange("internalNotes", e.target.value)
-                    }
-                  />
-                </div>
-              </div>
-
-              {/* Send Invoice Button */}
-              <div className="flex justify-end gap-4">
-                <button
-                  className={` mt-8 w-40 h-10 px-2 py-1 rounded-lg font-medium transition-colors ${
-                    isLoading || invoiceButtonState
-                      ? "bg-gray-500 cursor-not-allowed"
-                      : "bg-[#006BA9] hover:bg-[#006BA9]/90 cursor-pointer"
-                  } text-white`}
-                  onClick={handleSendInvoice}
-                  disabled={isLoading || invoiceButtonState}
-                >
-                  {isLoading ? "Sending Invoice..." : "Send Invoice"}
-                </button>
-                <div>
-                  {/* <label className="block text-white/60 text-sm mb-2">
-                    Invoice Status
-                  </label> */}
-                  <select
-                    className="bg-[#0a1929] py-3 text-green-400 outline-none"
-                    value={formData.invoiceStatus}
-                    onChange={(e) => {
-                      handleInputChange("invoiceStatus", e.target.value);
-                      if (e.target.value == "no") {
-                        setInvoiceButtonState(false);
-                      } else if (e.target.value == "yes") {
-                        setInvoiceButtonState(true);
-                      } else {
-                        setInvoiceButtonState(false);
-                      }
-                    }}
-                  >
-                    <option value="">Invoice Sent Status</option>
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
-                  </select>
-                  <div className="space-y-2">
-                    {!invoiceButtonState && (
-                      <div className="flex items-center justify-between bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3">
-                        <span className="text-green-400 text-sm">
-                          Invoice Sent
-                        </span>
-
-                        <span className="text-white/60 text-xs">
-                          {/* 27Jun25 7:11pm */}
-                          {invoiceDate &&
-                            `${formatDay(TIME)} ${formatTime(TIME)}`}
-                        </span>
-                      </div>
-                    )}
-                    {invoiceButtonState && (
-                      <div className="flex items-center justify-between bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3">
-                        <span className="text-green-400 text-sm">
-                          Invoice Sent
-                        </span>
-
-                        <div className="relative">
-                          <input
-                            type="date"
-                            className="text-white text-sm placeholder:text-white"
-                            value={formData.invoiceSentAt}
-                            onChange={(e) =>
-                              handleInputChange("invoiceSentAt", e.target.value)
-                            }
-                          />
-                        </div>
-                      </div>
-                    )}
-                    <div className="flex items-center justify-between gap-0.5 bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 mb-2">
-                      <span className="text-green-400 text-sm">
-                        Invoice Confirm
-                      </span>
-                      {/* <span className="text-white/60 text-xs">
-                          28Jun25 7:11pm
-                        </span> */}
-                      <input
-                        type="date"
-                        className="text-white text-sm ml-2 placeholder:text-white"
-                        value={formData.invoiceConfirmedAt}
+                    <div>
+                      <label className="block text-white/60 text-sm mb-2">
+                        Internal Notes
+                      </label>
+                      <textarea
+                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                        placeholder="Example : Enter VIN Number .... "
+                        value={formData.internalNotes}
                         onChange={(e) =>
-                          handleInputChange(
-                            "invoiceConfirmedAt",
-                            e.target.value
-                          )
+                          handleInputChange("internalNotes", e.target.value)
                         }
                       />
                     </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Payment Entries */}
-              <MerchantInfo
-                paymentEntries={paymentEntries}
-                isLoading={isLoading}
-                formData={formData}
-                handlePaymentEntryChange={handlePaymentEntryChange}
-                handleInputChange={handleInputChange}
-                handleCharge={handleCharge}
-                removePaymentEntry={removePaymentEntry}
-                addPaymentEntry={addPaymentEntry}
-                ChevronDown={ChevronDown}
-                X={X}
-                Plus={Plus}
-              />
-              {/* Yard Info Section */}
-              <YardInfo
-                formData={{
-                  yardName: formData.yardName,
-                  attnName: formData.attnName,
-                  yardAddress: formData.yardAddress,
-                  yardMobile: formData.yardMobile,
-                  yardEmail: formData.yardEmail,
-                  // yardPrice: formData.yardPrice,
-                  yardPrice: formData.yardPrice
-                    ? parseFloat(formData.yardPrice as string)
-                    : 0,
-                  taxesYardPrice: formData.taxesYardPrice
-                    ? parseFloat(formData.taxesYardPrice as string)
-                    : 0,
-                  handlingYardPrice: formData.handlingYardPrice
-                    ? parseFloat(formData.handlingYardPrice as string)
-                    : 0,
-                  processingYardPrice: formData.processingYardPrice
-                    ? parseFloat(formData.processingYardPrice as string)
-                    : 0,
-                  coreYardPrice: formData.coreYardPrice
-                    ? parseFloat(formData.coreYardPrice as string)
-                    : 0,
+                  {/* Send Invoice Button */}
+                  <div className="flex justify-end gap-4">
+                    <button
+                      className={` mt-8 w-40 h-10 px-2 py-1 rounded-lg font-medium transition-colors ${
+                        isLoadingInvoice || invoiceButtonState
+                          ? "bg-gray-500 cursor-not-allowed"
+                          : "bg-[#006BA9] hover:bg-[#006BA9]/90 cursor-pointer"
+                      } text-white`}
+                      onClick={handleSendInvoice}
+                      disabled={isLoadingInvoice || invoiceButtonState}
+                    >
+                      {isLoadingInvoice ? "Sending Invoice..." : "Send Invoice"}
+                    </button>
+                    <div>
+                      {/* <label className="block text-white/60 text-sm mb-2">
+                    Invoice Status
+                  </label> */}
+                      <select
+                        className="bg-[#0a1929] py-3 text-green-400 outline-none"
+                        value={formData.invoiceStatus}
+                        onChange={(e) => {
+                          handleInputChange("invoiceStatus", e.target.value);
+                          if (e.target.value == "no") {
+                            setInvoiceButtonState(false);
+                          } else if (e.target.value == "yes") {
+                            setInvoiceButtonState(true);
+                          } else {
+                            setInvoiceButtonState(false);
+                          }
+                        }}
+                      >
+                        <option value="">Invoice Sent Status</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                      </select>
+                      <div className="space-y-2">
+                        {!invoiceButtonState && (
+                          <div className="flex items-center justify-between bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3">
+                            <span className="text-green-400 text-sm">
+                              Invoice Sent
+                            </span>
 
-                  yardWarranty: formData.yardWarranty,
-                  yardMiles: formData.yardMiles,
-                  yardShipping: formData.yardShipping,
-                  yardCost: formData.yardCost,
-                  yardtotalBuy:
-                    formData.yardCost +
-                    formData.yardPrice +
-                    formData.processingYardPrice +
-                    formData.taxesYardPrice +
-                    formData.handlingYardPrice +
-                    formData.coreYardPrice,
-                  // yardCharge: formData.yardCharge,
-                }}
-                handleInputChange={handleInputChange}
-                showYardShippingCost={showYardShippingCost}
-                previousYards={previousYards}
-                setPreviousYards={setPreviousYards}
-                showPreviousYard={showPreviousYard}
-                setShowPreviousYard={setShowPreviousYard}
-                selectedPrevYardIdx={selectedPrevYardIdx}
-                setSelectedPrevYardIdx={setSelectedPrevYardIdx}
-                setStatusPopUp={setStatusPopUp}
-                statusPopUp={statusPopUp}
-                orderId={String(params.id)}
-                onYardMoved={handleYardMoved}
-              />
-              <div className="flex justify-end gap-4">
-                <button
-                  onClick={handleSendPO}
-                  className={` mt-8 w-40 h-10 px-2 py-1 rounded-lg font-medium transition-colors ${
-                    isLoading || poButtonState
-                      ? "bg-gray-500 cursor-not-allowed"
-                      : "bg-[#006BA9] hover:bg-[#006BA9]/90 cursor-pointer"
-                  } text-white`}
-                  disabled={isLoading || poButtonState}
-                >
-                  {isLoading ? "Sending PO..." : "Send PO"}
-                </button>
-                {/* PO Status & Approval/Sales */}
-                <div>
-                  {/* <label className="block text-white/60 text-sm mb-2">
+                            <span className="text-white/60 text-xs">
+                              {/* 27Jun25 7:11pm */}
+                              {invoiceDate &&
+                                `${formatDay(TIME)} ${formatTime(TIME)}`}
+                            </span>
+                          </div>
+                        )}
+                        {invoiceButtonState && (
+                          <div className="flex items-center justify-between bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3">
+                            <span className="text-green-400 text-sm">
+                              Invoice Sent
+                            </span>
+
+                            <div className="relative">
+                              <input
+                                type="date"
+                                className="text-white text-sm placeholder:text-white"
+                                value={formData.invoiceSentAt}
+                                onChange={(e) =>
+                                  handleInputChange(
+                                    "invoiceSentAt",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </div>
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between gap-0.5 bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 mb-2">
+                          <span className="text-green-400 text-sm">
+                            Invoice Confirm
+                          </span>
+                          {/* <span className="text-white/60 text-xs">
+                          28Jun25 7:11pm
+                        </span> */}
+                          <input
+                            type="date"
+                            className="text-white text-sm ml-2 placeholder:text-white"
+                            value={formData.invoiceConfirmedAt}
+                            onChange={(e) =>
+                              handleInputChange(
+                                "invoiceConfirmedAt",
+                                e.target.value
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Entries */}
+                  <MerchantInfo
+                    paymentEntries={paymentEntries}
+                    isLoading={isLoading}
+                    formData={formData}
+                    handlePaymentEntryChange={handlePaymentEntryChange}
+                    handleInputChange={handleInputChange}
+                    handleCharge={handleCharge}
+                    removePaymentEntry={removePaymentEntry}
+                    addPaymentEntry={addPaymentEntry}
+                    ChevronDown={ChevronDown}
+                    X={X}
+                    Plus={Plus}
+                  />
+                  {/* Yard Info Section */}
+                  <YardInfo
+                    formData={{
+                      yardName: formData.yardName,
+                      attnName: formData.attnName,
+                      yardAddress: formData.yardAddress,
+                      yardMobile: formData.yardMobile,
+                      yardEmail: formData.yardEmail,
+                      // yardPrice: formData.yardPrice,
+                      yardPrice: formData.yardPrice
+                        ? parseFloat(formData.yardPrice as string)
+                        : 0,
+                      taxesYardPrice: formData.taxesYardPrice
+                        ? parseFloat(formData.taxesYardPrice as string)
+                        : 0,
+                      handlingYardPrice: formData.handlingYardPrice
+                        ? parseFloat(formData.handlingYardPrice as string)
+                        : 0,
+                      processingYardPrice: formData.processingYardPrice
+                        ? parseFloat(formData.processingYardPrice as string)
+                        : 0,
+                      coreYardPrice: formData.coreYardPrice
+                        ? parseFloat(formData.coreYardPrice as string)
+                        : 0,
+
+                      yardWarranty: formData.yardWarranty,
+                      yardMiles: formData.yardMiles,
+                      yardShipping: formData.yardShipping,
+                      yardCost: formData.yardCost,
+                      yardtotalBuy:
+                        formData.yardCost +
+                        formData.yardPrice +
+                        formData.processingYardPrice +
+                        formData.taxesYardPrice +
+                        formData.handlingYardPrice +
+                        formData.coreYardPrice,
+                      // yardCharge: formData.yardCharge,
+                    }}
+                    handleInputChange={handleInputChange}
+                    showYardShippingCost={showYardShippingCost}
+                    previousYards={previousYards}
+                    setPreviousYards={setPreviousYards}
+                    showPreviousYard={showPreviousYard}
+                    setShowPreviousYard={setShowPreviousYard}
+                    selectedPrevYardIdx={selectedPrevYardIdx}
+                    setSelectedPrevYardIdx={setSelectedPrevYardIdx}
+                    setStatusPopUp={setStatusPopUp}
+                    statusPopUp={statusPopUp}
+                    orderId={String(params.id)}
+                    onYardMoved={handleYardMoved}
+                  />
+                  <div className="flex justify-end gap-4">
+                    <button
+                      onClick={handleSendPO}
+                      className={` mt-8 w-40 h-10 px-2 py-1 rounded-lg font-medium transition-colors ${
+                        isLoadingPo || poButtonState
+                          ? "bg-gray-500 cursor-not-allowed"
+                          : "bg-[#006BA9] hover:bg-[#006BA9]/90 cursor-pointer"
+                      } text-white`}
+                      disabled={isLoadingPo || poButtonState}
+                    >
+                      {isLoadingPo ? "Sending PO..." : "Send PO"}
+                    </button>
+                    {/* PO Status & Approval/Sales */}
+                    <div>
+                      {/* <label className="block text-white/60 text-sm mb-2">
                     PO Status
                   </label>
                   <div className="space-y-2">
@@ -4723,269 +4845,285 @@ const OrderDetails = () => {
                       </span>
                     </div>
                   </div> */}
-                  <select
-                    className="bg-[#0a1929] py-3 text-green-400 outline-none"
-                    value={formData.poStatus}
-                    onChange={(e) => {
-                      handleInputChange("poStatus", e.target.value);
-                      if (e.target.value == "no") {
-                        setPoButtonState(false);
-                      } else if (e.target.value == "yes") {
-                        setPoButtonState(true);
-                      } else {
-                        setPoButtonState(false);
-                      }
-                    }}
-                  >
-                    <option value="">PO Sent Status</option>
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
-                  </select>
-                  <div className="space-y-2">
-                    {!poButtonState && (
-                      <div className="flex items-center justify-between bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3">
-                        <span className="text-green-400 text-sm">PO Sent</span>
+                      <select
+                        className="bg-[#0a1929] py-3 text-green-400 outline-none"
+                        value={formData.poStatus}
+                        onChange={(e) => {
+                          handleInputChange("poStatus", e.target.value);
+                          if (e.target.value == "no") {
+                            setPoButtonState(false);
+                          } else if (e.target.value == "yes") {
+                            setPoButtonState(true);
+                          } else {
+                            setPoButtonState(false);
+                          }
+                        }}
+                      >
+                        <option value="">PO Sent Status</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                      </select>
+                      <div className="space-y-2">
+                        {!poButtonState && (
+                          <div className="flex items-center justify-between bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3">
+                            <span className="text-green-400 text-sm">
+                              PO Sent
+                            </span>
 
-                        <span className="text-white/60 text-xs">
-                          {/* 27Jun25 7:11pm */}
-                          {poDate && `${formatDay(TIME1)} ${formatTime(TIME1)}`}
-                        </span>
-                      </div>
-                    )}
-                    {poButtonState && (
-                      <div className="flex items-center justify-between bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3">
-                        <span className="text-green-400 text-sm">PO Sent</span>
+                            <span className="text-white/60 text-xs">
+                              {/* 27Jun25 7:11pm */}
+                              {poDate &&
+                                `${formatDay(TIME1)} ${formatTime(TIME1)}`}
+                            </span>
+                          </div>
+                        )}
+                        {poButtonState && (
+                          <div className="flex items-center justify-between bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3">
+                            <span className="text-green-400 text-sm">
+                              PO Sent
+                            </span>
 
-                        <div className="relative">
-                          <input
-                            type="date"
-                            className="text-white text-sm placeholder:text-white"
-                            value={formData.poSentAt}
-                            onChange={(e) =>
-                              handleInputChange("poSentAt", e.target.value)
-                            }
-                          />
-                        </div>
-                      </div>
-                    )}
-                    <div className="flex items-center justify-between gap-0.5 bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 mb-2">
-                      <span className="text-green-400 text-sm">PO Confirm</span>
-                      {/* <span className="text-white/60 text-xs">
+                            <div className="relative">
+                              <input
+                                type="date"
+                                className="text-white text-sm placeholder:text-white"
+                                value={formData.poSentAt}
+                                onChange={(e) =>
+                                  handleInputChange("poSentAt", e.target.value)
+                                }
+                              />
+                            </div>
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between gap-0.5 bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 mb-2">
+                          <span className="text-green-400 text-sm">
+                            PO Confirm
+                          </span>
+                          {/* <span className="text-white/60 text-xs">
                           28Jun25 7:11pm
                         </span> */}
-                      <input
-                        type="date"
-                        className="text-white text-sm ml-2 placeholder:text-white"
-                        value={formData.poConfirmedAt}
-                        onChange={(e) =>
-                          handleInputChange("poConfirmedAt", e.target.value)
-                        }
-                      />
+                          <input
+                            type="date"
+                            className="text-white text-sm ml-2 placeholder:text-white"
+                            value={formData.poConfirmedAt}
+                            onChange={(e) =>
+                              handleInputChange("poConfirmedAt", e.target.value)
+                            }
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-              <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-10 my-2">
-                <div>
-                  <label className="block text-white/60 text-sm mb-2">
-                    Picture Status
-                  </label>
-                  <select
-                    className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                    value={formData.pictureStatus}
-                    onChange={(e) =>
-                      handleInputChange("pictureStatus", e.target.value)
-                    }
-                  >
-                    <option value="">Select</option>
-                    <option value="Yes">Yes</option>
-                    <option value="No">No</option>
-                  </select>
-                  {formData.pictureStatus === "Yes" && (
-                    <div className="mt-4 p-4 bg-[#1a2636] rounded-lg border border-blue-700 flex flex-col items-center gap-4 shadow-lg">
-                      <label
-                        htmlFor="picture-upload"
-                        className="w-full flex flex-col items-center justify-center cursor-pointer bg-[#22304a] border-2 border-dashed border-blue-400 rounded-lg p-6 hover:bg-[#2a3a5a] transition-colors text-white/80 text-center"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-10 w-10 mb-2 text-blue-400"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"
-                          />
-                        </svg>
-                        <span className="font-semibold">
-                          Click to upload picture
-                        </span>
-                        <span className="text-xs text-white/50 mt-1">
-                          (JPG, PNG, or GIF)
-                        </span>
-                        <input
-                          id="picture-upload"
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            if (e.target.files && e.target.files[0]) {
-                              setUploadedPicture(e.target.files[0]);
-                            }
-                          }}
-                        />
+                  <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-10 my-2">
+                    <div>
+                      <label className="block text-white/60 text-sm mb-2">
+                        Picture Status
                       </label>
-                      {uploadedPicture && (
-                        <div className="text-white/80 text-sm mt-2">
-                          Selected:{" "}
-                          <span className="font-semibold">
-                            {uploadedPicture.name}
-                          </span>
-                        </div>
-                      )}
-                      <button
-                        className="bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white px-6 py-2 rounded-lg font-semibold shadow-md transition-colors w-full"
-                        onClick={handleSendPicture}
+                      <select
+                        className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                        value={formData.pictureStatus}
+                        onChange={(e) =>
+                          handleInputChange("pictureStatus", e.target.value)
+                        }
                       >
-                        Send Picture
-                      </button>
-                     {formData.pictureUrl && (
-                        <div className="mt-2 w-full">
-                          <p className="text-white/80 text-sm mb-2">Preview:</p>
-                          <div className="flex justify-center">
-                            <img 
-                              src={imagePreviewUrl || formData.pictureUrl} 
-                              alt="Preview" 
-                              className="max-w-full h-auto max-h-40 rounded border border-gray-600"
-                              onError={(e) => {
-                                // If direct URL fails, you could try to generate presigned URL
-                                console.log("Preview failed, consider using presigned URL");
+                        <option value="">Select</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                      </select>
+                      {formData.pictureStatus === "Yes" && (
+                        <div className="mt-4 p-4 bg-[#1a2636] rounded-lg border border-blue-700 flex flex-col items-center gap-4 shadow-lg">
+                          <label
+                            htmlFor="picture-upload"
+                            className="w-full flex flex-col items-center justify-center cursor-pointer bg-[#22304a] border-2 border-dashed border-blue-400 rounded-lg p-6 hover:bg-[#2a3a5a] transition-colors text-white/80 text-center"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-10 w-10 mb-2 text-blue-400"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"
+                              />
+                            </svg>
+                            <span className="font-semibold">
+                              Click to upload picture
+                            </span>
+                            <span className="text-xs text-white/50 mt-1">
+                              (JPG, PNG, or GIF)
+                            </span>
+                            <input
+                              id="picture-upload"
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                  setUploadedPicture(e.target.files[0]);
+                                }
                               }}
                             />
-                          </div>
+                          </label>
+                          {uploadedPicture && (
+                            <div className="text-white/80 text-sm mt-2">
+                              Selected:{" "}
+                              <span className="font-semibold">
+                                {uploadedPicture.name}
+                              </span>
+                            </div>
+                          )}
+                          <button
+                            className="bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white px-6 py-2 rounded-lg font-semibold shadow-md transition-colors w-full"
+                            onClick={handleSendPicture}
+                          >
+                            Send Picture
+                          </button>
+                          {formData.pictureUrl && (
+                            <div className="mt-2 w-full">
+                              <p className="text-white/80 text-sm mb-2">
+                                Preview:
+                              </p>
+                              <div className="flex justify-center">
+                                <img
+                                  src={imagePreviewUrl || formData.pictureUrl}
+                                  alt="Preview"
+                                  className="max-w-full h-auto max-h-40 rounded border border-gray-600"
+                                  onError={(e) => {
+                                    // If direct URL fails, you could try to generate presigned URL
+                                    console.log(
+                                      "Preview failed, consider using presigned URL"
+                                    );
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
+                  </div>
+                  {showOwnShipping && (
+                    <OwnShippingInfo
+                      formData={{
+                        ...formData,
+                        coreYardPrice:
+                          typeof formData.coreYardPrice === "number"
+                            ? formData.coreYardPrice.toString()
+                            : formData.coreYardPrice,
+                      }}
+                      setFormData={setFormData}
+                      handleCreateBOL={handleCreateBOL}
+                      ChevronDown={ChevronDown}
+                    />
                   )}
                 </div>
-              </div>
-              {showOwnShipping && (
-                <OwnShippingInfo
-                  formData={{
-                    ...formData,
-                    coreYardPrice:
-                      typeof formData.coreYardPrice === "number"
-                        ? formData.coreYardPrice.toString()
-                        : formData.coreYardPrice,
-                  }}
-                  setFormData={setFormData}
-                  handleCreateBOL={handleCreateBOL}
-                  ChevronDown={ChevronDown}
-                />
-              )}
-            </div>
-            <div className="grid md:grid-cols-4 gap-10">
-              <div>
-                <label className="block text-white/60 text-sm mb-2">
-                  Carrier Name
-                </label>
-                <input
-                  type="text"
-                  className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                  placeholder="Carrier Name"
-                  value={formData.carrierName}
-                  onChange={(e) =>
-                    handleInputChange("carrierName", e.target.value)
-                  }
-                />
-              </div>
-              <div>
-                <label className="block text-white/60 text-sm mb-2">
-                  Tracking Number
-                </label>
-                <input
-                  type="text"
-                  className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                  placeholder="Tracking Number"
-                  value={formData.trackingNumber}
-                  onChange={(e) =>
-                    handleInputChange("trackingNumber", e.target.value)
-                  }
-                />
-              </div>
-              <div>
-                <label className="block text-white/60 text-sm mb-2">
-                  Estimated Delivery Date
-                </label>
-                <input
-                  type="date"
-                  className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                  placeholder="Estimated Delivery Date"
-                  // value=""
-                  value={formData.estimatedDeliveryDate}
-                  onChange={(e) =>
-                    handleInputChange("estimatedDeliveryDate", e.target.value)
-                  }
-                />
-              </div>
-              <div className="col-span-1">
-                <button
-                  onClick={handleSendTracking}
-                  className="cursor-pointer mt-8 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white px-6 py-2 rounded-lg font-semibold shadow-md transition-colors w-full"
-                >
-                  Send Tracking details
-                </button>
-              </div>
-            </div>
+                <div className="grid md:grid-cols-4 gap-10">
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Carrier Name
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                      placeholder="Carrier Name"
+                      value={formData.carrierName}
+                      onChange={(e) =>
+                        handleInputChange("carrierName", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Tracking Number
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                      placeholder="Tracking Number"
+                      value={formData.trackingNumber}
+                      onChange={(e) =>
+                        handleInputChange("trackingNumber", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Estimated Delivery Date
+                    </label>
+                    <input
+                      type="date"
+                      className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                      placeholder="Estimated Delivery Date"
+                      // value=""
+                      value={formData.estimatedDeliveryDate}
+                      onChange={(e) =>
+                        handleInputChange(
+                          "estimatedDeliveryDate",
+                          e.target.value
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="col-span-1">
+                    <button
+                      onClick={handleSendTracking}
+                      className="cursor-pointer mt-8 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white px-6 py-2 rounded-lg font-semibold shadow-md transition-colors w-full"
+                    >
+                      Send Tracking details
+                    </button>
+                  </div>
+                </div>
 
-            {/* Action Buttons */}
-            <div className="flex justify-end gap-4 mt-8 mb-8">
-              <button
-                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg cursor-pointer"
-                onClick={handleSave}
-              >
-                Save
-              </button>
-              <button className="bg-gray-600  hover:bg-gray-700 text-white px-8 py-3 rounded-lg font-medium transition-colors cursor-pointer">
-                Close
-              </button>
-            </div>
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-4 mt-8 mb-8">
+                  <button
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg cursor-pointer"
+                    onClick={handleSave}
+                  >
+                    Save
+                  </button>
+                  <button className="bg-gray-600  hover:bg-gray-700 text-white px-8 py-3 rounded-lg font-medium transition-colors cursor-pointer">
+                    Close
+                  </button>
+                </div>
 
-            {formData.problematicIssueType === "Damaged Product" && (
-              <DamagedProductForm />
-            )}
-            {formData.problematicIssueType === "Defective Product" && (
-              <DefectiveProductForm />
-            )}
-            {formData.problematicIssueType === "Wrong Product" && (
-              <WrongProductForm />
-            )}
+                {formData.problematicIssueType === "Damaged Product" && (
+                  <DamagedProductForm />
+                )}
+                {formData.problematicIssueType === "Defective Product" && (
+                  <DefectiveProductForm />
+                )}
+                {formData.problematicIssueType === "Wrong Product" && (
+                  <WrongProductForm />
+                )}
 
-            {/* Notes Section */}
-            <div className="grid md:grid-cols-2 gap-10 md:mt-10">
-              <Notes
-                title="Customer Notes"
-                noteInput={customerNoteInput}
-                setNoteInput={setCustomerNoteInput}
-                handleAddNote={handleManualAddCustomerNote}
-                notes={customerNotes}
-                formatDay={formatDay}
-                formatTime={formatTime}
-              />
-              <Notes
-                title="Yard Notes"
-                noteInput={yardNoteInput}
-                setNoteInput={setYardNoteInput}
-                handleAddNote={handleManualAddYardNote}
-                notes={yardNotes}
-                formatDay={formatDay}
-                formatTime={formatTime}
-              />
-            </div>
+                {/* Notes Section */}
+                <div className="grid md:grid-cols-2 gap-10 md:mt-10">
+                  <Notes
+                    title="Customer Notes"
+                    noteInput={customerNoteInput}
+                    setNoteInput={setCustomerNoteInput}
+                    handleAddNote={handleManualAddCustomerNote}
+                    notes={customerNotes}
+                    formatDay={formatDay}
+                    formatTime={formatTime}
+                  />
+                  <Notes
+                    title="Yard Notes"
+                    noteInput={yardNoteInput}
+                    setNoteInput={setYardNoteInput}
+                    handleAddNote={handleManualAddYardNote}
+                    notes={yardNotes}
+                    formatDay={formatDay}
+                    formatTime={formatTime}
+                  />
+                </div>
+              </>
+            )}
           </main>
         </div>
       </div>

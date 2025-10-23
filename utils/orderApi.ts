@@ -109,6 +109,8 @@ export const createOrderFromAdmin = async (
       name: `Engine for ${item.id.split("-").slice(0, 3).join(" ")}`,
       milesPromised: item.milesPromised,
       specification: item.specification || "",
+      vinNumber: item.vinNumber || "",
+      notes: item.notes || "",
       productVariantId: item.id,
     })),
     paymentInfo:
@@ -266,7 +268,7 @@ export const createOrderFromAdmin = async (
 
   try {
     console.log("Sending order data:", JSON.stringify(orderData, null, 2));
-    
+
     const response = await fetch(`${API_URL}/orders`, {
       method: "POST",
       headers: {
