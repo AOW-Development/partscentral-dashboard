@@ -8,6 +8,8 @@ import {
   getProblematicPartsByOrderId,
 } from "@/utils/problematicPartApi";
 import { useParams, useRouter } from "next/navigation";
+import UploadSection from "./shared/UploadSection";
+import BOLUploadSection from "./shared/BOLUploadSection";
 
 const DamagedProductForm = () => {
   // Connect to Zustand store
@@ -68,22 +70,12 @@ const DamagedProductForm = () => {
   };
 
   // Handle file uploads (empty for now as requested)
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      // TODO: Implement photo upload logic
-      console.log("Photos selected:", files);
-    }
-  };
-
-  const handleBOLUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // TODO: Implement BOL upload logic
-      console.log("BOL file selected:", file);
-    }
-  };
-
+  const handlePhotoUpload = (fileUrl: string) => {
+    console.log("Photo uploaded:", fileUrl);
+  }
+  const handleBOLUpload = (fileUrl: string) => {
+   console.log("BOL uploaded:", fileUrl);
+  }
   const handleSubmit = async () => {
     if (!orderId) {
       alert("Order ID is missing!");
@@ -161,31 +153,16 @@ const DamagedProductForm = () => {
       <div className="bg-[#0a1929] p-6 rounded-lg shadow-lg relative">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-white text-lg font-semibold">Damaged Product</h3>
-          <div className="flex flex-col md:flex-row items-center gap-4">
-            <div>
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                className="hidden"
-                id="upload-photos-damaged"
-                onChange={handlePhotoUpload}
-              />
-              <label
-                htmlFor="upload-photos-damaged"
-                className="flex items-center gap-2 cursor-pointer bg-blue-700 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
-              >
-                <Upload size={16} />
-                Upload Photos
-              </label>
-            </div>
-            <button
-              onClick={() => alert("Sent to yard!")}
-              className="bg-blue-700 hover:bg-blue-600 px-4 py-2 rounded-lg text-white font-medium"
-            >
-              Send
-            </button>
-          </div>
+          <UploadSection
+            title="Upload Photos"
+            onFileUploaded={handlePhotoUpload}
+            multiple={true}
+            accept="image/*"
+            buttonLabel="Upload Photos"
+            buttonClass="bg-blue-700 hover:bg-blue-600"
+            showPreview={true}
+            folder="damaged-photos"
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -241,33 +218,15 @@ const DamagedProductForm = () => {
             {(common.returnShipping === "Own Shipping" ||
               common.returnShipping === "Yard Shipping") && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:col-span-2">
-                <div className="flex items-center gap-6 w-full">
-                  <div>
-                    <input
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      className="hidden"
-                      id="upload-bol-damaged"
-                      onChange={handleBOLUpload}
-                    />
-                    <label
-                      htmlFor="upload-bol-damaged"
-                      className="flex items-center gap-2 cursor-pointer bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg border border-gray-600"
-                    >
-                      <Upload size={16} />
-                      Upload BOL
-                    </label>
-                  </div>
-
-                  <button
-                    onClick={() => alert("Sent!")}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-full text-white font-medium transition-colors"
-                  >
-                    Send
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-6 w-full">
+                <BOLUploadSection
+                  onFileUploaded={handleBOLUpload}
+                  onSend={() => alert("Sent!")}
+                  label="Upload BOL"
+                  sendLabel="Send"
+                  sendButtonClass="bg-blue-600 hover:bg-blue-700"
+                  folder="damaged-bol"
+                />
+                <div className="flex items-end gap-4">
                   <div className="flex-1">
                     <label className="block text-white text-sm font-medium mb-2">
                       Product Returned
@@ -414,5 +373,4 @@ const DamagedProductForm = () => {
     </div>
   );
 };
-
-export default DamagedProductForm;
+export default DamagedProductForm ;
