@@ -4,30 +4,30 @@ import React, { useState } from "react";
 interface MoveYardPopUpProps {
   setStatus: (status: boolean) => void;
   setReason: (reason: string) => void;
-  setYardCharge: (yardCharge: string) => void;
+  // setYardCharge: (yardCharge: string) => void;
   setSubmitReason: (submitReason: boolean) => void;
 }
 
 export default function MoveYardPopUp({
   setStatus,
   setReason,
-  setYardCharge,
+  // setYardCharge,
   setSubmitReason,
 }: MoveYardPopUpProps) {
   const [reason, setLocalReason] = useState("");
-  const [yardCharge, setLocalYardCharge] = useState("");
+  // const [yardCharge, setLocalYardCharge] = useState("");
   const handleReasonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLocalReason(e.target.value);
     setReason(e.target.value);
   };
-  const handleYardChargeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setLocalYardCharge(e.target.value);
-    setYardCharge(e.target.value);
-  };
+  // const handleYardChargeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  //   setLocalYardCharge(e.target.value);
+  //   setYardCharge(e.target.value);
+  // };
 
   const handleSubmit = () => {
     setReason(reason.trim());
-    setYardCharge(yardCharge.trim());
+    // setYardCharge(yardCharge.trim());
     console.log("REASON", reason);
     setStatus(false);
     setSubmitReason(true);
@@ -56,7 +56,7 @@ export default function MoveYardPopUp({
           value={reason}
           onChange={handleReasonChange}
         />
-        <label className="absolute top-57 left-6 text-sm mb-1 text-white/50">
+        {/* <label className="absolute top-57 left-6 text-sm mb-1 text-white/50">
           Yard Charge:
         </label>
         <select
@@ -67,16 +67,16 @@ export default function MoveYardPopUp({
           <option value={""}>Select Yard Charge</option>
           <option>Yes</option>
           <option>No</option>
-        </select>
+        </select> */}
         <div className="flex w-full gap-3 mt-2">
           <button
             className="flex-1 bg-[#006BA9] hover:bg-[#005b8a] text-white px-4 py-2 rounded-lg font-medium transition-colors shadow hover:shadow-lg"
             onClick={handleSubmit}
-            disabled={!reason.trim() || !yardCharge.trim()}
+            disabled={!reason.trim()}
             style={{
-              opacity: reason.trim() && yardCharge.trim() ? 1 : 0.6,
+              opacity: reason.trim() ? 1 : 0.6,
               cursor:
-                reason.trim() && yardCharge.trim() ? "pointer" : "not-allowed",
+                reason.trim() ? "pointer" : "not-allowed",
             }}
           >
             Submit

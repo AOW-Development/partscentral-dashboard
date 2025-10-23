@@ -57,7 +57,7 @@ interface YardInfoProps {
   setStatusPopUp: React.Dispatch<React.SetStateAction<boolean>>;
   statusPopUp: boolean;
   orderId: string;
-  onYardMoved: (reason: string, yardCharge: string) => void;
+  onYardMoved: (reason: string) => void;
 }
 
 const YardInfo: React.FC<YardInfoProps> = ({
@@ -114,6 +114,8 @@ const YardInfo: React.FC<YardInfoProps> = ({
     const formatted = parseFloat(value.toString()).toFixed(2);
     handleInputChange(field, formatted); // must store string, not number
   };
+
+  
 
   // Ensure we have at least 3 previous yard slots
   const ensureMinimumPreviousYards = () => {
@@ -195,6 +197,8 @@ const YardInfo: React.FC<YardInfoProps> = ({
   //   }
   // };
 
+  
+
   // Ensure minimum previous yards when component loads or previousYards changes
   useEffect(() => {
     console.log(
@@ -248,32 +252,32 @@ const YardInfo: React.FC<YardInfoProps> = ({
   ]);
 
   useEffect(() => {
-    if (submitReason && reason.trim() && yardCharge.trim()) {
+    if (submitReason && reason.trim()) {
       const moveYardToHistory = async () => {
         try {
           const API_URL =
             process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
           const response = await axios.post(
             `${API_URL}/yards/move-to-history/${orderId}`,
-            { reason: reason.trim(), yardCharge: yardCharge.trim() }
+            { reason: reason.trim() }
           );
           console.log("Successfully moved yard to history:", response.data);
 
           // Notify parent component that yard has been moved
-          onYardMoved(reason.trim(), yardCharge.trim());
+          onYardMoved(reason.trim());
         } catch (error) {
           console.error("Error moving yard to history:", error);
         } finally {
           // Reset state
           setReason("");
-          setYardCharge("");
+          // setYardCharge("");
           setSubmitReason(false);
         }
       };
 
       moveYardToHistory();
     }
-  }, [submitReason, reason, orderId, onYardMoved, yardCharge]);
+  }, [submitReason, reason, orderId, onYardMoved]);
 
   return (
     <div className="relative p-2 mt-6">
@@ -281,7 +285,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
         <MoveYardPopUp
           setStatus={setStatusPopUp}
           setReason={setReason}
-          setYardCharge={setYardCharge}
+          // setYardCharge={setYardCharge}
           setSubmitReason={setSubmitReason}
         />
       )}
@@ -485,7 +489,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 Yard Price
               </label>
               <input
-                type="text"
+                type="number"
                 className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
                   editingPreviousYard &&
                   editingYardIndex === selectedPrevYardIdx
@@ -514,7 +518,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 Taxes Price
               </label>
               <input
-                type="text"
+                type="number"
                 className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
                   editingPreviousYard &&
                   editingYardIndex === selectedPrevYardIdx
@@ -543,7 +547,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 Handling Price
               </label>
               <input
-                type="text"
+                type="number"
                 className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
                   editingPreviousYard &&
                   editingYardIndex === selectedPrevYardIdx
@@ -574,7 +578,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 Processing Price
               </label>
               <input
-                type="text"
+                type="number"
                 className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
                   editingPreviousYard &&
                   editingYardIndex === selectedPrevYardIdx
@@ -605,7 +609,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 Core Price
               </label>
               <input
-                type="text"
+                type="number"
                 className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
                   editingPreviousYard &&
                   editingYardIndex === selectedPrevYardIdx
@@ -767,7 +771,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 rows={3}
               />
             </div>
-            <div className="md:col-span-3">
+            {/* <div className="md:col-span-3">
               <label className="block text-white/60 text-xs mb-1">
                 Yard Charge
               </label>
@@ -794,7 +798,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 }
                 rows={3}
               />
-            </div>
+            </div> */}
           </div>
         </div>
       )}
@@ -885,7 +889,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
           </label>
           <div className="relative" ref={yardPriceOptionsRef}>
             <input
-              type="text"
+              type="number"
               className={`appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full bg-[#0a1929] border rounded-lg px-4 py-3 pr-12 text-white focus:outline-none ${
                 fieldErrors.yardPrice
                   ? "border-red-500 focus:border-red-500"
@@ -972,7 +976,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
               Taxes Price
             </label>
             <input
-              type="text"
+              type="number"
               className={`
                 appearance-none
                 [appearance:textfield]
@@ -1018,7 +1022,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
               Handling Price
             </label>
             <input
-              type="text"
+              type="number"
               className={`
                 appearance-none
                 [appearance:textfield]
@@ -1066,7 +1070,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
               Processing Price
             </label>
             <input
-              type="text"
+              type="number"
               className={`
                 appearance-none
                 [appearance:textfield]
@@ -1114,7 +1118,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
               Core Price
             </label>
             <input
-              type="text"
+              type="number"
               className={`
                 appearance-none
                 [appearance:textfield]
@@ -1250,6 +1254,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
               value={yardCharge}
               onChange={(e) => setYardCharge(e.target.value)}
             >
+              <option value="yard charged">select yard charged </option>
               <option value="No">No</option>
               <option value="Yes">Yes</option>
             </select>

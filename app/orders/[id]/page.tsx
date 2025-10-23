@@ -120,7 +120,7 @@ import { getCardType, isValidCardNumber } from "@/utils/cardValidator";
 import { MAKES, MODELS } from "@/vehicleData-dashboard";
 import { fetchYears } from "@/utils/vehicleApi";
 import { getProductVariants, GroupedVariant } from "@/utils/productApi";
-import SaveChangesPopUp from "@/app/components/SaveChangesPopUp";
+import { useSaveChangesDetection, SaveChangesDialog } from "@/app/components/SaveChangesPopUp";
 import MoveYardPopUp from "@/app/components/MoveYardPopUp";
 import YardInfo from "@/app/components/YardInfo";
 import MerchantInfo from "@/app/components/MerchantInfo";
@@ -367,7 +367,7 @@ const OrderDetails = () => {
 
             // Customer info
             customerName: data.customer?.full_name || "",
-            email: billing.email || "",
+            email: billing.email || data.customer?.email || shipping?.email || "",
             mobile: billing.phone || "",
             alternateMobile: data.customer?.alternativePhone || "",
 
@@ -558,6 +558,7 @@ const OrderDetails = () => {
   }>({});
   const [variantError, setVariantError] = useState("");
   const [cardEntry, setCardEntry] = useState(false);
+  
 
   const [statusPopUp, setStatusPopUp] = useState(false);
   const pathName = usePathname();
@@ -778,7 +779,7 @@ const OrderDetails = () => {
     }
   }, [formData.products, loadingOrder]);
 
-  const handleYardMoved = (reason: string, yardCharge: string) => {
+  const handleYardMoved = (reason: string) => {
     addYardNote(`Yard Removed. Reason: ${reason}`, "By Agent");
 
     const currentYard = {
@@ -797,7 +798,7 @@ const OrderDetails = () => {
       yardShipping: formData.yardShipping,
       yardCost: formData.yardCost.toString(),
       reason: reason.trim(),
-      yardCharge: yardCharge.trim(),
+      // yardCharge: yardCharge.trim(),
       yardtotalBuy: formData.yardtotalBuy.toString(),
     };
 
@@ -829,23 +830,16 @@ const OrderDetails = () => {
   // The popup should only show when user tries to navigate away
   const [saveState, setSaveState] = useState(false);
   // Handle save changes for unsaved changes popup
+   // Handle save changes for unsaved changes popup
   const handleSaveChanges = async (): Promise<boolean> => {
     try {
       // Call the existing handleSave function
-      if (saveState) {
-        setHasUnsavedChanges(false);
-        // Update initial data to current data after successful save
-        setInitialFormData(JSON.parse(JSON.stringify(formData)));
-        setInitialPaymentEntries(JSON.parse(JSON.stringify(paymentEntries)));
-        return true;
-      } else {
-        await handleSave();
-        setHasUnsavedChanges(false);
-        // Update initial data to current data after successful save
-        setInitialFormData(JSON.parse(JSON.stringify(formData)));
-        setInitialPaymentEntries(JSON.parse(JSON.stringify(paymentEntries)));
-        return true;
-      }
+      await handleSave();
+      setHasUnsavedChanges(false);
+      // Update initial data to current data after successful save
+      setInitialFormData(JSON.parse(JSON.stringify(formData)));
+      setInitialPaymentEntries(JSON.parse(JSON.stringify(paymentEntries)));
+      return true;
     } catch (error) {
       console.error("Error saving changes:", error);
       toast.error("Error saving changes");
@@ -2174,6 +2168,7 @@ const OrderDetails = () => {
     } else {
       await handleCreateOrder();
     }
+    saveChanges.markAsSaved();
   };
 
   const handleUpdateOrder = async () => {
@@ -2248,6 +2243,7 @@ const OrderDetails = () => {
       setHasUnsavedChanges(false);
       setInitialFormData(JSON.parse(JSON.stringify(formData)));
       setInitialPaymentEntries(JSON.parse(JSON.stringify(paymentEntries)));
+      saveChanges.markAsSaved();
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -2380,6 +2376,7 @@ const OrderDetails = () => {
       setHasUnsavedChanges(false);
       setInitialFormData(JSON.parse(JSON.stringify(formData)));
       setInitialPaymentEntries(JSON.parse(JSON.stringify(paymentEntries)));
+      saveChanges.markAsSaved();
     } catch (error) {
       // setMessage({
       //   type: "error",
@@ -2802,6 +2799,7 @@ const OrderDetails = () => {
   //   formData.ownShippingInfo?.price,
   //   formData.shippingAddressType,
   // ]);
+  const saveChanges = useSaveChangesDetection([formData, paymentEntries]);
 
   return (
     <ProtectRoute>
@@ -4989,13 +4987,55 @@ const OrderDetails = () => {
           </main>
         </div>
       </div>
+      {/* {isSaveDialogOpen && (
+        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h2 className="text-xl font-semibold mb-2">Unsaved Changes</h2>
+            <p className="text-gray-600 mb-6">
+              You have unsaved changes. Are you sure you want to leave this page?
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={handleDiscard}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                Discard Changes
+              </button>
+              <button
+                onClick={handleSaveChanges}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )} */}
 
-      <SaveChangesPopUp
+
+      {/* <SaveChangesPopUp
         hasUnsavedChanges={hasUnsavedChanges && isInitialized}
         onSave={handleSaveChanges}
         onDiscard={handleDiscard}
         isOpen={isSaveDialogOpen}
         setIsOpen={setIsSaveDialogOpen}
+      /> */}
+
+     <SaveChangesDialog
+        isOpen={saveChanges.isSaveDialogOpen}
+        onSave={async () => {
+          await saveChanges.handleSave(async () => {
+            try {
+              await handleSave();
+              return true;
+            } catch (error) {
+              console.error("Error saving:", error);
+              return false;
+            }
+          });
+        }}
+        onDiscard={saveChanges.handleDiscard}
+        onCancel={saveChanges.handleCancel}
       />
     </ProtectRoute>
   );

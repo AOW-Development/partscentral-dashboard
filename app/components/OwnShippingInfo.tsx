@@ -145,24 +145,46 @@ const OwnShippingInfo: React.FC<OwnShippingInfoProps> = ({
           />
         </div>
         {/* Dimensions */}
-        <div>
-          <label className="block text-white/60 text-sm mb-2">Dimensions</label>
-          <input
-            type="number"
-            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-            placeholder="Enter dimensions"
-            value={formData.ownShippingInfo.dimensions}
-            onChange={(e) =>
-              setFormData((prev: any) => ({
-                ...prev,
-                ownShippingInfo: {
-                  ...prev.ownShippingInfo,
-                  dimensions: e.target.value,
-                },
-              }))
-            }
-          />
-        </div>
+          <div>
+            <label className="block text-white/60 text-sm mb-2">
+              Dimensions (W × B × H)
+            </label>
+
+            <div className="flex items-center bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-3 text-white gap-2">
+              {["W", "B", "H"].map((label, index) => (
+                <React.Fragment key={label}>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder={label}
+                    className="w-16 text-center border border-gray-600 rounded-md bg-transparent outline-none text-white placeholder-gray-400"
+                    value={formData.ownShippingInfo.dimensions?.split("x")[index] || ""}
+                    onChange={(e) => {
+                      const parts = (formData.ownShippingInfo.dimensions || "x x x").split("x");
+                      parts[index] = e.target.value;
+                      const newValue = parts.join("x");
+                      setFormData((prev: any) => ({
+                        ...prev,
+                        ownShippingInfo: { ...prev.ownShippingInfo, dimensions: newValue },
+                      }));
+                    }}
+                  />
+                  {index < 2 && <span>×</span>}
+                </React.Fragment>
+              ))}
+
+              {/* Total */}
+              <span className="ml-auto text-gray-400">
+                {(() => {
+                  const [w, b, h] = (formData.ownShippingInfo.dimensions || "")
+                    .split("x")
+                    .map(Number);
+                  return w && b && h ? `= ${w * b * h}` : "= 0";
+                })()}
+              </span>
+            </div>
+          </div>
+
         {/* Pick Up Date */}
         <div>
           <label className="block text-white/60 text-sm mb-2">
