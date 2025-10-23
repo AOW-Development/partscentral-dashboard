@@ -759,6 +759,7 @@ const OrderDetails = () => {
     if (!loadingOrder) {
       const newVisibleFields = { ...visiblePriceFields };
 
+      let shouldUpdate = false; 
       // Check each product individually for additional price fields
       formData.products.forEach((product, index) => {
         if (!newVisibleFields[index]) {
@@ -775,27 +776,32 @@ const OrderDetails = () => {
           parseFloat(product.taxesPrice.toString()) > 0
         ) {
           newVisibleFields[index].taxesPrice = true;
+          shouldUpdate = true;
         }
         if (
           product.handlingPrice &&
           parseFloat(product.handlingPrice.toString()) > 0
         ) {
           newVisibleFields[index].handlingPrice = true;
+          shouldUpdate = true;
         }
         if (
           product.processingPrice &&
           parseFloat(product.processingPrice.toString()) > 0
         ) {
           newVisibleFields[index].processingPrice = true;
+          shouldUpdate = true;
         }
         if (product.corePrice && parseFloat(product.corePrice.toString()) > 0) {
           newVisibleFields[index].corePrice = true;
+          shouldUpdate = true;
         }
       });
-
-      setVisiblePriceFields(newVisibleFields);
+      if (shouldUpdate){
+          setVisiblePriceFields(newVisibleFields);
+      }
     }
-  }, [formData.products, loadingOrder]);
+  }, [loadingOrder]);
 
   const handleYardMoved = (reason: string, yardCharge: string) => {
     addYardNote(`Yard Removed. Reason: ${reason}`, "By Agent");
@@ -2274,18 +2280,11 @@ const OrderDetails = () => {
   };
 
   const handleCreateOrder = async () => {
-    // if (!validateAllFields()) {
-    //   toast.error("Please fill all the fields");
-    //   return;
-    // }
-
     setIsLoading(true);
     setMessage(null);
 
     try {
-      // Auto-process uploaded picture if it exists and hasn't been processed yet
       if (uploadedPicture && !formData.pictureUrl) {
-        // Upload to backend
         const formDataData = new FormData();
         formDataData.append("file", uploadedPicture);
 
@@ -2687,58 +2686,64 @@ const OrderDetails = () => {
         }));
 
         // If we have an orderId, update database
-        if (orderId && orderId !== "create" && orderId !== "new") {
-          await updateOrderWithPicture(orderId, "Yes", s3Key);
-        }
-        addCustomerNote(
-          `Picture Uploaded – ${uploadedPicture.name} sent to customer.`,
-          "By Agent"
-        );
-        toast.success("Picture uploaded successfully!");
-      } catch (error) {
-        console.error("Error uploading picture:", error);
-        toast.error("failed to uplaod picture !");
+      if (orderId && orderId !== "create" && orderId !== "new") {
+        await updateOrderWithPicture(orderId, "Yes", s3Key);
       }
-      return;
-    }
-    // else if(!uploadedPicture && formData.pictureUrl){
-    //   setFormData((prev)=>({
-    //     ...prev,
-    //     pictureStatus:"Yes"
-    //   }));
-    //   await updateOrderWithPicture(orderId, "No", formData.pictureUrl); ;
-    // }
-    // else {
-    //   // Reset picture status if no file is selected
-    //   setFormData((prev) => ({
-    //     ...prev,
-    //     pictureUrl: "",
-    //     pictureStatus: "No",
-    //   }));
-    //    addCustomerNote("Picture – No file selected.", "By Agent");
-    //    await updateOrderWithPicture(orderId, "No", "");
-    // }
+      addCustomerNote(
+        `Picture Uploaded – ${uploadedPicture.name} sent to customer.`,
+        "By Agent"
+      );
+      toast.success("Picture uploaded successfully!");
+    } catch(error) {
+      console.error("Error uploading picture:", error);
+      toast.error("failed to uplaod picture !")
+    } 
+  return;
+  }
+    if (uploadedPicture && formData.pictureUrl && orderId && orderId !== "create" && orderId !== "new") {
+          try { 
+            // Upload new picture to backend
+              const formDataToSend = new FormData();
+              formDataToSend.append("file", uploadedPicture);
+            
+            const res = await fetch(`${API_URL}/upload-single`, {
+              method: "POST",
+                body: formDataToSend,
+              });
+              const data = await res.json();
+              const s3Key = data.file.key;
 
-    // Handle case where we have an orderId and picture but no upload
-    if (
-      orderId &&
-      orderId !== "create" &&
-      orderId !== "new" &&
-      formData.pictureUrl
-    ) {
-      try {
-        await updateOrderWithPicture(
-          orderId,
-          formData.pictureStatus,
-          formData.pictureUrl
-        );
-        toast.success("Picture status updated!");
-      } catch (error) {
-        console.error("Error updating picture status:", error);
-        toast.error("Failed to update picture status");
-      }
+              // Update form data with new picture information
+              setFormData((prev) => ({
+              ...prev,
+              pictureUrl: s3Key,
+                pictureStatus: "Yes",
+              }));
+
+            // Update database with new picture
+              await updateOrderWithPicture(orderId, "Yes", s3Key);
+              addCustomerNote(
+                `Picture Updated – ${uploadedPicture.name} sent to customer.`,
+                "By Agent"
+              );
+              toast.success("Picture updated successfully!");
+            } catch(error) {
+              console.error("Error updating picture:", error);
+              toast.error("Failed to update picture!");
+            } 
+            return;
+  }
+  
+  // Handle case where we have an orderId and picture but no upload
+  if (orderId && orderId !== "create" && orderId !== "new" && formData.pictureUrl) {
+    try {
+      await updateOrderWithPicture(orderId, formData.pictureStatus, formData.pictureUrl);
+      toast.success("Picture status updated!");
+    } catch (error) {
+      console.error("Error updating picture status:", error);
+      toast.error("Failed to update picture status");
     }
-  };
+  } };
 
   // Initialize a base note once
   const initRef = useRef(false);
