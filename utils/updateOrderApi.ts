@@ -35,7 +35,6 @@ const mapWarrantyToPrismaEnum = (warranty: string): string => {
   }
 };
 
-
 export const updateOrderWithPicture = async (
   orderId: string,
   pictureStatus: string,
@@ -49,7 +48,7 @@ export const updateOrderWithPicture = async (
       },
       body: JSON.stringify({
         pictureStatus,
-        pictureUrl
+        pictureUrl,
       }),
     });
 
@@ -134,6 +133,8 @@ export const updateOrderFromAdmin = async (
         name: `Engine for ${sku.split("-").slice(0, 3).join(" ")}`,
         milesPromised: item.milesPromised,
         specification: item.specification || "",
+        vinNumber: item.vinNumber || "",
+        notes: item.notes || "",
         productVariantId: sku,
         // pictureUrl: item.pictureUrl || "",
         // pictureStatus: item.pictureStatus || "PENDING",
@@ -270,12 +271,14 @@ export const updateOrderFromAdmin = async (
         yardProcessingFee:
           parseFloat(formData.processingYardPrice as string) || 0,
         yardCorePrice: parseFloat(formData.coreYardPrice as string) || 0,
+        yardCharge: formData.yardCharge || "No",
+        yardChangedAmount:
+          parseFloat(formData.yardChangedAmount as string) || 0,
         ...(formData.yardShipping === "Own Shipping" && formData.ownShippingInfo
           ? { yardOwnShippingInfo: formData.ownShippingInfo }
           : {}),
       },
     }),
-    
   };
 
   try {

@@ -109,6 +109,8 @@ export const createOrderFromAdmin = async (
       name: `Engine for ${item.id.split("-").slice(0, 3).join(" ")}`,
       milesPromised: item.milesPromised,
       specification: item.specification || "",
+      vinNumber: item.vinNumber || "",
+      notes: item.notes || "",
       productVariantId: item.id,
     })),
     paymentInfo:
@@ -239,6 +241,8 @@ export const createOrderFromAdmin = async (
         yardHandlingFee: formData.handlingYardPrice || 0,
         yardProcessingFee: formData.processingYardPrice || 0,
         yardCorePrice: formData.coreYardPrice || 0,
+        yardCharge: formData.yardCharge || "No",
+        yardChangedAmount: formData.yardChangedAmount || 0,
         ...(formData.yardShipping === "Own Shipping" && formData.ownShippingInfo
           ? { yardOwnShippingInfo: formData.ownShippingInfo }
           : {}),
@@ -266,7 +270,7 @@ export const createOrderFromAdmin = async (
 
   try {
     console.log("Sending order data:", JSON.stringify(orderData, null, 2));
-    
+
     const response = await fetch(`${API_URL}/orders`, {
       method: "POST",
       headers: {

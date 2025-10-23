@@ -363,7 +363,7 @@ const DefectiveProductForm = () => {
                           setCommonField("productReturned", e.target.value)
                         }
                       >
-                        <option value="">Yes Or No</option>
+                        <option value="">Select</option>
                         <option value="Yes">Yes</option>
                         <option value="No">No</option>
                       </select>
