@@ -211,7 +211,8 @@ const MerchantInfo: React.FC<MerchantInfoProps> = ({
                 onClick={() => handleCharge(entry.id)}
                 disabled={isLoading}
               >
-                {entry.chargeClicked ? "Re-charge" : "Charge"}
+                {/* {entry.chargeClicked ? "Re-charge" : "Charge"} */}
+                {entry.charged === "Yes" ? "Re-charge" : "Charge"}
               </button>
             </div>
             <div>
@@ -278,7 +279,7 @@ const MerchantInfo: React.FC<MerchantInfoProps> = ({
               <input
                 type="text"
                 className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                placeholder="Enter charged status"
+                placeholder="Enter charged status(Yes/No)"
                 value={entry.charged}
                 onChange={(e) =>
                   handlePaymentEntryChange(entry.id, "charged", e.target.value)
