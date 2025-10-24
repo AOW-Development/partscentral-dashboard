@@ -127,7 +127,10 @@ import { getCardType, isValidCardNumber } from "@/utils/cardValidator";
 import { MAKES, MODELS } from "@/vehicleData-dashboard";
 import { fetchYears } from "@/utils/vehicleApi";
 import { getProductVariants, GroupedVariant } from "@/utils/productApi";
-import { useSaveChangesDetection, SaveChangesDialog } from "@/app/components/SaveChangesPopUp";
+import {
+  useSaveChangesDetection,
+  SaveChangesDialog,
+} from "@/app/components/SaveChangesPopUp";
 import MoveYardPopUp from "@/app/components/MoveYardPopUp";
 import YardInfo from "@/app/components/YardInfo";
 import MerchantInfo from "@/app/components/MerchantInfo";
@@ -272,7 +275,6 @@ const OrderDetails = () => {
           setPreviousYards(yardHistory);
 
           const payments = Array.isArray(data.payments) ? data.payments : [];
-        
 
           const mappedPaymentEntries = payments.map(
             (p: any, index: number) => ({
@@ -475,6 +477,7 @@ const OrderDetails = () => {
               ? new Date(data.invoiceConfirmedAt).toISOString().split("T")[0]
               : "",
             poStatus: dataPoStatus,
+            invoiceStatus: dataInvoiceStatus,
             poSentAt: data.poSentAt
               ? new Date(data.poSentAt).toISOString().split("T")[0]
               : "",
@@ -511,7 +514,6 @@ const OrderDetails = () => {
                 Array.isArray(parsedCustomerNotes) ? parsedCustomerNotes : []
               );
             } catch (error) {
-          
               setCustomerNotes([]);
             }
           }
@@ -523,7 +525,6 @@ const OrderDetails = () => {
                 Array.isArray(parsedYardNotes) ? parsedYardNotes : []
               );
             } catch (error) {
-            
               setYardNotes([]);
             }
           }
@@ -577,7 +578,6 @@ const OrderDetails = () => {
   }>({});
   const [variantError, setVariantError] = useState("");
   const [cardEntry, setCardEntry] = useState(false);
-  
 
   const [statusPopUp, setStatusPopUp] = useState(false);
   const pathName = usePathname();
@@ -863,7 +863,7 @@ const OrderDetails = () => {
   // The popup should only show when user tries to navigate away
   const [saveState, setSaveState] = useState(false);
   // Handle save changes for unsaved changes popup
-   // Handle save changes for unsaved changes popup
+  // Handle save changes for unsaved changes popup
   const handleSaveChanges = async (): Promise<boolean> => {
     try {
       // Call the existing handleSave function
@@ -1419,8 +1419,6 @@ const OrderDetails = () => {
       const key = `${make}-${model}-${year}-${parts}`;
 
       if (lastVariantKeys.current[index] !== key) {
-       
-
         // Only reset dependent fields if this is NOT the initial load AND the key actually changed
         // This prevents resetting fields when loading existing order data
         if (lastVariantKeys.current[index]) {
@@ -1995,7 +1993,6 @@ const OrderDetails = () => {
           trackingNumber: formData.trackingNumber,
         },
       };
-  
 
       // API call to send invoice
       const response = await fetch(`${URL}api/send-invoice`, {
@@ -2360,8 +2357,6 @@ const OrderDetails = () => {
         paymentAmount: firstPaymentEntry?.totalPrice || "",
       };
 
-     
-
       const result = await createOrderFromAdmin(
         finalFormDataWithPayment,
         cartItems,
@@ -2504,7 +2499,6 @@ const OrderDetails = () => {
   const [showPreviousYard, setShowPreviousYard] = useState(false);
   const [previousYards, setPreviousYards] = useState<PreviousYard[]>([]);
   const [selectedPrevYardIdx, setSelectedPrevYardIdx] = useState(0);
- 
 
   // Add state for uploaded picture file
   const [uploadedPicture, setUploadedPicture] = useState<File | null>(null);
@@ -2523,7 +2517,6 @@ const OrderDetails = () => {
   const [yardNoteInput, setYardNoteInput] = useState("");
 
   const addCustomerNote = (message: string, actor?: string) => {
-  
     const newNote = {
       id: Date.now() + Math.floor(Math.random() * 1000000),
       timestamp: new Date(),
@@ -2541,8 +2534,6 @@ const OrderDetails = () => {
   };
 
   const addYardNote = (message: string, actor?: string) => {
-   
-
     const newNote = {
       id: Date.now() + Math.floor(Math.random() * 1000000),
       timestamp: new Date(),
@@ -2570,6 +2561,14 @@ const OrderDetails = () => {
       hour: "numeric",
       minute: "2-digit",
     });
+  };
+
+  const formatDateDDMMYYYY = (d: Date | string | number) => {
+    const date = d instanceof Date ? d : new Date(d);
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
   };
 
   const handleManualAddCustomerNote = () => {
@@ -2975,6 +2974,7 @@ const OrderDetails = () => {
                         }
                       >
                         <option value="">Source</option>
+                        <option value="ecommerce">Ecommerce</option>
                         <option value="Inbound Call">Inbound Call</option>
                         <option value="meta ads">Meta Ads</option>
                         <option value="meta organic">Meta Organic</option>
@@ -4707,11 +4707,29 @@ const OrderDetails = () => {
                               Invoice Sent
                             </span>
 
-                            <span className="text-white/60 text-xs">
-                              {/* 27Jun25 7:11pm */}
-                              {invoiceDate &&
-                                `${formatDay(TIME)} ${formatTime(TIME)}`}
-                            </span>
+                            {/* <span className="text-white/60 text-md"> */}
+                            {/* 23-10-2025 */}
+                            {/* {invoiceDate && formatDateDDMMYYYY(TIME)}
+                            </span> */}
+                            <div className="relative">
+                              <input
+                                type="date"
+                                className="text-white text-sm placeholder:text-white"
+                                value={
+                                  !isLoadingInvoice
+                                    ? formData.invoiceSentAt
+                                    : ""
+                                  // : new Date(TIME).toISOString().split("T")[0]
+                                }
+                                onChange={(e) =>
+                                  handleInputChange(
+                                    "invoiceSentAt",
+                                    e.target.value
+                                  )
+                                }
+                                // disabled={!invoiceButtonState}
+                              />
+                            </div>
                           </div>
                         )}
                         {invoiceButtonState && (
@@ -4881,11 +4899,25 @@ const OrderDetails = () => {
                               PO Sent
                             </span>
 
-                            <span className="text-white/60 text-xs">
-                              {/* 27Jun25 7:11pm */}
-                              {poDate &&
-                                `${formatDay(TIME1)} ${formatTime(TIME1)}`}
-                            </span>
+                            {/* <span className="text-white/60 text-md"> */}
+                            {/* {poDate && formatDateDDMMYYYY(TIME1)} */}
+                            {/* </span> */}
+                            <div className="relative">
+                              <input
+                                type="date"
+                                className="text-white text-sm placeholder:text-white"
+                                value={
+                                  !isLoadingPo ? formData.poSentAt : ""
+                                  // : new Date(TIME1)
+                                  //     .toISOString()
+                                  //     .split("T")[0]
+                                }
+                                onChange={(e) =>
+                                  handleInputChange("poSentAt", e.target.value)
+                                }
+                                // disabled={!poButtonState}
+                              />
+                            </div>
                           </div>
                         )}
                         {poButtonState && (
@@ -5163,7 +5195,6 @@ const OrderDetails = () => {
         </div>
       )} */}
 
-
       {/* <SaveChangesPopUp
         hasUnsavedChanges={hasUnsavedChanges && isInitialized}
         onSave={handleSaveChanges}
@@ -5172,7 +5203,7 @@ const OrderDetails = () => {
         setIsOpen={setIsSaveDialogOpen}
       /> */}
 
-     <SaveChangesDialog
+      <SaveChangesDialog
         isOpen={saveChanges.isSaveDialogOpen}
         onSave={async () => {
           await saveChanges.handleSave(async () => {

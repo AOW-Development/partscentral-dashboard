@@ -184,6 +184,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
   // Save previous yard changes
   const savePreviousYard = () => {
     setEditingPreviousYard(false);
+    
     setEditingYardIndex(null);
   };
 

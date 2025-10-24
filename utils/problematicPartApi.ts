@@ -1,8 +1,6 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
-
 // TYPE DEFINITIONS
-
 
 export interface CreateProblematicPartPayload {
   orderId: string;
@@ -29,6 +27,7 @@ export interface CreateProblematicPartPayload {
   make?: string;
   model?: string;
   year?: string;
+  parts?: string;
   specification?: string;
 
   // Replacement data
@@ -69,9 +68,7 @@ export interface ReplacementPayload {
   metadata?: any;
 }
 
-
 // CREATE OR UPDATE PROBLEMATIC PART
-
 
 /**
  * Creates or updates a problematic part
@@ -113,9 +110,7 @@ export const createOrUpdateProblematicPart = async (
   }
 };
 
-
 // GET PROBLEMATIC PARTS BY ORDER ID
-
 
 export const getProblematicPartsByOrderId = async (
   orderId: string
@@ -143,9 +138,7 @@ export const getProblematicPartsByOrderId = async (
   }
 };
 
-
 // GET PROBLEMATIC PART BY ID
-
 
 export const getProblematicPartById = async (id: string): Promise<any> => {
   try {
@@ -168,9 +161,7 @@ export const getProblematicPartById = async (id: string): Promise<any> => {
   }
 };
 
-
 // DELETE PROBLEMATIC PART
-
 
 export const deleteProblematicPart = async (id: string): Promise<any> => {
   try {
@@ -193,9 +184,7 @@ export const deleteProblematicPart = async (id: string): Promise<any> => {
   }
 };
 
-
 // HELPER: Build Payload from Zustand Store
-
 
 /**
  * Converts Zustand store state to API payload
@@ -233,6 +222,7 @@ export const buildPayloadFromStore = (
     payload.make = formSpecific.make;
     payload.model = formSpecific.model;
     payload.year = formSpecific.year;
+    payload.parts = formSpecific.parts;
     payload.specification = formSpecific.specification;
   }
 

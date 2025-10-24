@@ -1,6 +1,5 @@
 import { create } from "zustand";
 
-
 // COMMON FIELDS - Shared across all problem types
 
 export interface CommonFields {
@@ -16,13 +15,11 @@ export interface CommonFields {
   bolFile: File | null; // Bill of Lading file
 }
 
-
 // DAMAGED PRODUCT - No additional fields beyond common
 
 export interface DamagedProductFields {
   // Damaged product uses only common fields
 }
-
 
 // DEFECTIVE PRODUCT - Has problem category and description
 
@@ -32,16 +29,15 @@ export interface DefectiveProductFields {
   serviceDocument: File[]; // Service document uploads
 }
 
-
 // WRONG PRODUCT - Has vehicle information
 
 export interface WrongProductFields {
   make: string; // Vehicle make
   model: string; // Vehicle model
   year: string; // Vehicle year
+  parts: string; // Vehicle parts
   specification: string; // Part specification
 }
-
 
 // REPLACEMENT FORM DATA - Used when requestFromCustomer = "Replacement"
 
@@ -82,7 +78,6 @@ export interface ReplacementFormData {
   redeliveryCarrierName: string;
   redeliveryTrackingNumber: string;
 }
-
 
 // MAIN STORE STATE
 
@@ -130,7 +125,6 @@ interface ProblematicPartsState {
   resetReplacement: () => void;
 }
 
-
 // INITIAL STATES
 
 const initialCommon: CommonFields = {
@@ -158,6 +152,7 @@ const initialWrong: WrongProductFields = {
   make: "",
   model: "",
   year: "",
+  parts: "",
   specification: "",
 };
 
@@ -187,7 +182,6 @@ const initialReplacement: ReplacementFormData = {
   redeliveryCarrierName: "",
   redeliveryTrackingNumber: "",
 };
-
 
 // ZUSTAND STORE
 export const useProblematicPartsStore = create<ProblematicPartsState>(
@@ -293,6 +287,7 @@ export const useProblematicPartsStore = create<ProblematicPartsState>(
             make: data.make || "",
             model: data.model || "",
             year: data.year || "",
+            parts: data.parts || "",
             specification: data.specification || "",
           };
         }
