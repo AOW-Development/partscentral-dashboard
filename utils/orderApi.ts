@@ -31,7 +31,7 @@ const mapWarrantyToPrismaEnum = (warranty: string): string => {
     case "1 Year":
       return "WARRANTY_1_YEAR";
     default:
-      return "WARRANTY_30_DAYS";
+      return "";
   }
 };
 
@@ -59,10 +59,10 @@ export const createOrderFromAdmin = async (
       lastName: formData.cardHolderName?.split(" ").slice(1).join(" ") || "",
       address: formData.billingAddress || "",
       city: formData.billingCity || formData.shippingCity || "",
-      state: formData.billingState || formData.shippingState || "CA",
+      state: formData.billingState || formData.shippingState || "",
       postalCode:
         formData.billingPostalCode || formData.shippingPostalCode || "00000",
-      country: "US",
+      country: "",
       phone: formData.mobile || "",
       email: formData.email || "",
       company: formData.billingCompany || formData.company || null,
@@ -76,9 +76,9 @@ export const createOrderFromAdmin = async (
       lastName: formData.cardHolderName?.split(" ").slice(1).join(" ") || "",
       address: formData.shippingAddress || "",
       city: formData.shippingCity || "",
-      state: formData.shippingState || "CA",
+      state: formData.shippingState || "",
       postalCode: formData.shippingPostalCode || "00000",
-      country: "US",
+      country: "",
       phone: formData.mobile || "",
       email: formData.email || "",
       company: formData.company || null,
@@ -92,9 +92,9 @@ export const createOrderFromAdmin = async (
       company: formData.company || null,
       address: formData.shippingAddress || "",
       city: formData.shippingCity || "",
-      state: formData.shippingState || "CA",
+      state: formData.shippingState || "",
       postalCode: formData.shippingPostalCode || "00000",
-      country: "US",
+      country: "",
       type: formData.shippingAddressType || "RESIDENTIAL",
     },
     cartItems: cartItems.map((item) => ({
@@ -199,7 +199,7 @@ export const createOrderFromAdmin = async (
     status: formData.status,
     vinNumber: formData.vinNumber,
     notes: formData.notes,
-    warranty: mapWarrantyToPrismaEnum(formData.warranty || "30 Days"),
+    warranty: mapWarrantyToPrismaEnum(formData.warranty || ""),
     invoiceSentAt: formData.invoiceSentAt
       ? new Date(formData.invoiceSentAt).toISOString()
       : null,
@@ -231,7 +231,7 @@ export const createOrderFromAdmin = async (
         yardEmail: formData.yardEmail || "",
         yardPrice: formData.yardPrice || 0,
         yardWarranty: mapWarrantyToPrismaEnum(
-          formData.yardWarranty || "30 Days"
+          formData.yardWarranty || ""
         ),
         yardMiles: formData.yardMiles || 0,
         yardShippingType: formData.yardShipping || "OWN_SHIPPING",
@@ -241,6 +241,8 @@ export const createOrderFromAdmin = async (
         yardHandlingFee: formData.handlingYardPrice || 0,
         yardProcessingFee: formData.processingYardPrice || 0,
         yardCorePrice: formData.coreYardPrice || 0,
+        yardCharge: formData.yardCharge || "No",
+        yardChangedAmount: formData.yardChangedAmount || 0,
         ...(formData.yardShipping === "Own Shipping" && formData.ownShippingInfo
           ? { yardOwnShippingInfo: formData.ownShippingInfo }
           : {}),

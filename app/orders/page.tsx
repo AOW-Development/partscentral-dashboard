@@ -51,6 +51,30 @@ interface RawOrder {
   };
 }
 
+function sortOrders(a: { orderNumber: string }, b: { orderNumber: string }) {
+  const getNum = (orderNo: string) => {
+    const match = orderNo.match(/\d+/);
+    return match ? parseInt(match[0]) : 0;
+  };
+
+  const isAPC = a.orderNumber.startsWith("PC");
+  const isBPC = b.orderNumber.startsWith("PC");
+
+  // Step 1: PC orders always come first
+  if (isAPC && !isBPC) return -1;
+  if (!isAPC && isBPC) return 1;
+
+  //  Step 2: Within the same group, sort descending by number
+  const numA = getNum(a.orderNumber);
+  const numB = getNum(b.orderNumber);
+
+  if (numB !== numA) return numB - numA;
+
+  //  Step 3: Fallback to alphabetical if numeric parts are equal
+  return b.orderNumber.localeCompare(a.orderNumber);
+}
+
+
 export default function Orders() {
   const [currentPage, setCurrentPage] = useState(1);
   const [open, setOpen] = useState(false);
@@ -122,8 +146,9 @@ export default function Orders() {
             raw: order,
           }));
           mappedOrders.sort(
-            (a: Order, b: Order) =>
-              Number(b.orderNumber) - Number(a.orderNumber)
+            sortOrders
+            // (a: Order, b: Order) =>
+            //   Number(b.orderNumber) - Number(a.orderNumber)
           );
 
           setOrders(mappedOrders);
@@ -172,7 +197,8 @@ export default function Orders() {
       setOrders((prevOrders) => {
         const updated = [newOrder, ...prevOrders];
         return updated.sort(
-          (a: Order, b: Order) => Number(b.orderNumber) - Number(a.orderNumber)
+          // (a: Order, b: Order) => Number(b.orderNumber) - Number(a.orderNumber)
+          sortOrders
         );
       });
     });
@@ -201,7 +227,7 @@ export default function Orders() {
   // And this as the paginated subset that goes to the table
   const [paginatedOrders, setPaginatedOrders] = useState<Order[]>([]);
   const [totalPages, setTotalPages] = useState(1);
-  const pageSize = 50;
+  const pageSize = 5;
 
   // Close panel when clicking outside
   useEffect(() => {
@@ -273,12 +299,30 @@ export default function Orders() {
       );
     }
 
-    if (dateRange.from && dateRange.to) {
-      filtered = filtered.filter(
-        (order) =>
-          order.orderDate >= dateRange.from && order.orderDate <= dateRange.to
-      );
-    }
+    if (dateRange.from || dateRange.to) {
+        const parseDate = (str: string) => {
+          const match = str.match(/^(\d{2})([A-Za-z]{3})(\d{2})$/);
+          if (!match) return null;
+          const [, day, mon, year] = match;
+          const monthIndex = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].indexOf(mon);
+          return new Date(2000 + parseInt(year), monthIndex, parseInt(day));
+        };
+
+        const fromDate = dateRange.from ? parseDate(dateRange.from) : null;
+        const toDate = dateRange.to ? parseDate(dateRange.to) : null;
+
+        filtered = filtered.filter((order) => {
+          const orderDate = parseDate(order.orderDate.replace(/\s/g, ""));
+          if (!orderDate) return false;
+
+          if (fromDate && !toDate) return orderDate.getTime() === fromDate.getTime();
+          if (!fromDate && toDate) return orderDate.getTime() === toDate.getTime();
+          if (fromDate && toDate)
+            return orderDate >= fromDate && orderDate <= toDate;
+          return true;
+        });
+      }
+
     setFilteredOrders(filtered);
 
     // 2. Calculate totalPages
@@ -446,10 +490,19 @@ export default function Orders() {
                     <Calendar className="w-4 h-4 text-white" />
                   </div>
                   <div className="text-white flex flex-row gap-2">
-                    <p className="text-sm font-medium">Today</p>
-                    <p className="text-sm opacity-80">
+                    {/* <p className="text-sm font-medium">Today</p> */}
+                    {/* <p className="text-sm opacity-80">
                       {monthName} {date} • {year}
-                    </p>
+                    </p> */}
+                    <p className="text-sm opacity-80">
+                  {selectedDateRange.start
+                    ? `${monthNames[selectedDateRange.start.getMonth()]}
+                     ${selectedDateRange.start.getDate()} • ${selectedDateRange.start.getFullYear()}`
+                    : monthName && date && year
+                    ? `${monthName} ${date} • ${year}`
+                    : ""}
+                </p>
+
                   </div>
                 </div>
                 <ChevronDown className="w-4 h-4 text-white/60" />

@@ -31,7 +31,7 @@ const mapWarrantyToPrismaEnum = (warranty: string): string => {
     case "1 Year":
       return "WARRANTY_1_YEAR";
     default:
-      return "WARRANTY_30_DAYS"; // Default or handle error
+      return ""; // Default or handle error
   }
 };
 
@@ -230,7 +230,7 @@ export const updateOrderFromAdmin = async (
     status: formData.status,
     vinNumber: formData.vinNumber,
     notes: formData.notes,
-    warranty: mapWarrantyToPrismaEnum(formData.warranty || "30 Days"),
+    warranty: mapWarrantyToPrismaEnum(formData.warranty || ""),
     invoiceSentAt: formData.invoiceSentAt
       ? new Date(formData.invoiceSentAt).toISOString()
       : null,
@@ -260,7 +260,7 @@ export const updateOrderFromAdmin = async (
         yardEmail: formData.yardEmail || "",
         yardPrice: parseFloat(formData.yardPrice as string) || 0,
         yardWarranty: mapWarrantyToPrismaEnum(
-          formData.yardWarranty || "30 Days"
+          formData.yardWarranty || ""
         ),
         yardMiles: parseFloat(formData.yardMiles as string) || 0,
         yardShippingType: formData.yardShipping || "OWN_SHIPPING",
@@ -271,6 +271,9 @@ export const updateOrderFromAdmin = async (
         yardProcessingFee:
           parseFloat(formData.processingYardPrice as string) || 0,
         yardCorePrice: parseFloat(formData.coreYardPrice as string) || 0,
+        yardCharge: formData.yardCharge || "No",
+        yardChangedAmount:
+          parseFloat(formData.yardChangedAmount as string) || 0,
         ...(formData.yardShipping === "Own Shipping" && formData.ownShippingInfo
           ? { yardOwnShippingInfo: formData.ownShippingInfo }
           : {}),

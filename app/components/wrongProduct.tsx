@@ -8,6 +8,9 @@ import {
   getProblematicPartsByOrderId,
 } from "@/utils/problematicPartApi";
 import { useParams, useRouter } from "next/navigation";
+import { MAKES, MODELS } from "@/vehicleData-dashboard";
+import { fetchYears } from "@/utils/vehicleApi";
+import { getProductVariants, GroupedVariant } from "@/utils/productApi";
 
 const WrongProductForm = () => {
   // Connect to Zustand store
@@ -33,6 +36,9 @@ const WrongProductForm = () => {
   const router = useRouter();
   const [localLoading, setLocalLoading] = useState(false);
   const [isLoadingExisting, setIsLoadingExisting] = useState(false);
+  const [availableYears, setAvailableYears] = useState<string[]>([]);
+  const [productVariants, setProductVariants] = useState<GroupedVariant[]>([]);
+  const [isLoadingVariants, setIsLoadingVariants] = useState(false);
 
   // Set active form type, order ID, and fetch existing data on mount
   useEffect(() => {
@@ -67,6 +73,44 @@ const WrongProductForm = () => {
       setIsLoadingExisting(false);
     }
   };
+
+  // Fetch years when make and model change
+  useEffect(() => {
+    if (wrong.make && wrong.model) {
+      fetchYears(wrong.make, wrong.model).then((years) => {
+        setAvailableYears(years);
+      });
+    } else {
+      setAvailableYears([]);
+    }
+  }, [wrong.make, wrong.model]);
+
+  // Fetch product variants when make, model, year, and parts change
+  useEffect(() => {
+    const fetchVariants = async () => {
+      if (wrong.make && wrong.model && wrong.year && wrong.parts) {
+        setIsLoadingVariants(true);
+        try {
+          const data = await getProductVariants({
+            make: wrong.make,
+            model: wrong.model,
+            year: wrong.year,
+            part: wrong.parts,
+          });
+          setProductVariants(data.groupedVariants || []);
+        } catch (error) {
+          console.error("Error fetching product variants:", error);
+          setProductVariants([]);
+        } finally {
+          setIsLoadingVariants(false);
+        }
+      } else {
+        setProductVariants([]);
+      }
+    };
+
+    fetchVariants();
+  }, [wrong.make, wrong.model, wrong.year, wrong.parts]);
 
   // Handle file uploads (empty for now as requested)
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -191,7 +235,7 @@ const WrongProductForm = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Ordered Part Section */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 md:col-span-2">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6 md:col-span-2">
             <div>
               <label className="block text-white text-sm font-medium mb-2">
                 Make <span className="text-red-500">*</span>
@@ -199,19 +243,23 @@ const WrongProductForm = () => {
               <div className="relative">
                 <select
                   value={wrong.make}
-                  onChange={(e) => setWrongField("make", e.target.value)}
+                  onChange={(e) => {
+                    setWrongField("make", e.target.value);
+                    // Reset dependent fields when make changes
+                    setWrongField("model", "");
+                    setWrongField("year", "");
+                    setWrongField("parts", "");
+                    setWrongField("specification", "");
+                  }}
                   className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
                 >
                   <option value="">Select Make</option>
-                  <option value="acura">Acura</option>
-                  <option value="buick">Buick</option>
-                  <option value="dodge">Dodge</option>
-                  <option value="honda">Honda</option>
-                  <option value="hyundai">Hyundai</option>
-                  <option value="isuzu">Isuzu</option>
-                  <option value="kia">Kia</option>
-                  <option value="suzuki">Suzuki</option>
-                  <option value="toyota">Toyota</option>
+                  {MAKES.map((make) => (
+                    <option key={make} value={make}>
+                      {make.charAt(0).toUpperCase() +
+                        make.slice(1).toLowerCase()}
+                    </option>
+                  ))}
                 </select>
                 <ChevronDown
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -227,13 +275,22 @@ const WrongProductForm = () => {
               <div className="relative">
                 <select
                   value={wrong.model}
-                  onChange={(e) => setWrongField("model", e.target.value)}
-                  className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
+                  onChange={(e) => {
+                    setWrongField("model", e.target.value);
+                    // Reset dependent fields when model changes
+                    setWrongField("year", "");
+                    setWrongField("parts", "");
+                    setWrongField("specification", "");
+                  }}
+                  disabled={!wrong.make}
+                  className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <option value="">Select Model</option>
-                  <option value="model1">Model 1</option>
-                  <option value="model2">Model 2</option>
-                  <option value="model3">Model 3</option>
+                  {(MODELS[wrong.make] || []).map((model) => (
+                    <option key={model} value={model}>
+                      {model}
+                    </option>
+                  ))}
                 </select>
                 <ChevronDown
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -249,20 +306,21 @@ const WrongProductForm = () => {
               <div className="relative">
                 <select
                   value={wrong.year}
-                  onChange={(e) => setWrongField("year", e.target.value)}
-                  className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
+                  onChange={(e) => {
+                    setWrongField("year", e.target.value);
+                    // Reset dependent fields when year changes
+                    setWrongField("parts", "");
+                    setWrongField("specification", "");
+                  }}
+                  disabled={!wrong.model || availableYears.length === 0}
+                  className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <option value="">Select Year</option>
-                  <option value="2024">2024</option>
-                  <option value="2023">2023</option>
-                  <option value="2022">2022</option>
-                  <option value="2021">2021</option>
-                  <option value="2020">2020</option>
-                  <option value="2019">2019</option>
-                  <option value="2018">2018</option>
-                  <option value="2017">2017</option>
-                  <option value="2016">2016</option>
-                  <option value="2015">2015</option>
+                  {availableYears.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
                 </select>
                 <ChevronDown
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -270,6 +328,32 @@ const WrongProductForm = () => {
                 />
               </div>
             </div>
+            <div>
+              <label className="block text-white text-sm font-medium mb-2">
+                Part <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <select
+                  value={wrong.parts}
+                  onChange={(e) => {
+                    setWrongField("parts", e.target.value);
+                    // Reset specification when part changes
+                    setWrongField("specification", "");
+                  }}
+                  disabled={!wrong.year}
+                  className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <option value="">Select Part</option>
+                  <option value="Engine">Engine</option>
+                  <option value="Transmission">Transmission</option>
+                </select>
+                <ChevronDown
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  size={20}
+                />
+              </div>
+            </div>
+
             <div>
               <label className="block text-white text-sm font-medium mb-2">
                 Specification
@@ -280,12 +364,21 @@ const WrongProductForm = () => {
                   onChange={(e) =>
                     setWrongField("specification", e.target.value)
                   }
-                  className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
+                  disabled={!productVariants.length}
+                  className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <option value="">Select Specification</option>
-                  <option value="Specification 1">Specification 1</option>
-                  <option value="Specification 2">Specification 2</option>
-                  <option value="Specification 3">Specification 3</option>
+                  <option value="">
+                    {isLoadingVariants
+                      ? "Loading..."
+                      : productVariants.length === 0
+                      ? "No specifications available"
+                      : "Select Specification"}
+                  </option>
+                  {productVariants.map((variant, idx) => (
+                    <option key={idx} value={variant.subPart.name}>
+                      {variant.subPart.name}
+                    </option>
+                  ))}
                 </select>
                 <ChevronDown
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"

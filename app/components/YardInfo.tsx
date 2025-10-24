@@ -57,7 +57,7 @@ interface YardInfoProps {
   setStatusPopUp: React.Dispatch<React.SetStateAction<boolean>>;
   statusPopUp: boolean;
   orderId: string;
-  onYardMoved: (reason: string, yardCharge: string) => void;
+  onYardMoved: (reason: string) => void;
 }
 
 const YardInfo: React.FC<YardInfoProps> = ({
@@ -76,10 +76,9 @@ const YardInfo: React.FC<YardInfoProps> = ({
   onYardMoved,
 }) => {
   const [reason, setReason] = useState("");
-  const [yardCharge, setYardCharge] = useState("");
+  const [yardChargeForHistory, setYardChargeForHistory] = useState("");
   const [submitReason, setSubmitReason] = useState(false);
   const [showYardPriceOptions, setShowYardPriceOptions] = useState(false);
-  const [yardChangedAmount, setYardChangedAmount] = useState("");
   const [visiblePriceFields, setVisiblePriceFields] = useState({
     taxesPrice: false,
     handlingPrice: false,
@@ -91,6 +90,11 @@ const YardInfo: React.FC<YardInfoProps> = ({
   const yardPriceOptionsRef = useRef<HTMLDivElement>(null);
 
   const [fieldErrors] = useState<{ [key: string]: boolean }>({});
+  const [localYardPrice, setLocalYardPrice] = useState<string>("");
+  const [localTaxesPrice, setLocalTaxesPrice] = useState<string>("");
+  const [localHandlingPrice, setLocalHandlingPrice] = useState<string>("");
+  const [localProcessingPrice, setLocalProcessingPrice] = useState<string>("");
+  const [localCorePrice, setLocalCorePrice] = useState<string>("");
   // Handle price field selection
   const handlePriceFieldSelection = (
     fieldName: keyof typeof visiblePriceFields
@@ -107,13 +111,22 @@ const YardInfo: React.FC<YardInfoProps> = ({
     field: keyof typeof formData,
     value: string | number
   ) => {
-    if (value === "" || isNaN(Number(value))) {
+    if (value === "" || value === null || value === undefined) {
       handleInputChange(field, "");
       return;
     }
-    const formatted = parseFloat(value.toString()).toFixed(2);
+
+    const numericValue = parseFloat(value.toString());
+    if (isNaN(numericValue)) {
+      handleInputChange(field, "");
+      return;
+    }
+
+    const formatted = numericValue.toFixed(2);
     handleInputChange(field, formatted); // must store string, not number
   };
+
+  
 
   // Ensure we have at least 3 previous yard slots
   const ensureMinimumPreviousYards = () => {
@@ -171,6 +184,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
   // Save previous yard changes
   const savePreviousYard = () => {
     setEditingPreviousYard(false);
+    
     setEditingYardIndex(null);
   };
 
@@ -195,6 +209,8 @@ const YardInfo: React.FC<YardInfoProps> = ({
   //   }
   // };
 
+  
+
   // Ensure minimum previous yards when component loads or previousYards changes
   useEffect(() => {
     console.log(
@@ -206,6 +222,31 @@ const YardInfo: React.FC<YardInfoProps> = ({
       ensureMinimumPreviousYards();
     }
   }, [previousYards.length]);
+
+  // Sync local prices with form data
+  useEffect(() => {
+    if (formData.yardPrice !== undefined) {
+      setLocalYardPrice(formData.yardPrice.toString());
+    }
+    if (formData.taxesYardPrice !== undefined) {
+      setLocalTaxesPrice(formData.taxesYardPrice.toString());
+    }
+    if (formData.handlingYardPrice !== undefined) {
+      setLocalHandlingPrice(formData.handlingYardPrice.toString());
+    }
+    if (formData.processingYardPrice !== undefined) {
+      setLocalProcessingPrice(formData.processingYardPrice.toString());
+    }
+    if (formData.coreYardPrice !== undefined) {
+      setLocalCorePrice(formData.coreYardPrice.toString());
+    }
+  }, [
+    formData.yardPrice,
+    formData.taxesYardPrice,
+    formData.handlingYardPrice,
+    formData.processingYardPrice,
+    formData.coreYardPrice,
+  ]);
 
   // Show price fields if they already have values
   useEffect(() => {
@@ -248,32 +289,32 @@ const YardInfo: React.FC<YardInfoProps> = ({
   ]);
 
   useEffect(() => {
-    if (submitReason && reason.trim() && yardCharge.trim()) {
+    if (submitReason && reason.trim()) {
       const moveYardToHistory = async () => {
         try {
           const API_URL =
             process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
           const response = await axios.post(
             `${API_URL}/yards/move-to-history/${orderId}`,
-            { reason: reason.trim(), yardCharge: yardCharge.trim() }
+            { reason: reason.trim() }
           );
           console.log("Successfully moved yard to history:", response.data);
 
           // Notify parent component that yard has been moved
-          onYardMoved(reason.trim(), yardCharge.trim());
+          onYardMoved(reason.trim());
         } catch (error) {
           console.error("Error moving yard to history:", error);
         } finally {
           // Reset state
           setReason("");
-          setYardCharge("");
+          // setYardCharge("");
           setSubmitReason(false);
         }
       };
 
       moveYardToHistory();
     }
-  }, [submitReason, reason, orderId, onYardMoved, yardCharge]);
+  }, [submitReason, reason, orderId, onYardMoved]);
 
   return (
     <div className="relative p-2 mt-6">
@@ -281,7 +322,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
         <MoveYardPopUp
           setStatus={setStatusPopUp}
           setReason={setReason}
-          setYardCharge={setYardCharge}
+          // setYardCharge={setYardCharge}
           setSubmitReason={setSubmitReason}
         />
       )}
@@ -485,7 +526,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 Yard Price
               </label>
               <input
-                type="text"
+                type="number"
                 className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
                   editingPreviousYard &&
                   editingYardIndex === selectedPrevYardIdx
@@ -514,7 +555,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 Taxes Price
               </label>
               <input
-                type="text"
+                type="number"
                 className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
                   editingPreviousYard &&
                   editingYardIndex === selectedPrevYardIdx
@@ -543,7 +584,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 Handling Price
               </label>
               <input
-                type="text"
+                type="number"
                 className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
                   editingPreviousYard &&
                   editingYardIndex === selectedPrevYardIdx
@@ -574,7 +615,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 Processing Price
               </label>
               <input
-                type="text"
+                type="number"
                 className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
                   editingPreviousYard &&
                   editingYardIndex === selectedPrevYardIdx
@@ -605,7 +646,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 Core Price
               </label>
               <input
-                type="text"
+                type="number"
                 className={`w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white ${
                   editingPreviousYard &&
                   editingYardIndex === selectedPrevYardIdx
@@ -767,7 +808,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 rows={3}
               />
             </div>
-            <div className="md:col-span-3">
+            {/* <div className="md:col-span-3">
               <label className="block text-white/60 text-xs mb-1">
                 Yard Charge
               </label>
@@ -795,6 +836,40 @@ const YardInfo: React.FC<YardInfoProps> = ({
                 rows={3}
               />
             </div>
+            {/* <div className="md:col-span-3">
+              <label className="block text-white/60 text-xs mb-1">
+                Yard Charged Amount
+              </label>
+              <input
+                type="text"
+                className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
+                value={
+                  previousYards[selectedPrevYardIdx]?.yardChangedAmount || ""
+                }
+                disabled={
+                  !(
+                    editingPreviousYard &&
+                    editingYardIndex === selectedPrevYardIdx
+                  )
+                }
+                onChange={(e) =>
+                  handlePreviousYardChange(
+                    selectedPrevYardIdx,
+                    "yardChangedAmount",
+                    e.target.value
+                  )
+                }
+                onBlur={(e) => {
+                  const rawValue = e.target.value || "0";
+                  const value = parseFloat(rawValue).toFixed(2);
+                  handlePreviousYardChange(
+                    selectedPrevYardIdx,
+                    "yardChangedAmount",
+                    value
+                  );
+                }}
+              />
+            </div> */}
           </div>
         </div>
       )}
@@ -885,16 +960,29 @@ const YardInfo: React.FC<YardInfoProps> = ({
           </label>
           <div className="relative" ref={yardPriceOptionsRef}>
             <input
-              type="text"
+              type="number"
               className={`appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full bg-[#0a1929] border rounded-lg px-4 py-3 pr-12 text-white focus:outline-none ${
                 fieldErrors.yardPrice
                   ? "border-red-500 focus:border-red-500"
                   : "border-gray-600 focus:border-blue-500"
               }`}
               placeholder="00.00"
-              value={formData.yardPrice === 0 ? "" : formData.yardPrice}
-              onChange={(e) => handleInputChange("yardPrice", e.target.value)}
-              onBlur={(e) => handlePriceBlur("yardPrice", e.target.value)}
+              value={localYardPrice}
+              onChange={(e) => {
+                setLocalYardPrice(e.target.value);
+                handleInputChange("yardPrice", e.target.value);
+              }}
+              onBlur={(e) => {
+                const value = e.target.value;
+                if (value && !isNaN(parseFloat(value)) && value !== "") {
+                  const numericValue = parseFloat(value);
+                  const formatted = numericValue.toFixed(2);
+                  if (value !== formatted) {
+                    setLocalYardPrice(formatted);
+                    handleInputChange("yardPrice", formatted);
+                  }
+                }
+              }}
             />
             <button
               type="button"
@@ -972,7 +1060,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
               Taxes Price
             </label>
             <input
-              type="text"
+              type="number"
               className={`
                 appearance-none
                 [appearance:textfield]
@@ -984,17 +1072,22 @@ const YardInfo: React.FC<YardInfoProps> = ({
                     : "border-gray-600 focus:border-blue-500"
                 }`}
               placeholder="00.00"
-              value={
-                formData.taxesYardPrice === 0 ||
-                formData.taxesYardPrice === "0" ||
-                formData.taxesYardPrice === "0.00"
-                  ? ""
-                  : formData.taxesYardPrice
-              }
-              onChange={(e) =>
-                handleInputChange("taxesYardPrice", e.target.value)
-              }
-              onBlur={(e) => handlePriceBlur("taxesYardPrice", e.target.value)}
+              value={localTaxesPrice}
+              onChange={(e) => {
+                setLocalTaxesPrice(e.target.value);
+                handleInputChange("taxesYardPrice", e.target.value);
+              }}
+              onBlur={(e) => {
+                const value = e.target.value;
+                if (value && !isNaN(parseFloat(value)) && value !== "") {
+                  const numericValue = parseFloat(value);
+                  const formatted = numericValue.toFixed(2);
+                  if (value !== formatted) {
+                    setLocalTaxesPrice(formatted);
+                    handleInputChange("taxesYardPrice", formatted);
+                  }
+                }
+              }}
             />
           </div>
         )}
@@ -1018,7 +1111,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
               Handling Price
             </label>
             <input
-              type="text"
+              type="number"
               className={`
                 appearance-none
                 [appearance:textfield]
@@ -1030,19 +1123,22 @@ const YardInfo: React.FC<YardInfoProps> = ({
                     : "border-gray-600 focus:border-blue-500"
                 }`}
               placeholder="00.00"
-              value={
-                formData.handlingYardPrice === 0 ||
-                formData.handlingYardPrice === "0" ||
-                formData.handlingYardPrice === "0.00"
-                  ? ""
-                  : formData.handlingYardPrice
-              }
-              onChange={(e) =>
-                handleInputChange("handlingYardPrice", e.target.value)
-              }
-              onBlur={(e) =>
-                handlePriceBlur("handlingYardPrice", e.target.value)
-              }
+              value={localHandlingPrice}
+              onChange={(e) => {
+                setLocalHandlingPrice(e.target.value);
+                handleInputChange("handlingYardPrice", e.target.value);
+              }}
+              onBlur={(e) => {
+                const value = e.target.value;
+                if (value && !isNaN(parseFloat(value)) && value !== "") {
+                  const numericValue = parseFloat(value);
+                  const formatted = numericValue.toFixed(2);
+                  if (value !== formatted) {
+                    setLocalHandlingPrice(formatted);
+                    handleInputChange("handlingYardPrice", formatted);
+                  }
+                }
+              }}
             />
           </div>
         )}
@@ -1066,7 +1162,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
               Processing Price
             </label>
             <input
-              type="text"
+              type="number"
               className={`
                 appearance-none
                 [appearance:textfield]
@@ -1078,19 +1174,22 @@ const YardInfo: React.FC<YardInfoProps> = ({
                     : "border-gray-600 focus:border-blue-500"
                 }`}
               placeholder="00.00"
-              value={
-                formData.processingYardPrice === 0 ||
-                formData.processingYardPrice === "0" ||
-                formData.processingYardPrice === "0.00"
-                  ? ""
-                  : formData.processingYardPrice
-              }
-              onChange={(e) =>
-                handleInputChange("processingYardPrice", e.target.value)
-              }
-              onBlur={(e) =>
-                handlePriceBlur("processingYardPrice", e.target.value)
-              }
+              value={localProcessingPrice}
+              onChange={(e) => {
+                setLocalProcessingPrice(e.target.value);
+                handleInputChange("processingYardPrice", e.target.value);
+              }}
+              onBlur={(e) => {
+                const value = e.target.value;
+                if (value && !isNaN(parseFloat(value)) && value !== "") {
+                  const numericValue = parseFloat(value);
+                  const formatted = numericValue.toFixed(2);
+                  if (value !== formatted) {
+                    setLocalProcessingPrice(formatted);
+                    handleInputChange("processingYardPrice", formatted);
+                  }
+                }
+              }}
             />
           </div>
         )}
@@ -1114,7 +1213,7 @@ const YardInfo: React.FC<YardInfoProps> = ({
               Core Price
             </label>
             <input
-              type="text"
+              type="number"
               className={`
                 appearance-none
                 [appearance:textfield]
@@ -1126,17 +1225,22 @@ const YardInfo: React.FC<YardInfoProps> = ({
                     : "border-gray-600 focus:border-blue-500"
                 }`}
               placeholder="00.00"
-              value={
-                formData.coreYardPrice === 0 ||
-                formData.coreYardPrice === "0" ||
-                formData.coreYardPrice === "0.00"
-                  ? ""
-                  : formData.coreYardPrice
-              }
-              onChange={(e) =>
-                handleInputChange("coreYardPrice", e.target.value)
-              }
-              onBlur={(e) => handlePriceBlur("coreYardPrice", e.target.value)}
+              value={localCorePrice}
+              onChange={(e) => {
+                setLocalCorePrice(e.target.value);
+                handleInputChange("coreYardPrice", e.target.value);
+              }}
+              onBlur={(e) => {
+                const value = e.target.value;
+                if (value && !isNaN(parseFloat(value)) && value !== "") {
+                  const numericValue = parseFloat(value);
+                  const formatted = numericValue.toFixed(2);
+                  if (value !== formatted) {
+                    setLocalCorePrice(formatted);
+                    handleInputChange("coreYardPrice", formatted);
+                  }
+                }
+              }}
             />
           </div>
         )}
@@ -1244,12 +1348,20 @@ const YardInfo: React.FC<YardInfoProps> = ({
           <label className="block text-white/60 text-sm mb-2">
             Yard Charged
           </label>
+          {/* <input
+            type="text"
+            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+            placeholder="Enter yard charge(Yes or No)"
+            value={formData.yardCharge}
+            onChange={(e) => handleInputChange("yardCharge", e.target.value)}
+          /> */}
           <div className="relative">
             <select
               className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none appearance-none"
-              value={yardCharge}
-              onChange={(e) => setYardCharge(e.target.value)}
+              value={formData.yardCharge}
+              onChange={(e) => handleInputChange("yardCharge", e.target.value)}
             >
+              <option value="">Select yard charge</option>
               <option value="No">No</option>
               <option value="Yes">Yes</option>
             </select>
@@ -1260,25 +1372,28 @@ const YardInfo: React.FC<YardInfoProps> = ({
           </div>
         </div>
 
-        {yardCharge === "Yes" && (
-          <div>
-            <label className="block text-white/60 text-sm mb-2">
-              Yard Changed Amount
-            </label>
-            <input
-              type="number"
-              className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-              placeholder="Enter amount"
-              value={yardChangedAmount}
-              onChange={(e) => setYardChangedAmount(e.target.value)}
-              onBlur={(e) => {
-                const rawValue = e.target.value || "0";
-                const value = parseFloat(rawValue).toFixed(2);
-                setYardChangedAmount(value);
-              }}
-            />
-          </div>
-        )}
+        {/* {formData.yardCharge === "Yes" ||
+          (formData.yardCharge === "yes" && ( */}
+        <div>
+          <label className="block text-white/60 text-sm mb-2">
+            Yard Charged Amount
+          </label>
+          <input
+            type="text"
+            className="w-full bg-[#0a1929] border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+            placeholder="Enter amount"
+            value={formData.yardChangedAmount}
+            onChange={(e) =>
+              handleInputChange("yardChangedAmount", e.target.value)
+            }
+            onBlur={(e) => {
+              const rawValue = e.target.value || "0";
+              const value = parseFloat(rawValue).toFixed(2);
+              handleInputChange("yardChangedAmount", value);
+            }}
+          />
+        </div>
+        {/* ))} */}
       </div>
     </div>
   );

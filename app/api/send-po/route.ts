@@ -639,19 +639,53 @@ async function generatePOPDF(data: InvoiceData) {
     // ---
     // Draw the multi-line content text
     // ---
-    const lines = text.split("\n");
-    const textX = leftPadding + labelWidth + 15;
-    let textYStart = currentX - verticalPadding / 2 - defaultLineHeight;
+   // --- Draw the multi-line or wrapped content text ---
+      const textX = leftPadding + labelWidth + 15;
+      let textYStart = currentX - verticalPadding / 2 - defaultLineHeight;
 
-    for (let j = 0; j < lines.length; j++) {
-      page.drawText(lines[j], {
-        x: textX,
-        y: textYStart - j * defaultLineHeight,
-        size: 11,
-        font: times,
-        color: rgb(0, 0, 0),
-      });
-    }
+      // ✅ If it's the "Price" field, apply wrapping
+      if (label === "Price") {
+        const maxWidth = width - 2 * leftPadding - labelWidth - 30;
+        const words = text.split(/\s+/);
+        let currentLine = "";
+        const wrappedLines: string[] = [];
+
+        for (const word of words) {
+          const testLine = currentLine ? `${currentLine} ${word}` : word;
+          const testWidth = times.widthOfTextAtSize(testLine, 11);
+
+          if (testWidth < maxWidth) {
+            currentLine = testLine;
+          } else {
+            wrappedLines.push(currentLine);
+            currentLine = word;
+          }
+        }
+        if (currentLine) wrappedLines.push(currentLine);
+
+        for (let j = 0; j < wrappedLines.length; j++) {
+          page.drawText(wrappedLines[j], {
+            x: textX,
+            y: textYStart - j * defaultLineHeight,
+            size: 11,
+            font: times,
+            color: rgb(0, 0, 0),
+          });
+        }
+      } else {
+        // 🟦 Default behavior for all other fields (no wrapping)
+        const lines = text.split("\n");
+        for (let j = 0; j < lines.length; j++) {
+          page.drawText(lines[j], {
+            x: textX,
+            y: textYStart - j * defaultLineHeight,
+            size: 11,
+            font: times,
+            color: rgb(0, 0, 0),
+          });
+        }
+      }
+
 
     // ---
     // Update currentY for the next block

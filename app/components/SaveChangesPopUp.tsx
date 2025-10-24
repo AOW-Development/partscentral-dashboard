@@ -1,282 +1,171 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, useRef } from "react";
+import { useRouter, usePathname } from "next/navigation";
 
-interface SaveChangesPopUpProps {
-  hasUnsavedChanges: boolean;
-  onSave: () => Promise<boolean> | boolean;
-  onDiscard: () => void;
-  isOpen: boolean;
-  setIsOpen: (open: boolean) => void;
-  message?: string;
-  saveButtonText?: string;
-  discardButtonText?: string;
-}
-
-export default function SaveChangesPopUp({
-  hasUnsavedChanges,
-  onSave,
-  onDiscard,
-  isOpen,
-  setIsOpen,
-  message = "You have unsaved changes. Are you sure you want to leave this page?",
-  saveButtonText = "Save Changes",
-  discardButtonText = "Discard Changes",
-}: SaveChangesPopUpProps) {
+// Hook to detect unsaved changes
+export function useSaveChangesDetection(dependencies: any[] = []) {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const [nextPath, setNextPath] = useState<string | null>(null);
+  const currentUrlRef = useRef<string>("");
+  const initialDataRef = useRef<string>("");
+  const isInitializedRef = useRef(false);
 
-  // Handle browser tab/window close or refresh
+  // Store initial state
   useEffect(() => {
-    if (!hasUnsavedChanges) return;
+    if (!isInitializedRef.current && dependencies.length > 0) {
+      initialDataRef.current = JSON.stringify(dependencies);
+      isInitializedRef.current = true;
+    }
+  }, []);
 
+  // Detect changes
+  useEffect(() => {
+    if (!isInitializedRef.current) return;
+    
+    const currentData = JSON.stringify(dependencies);
+    const hasChanges = currentData !== initialDataRef.current;
+    setHasUnsavedChanges(hasChanges);
+  }, [JSON.stringify(dependencies)]);
+
+  // Browser close/refresh warning
+  useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!hasUnsavedChanges) return;
       e.preventDefault();
-      e.returnValue =
-        "You have unsaved changes. Are you sure you want to leave?";
-      return "You have unsaved changes. Are you sure you want to leave?";
+      e.returnValue = "You have unsaved changes. Are you sure you want to leave?";
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
-  // Handle all navigation attempts
+  // Navigation interception
   useEffect(() => {
-    if (!hasUnsavedChanges) return;
+    currentUrlRef.current = window.location.href;
 
-    // Add a history entry to intercept back/forward navigation
-    const currentUrl = window.location.href;
-    window.history.pushState(
-      { preventNavigation: true, timestamp: Date.now() },
-      "",
-      currentUrl
-    );
-
-    // Handle browser back/forward navigation
     const handlePopState = (event: PopStateEvent) => {
-      if (hasUnsavedChanges && !isNavigating) {
-        // Show popup for browser navigation
-        setIsOpen(true);
-        // Determine if it's back or forward navigation
-        const isBackNavigation = event.state?.preventNavigation === true;
-        setNextPath(isBackNavigation ? "back" : "forward");
-        // Push current state back to prevent navigation
-        window.history.pushState(
-          { preventNavigation: true, timestamp: Date.now() },
-          "",
-          currentUrl
-        );
-      }
+      if (!hasUnsavedChanges || isNavigating) return;
+      
+      event.preventDefault();
+      setNextPath("back");
+      setIsSaveDialogOpen(true);
+      
+      window.history.pushState(
+        { preventNavigation: true },
+        "",
+        currentUrlRef.current
+      );
     };
 
-    // Handle Link component clicks and button navigation
     const handleLinkClick = (event: MouseEvent) => {
+      if (!hasUnsavedChanges || isNavigating) return;
+
       const target = event.target as HTMLElement;
-
-      // Check for Link components (Next.js Link)
       const link = target.closest("a[href]") as HTMLAnchorElement;
-      if (link && hasUnsavedChanges && !isNavigating) {
-        const href = link.getAttribute("href");
-        if (
-          href &&
-          href !== window.location.pathname &&
-          !href.startsWith("#")
-        ) {
-          event.preventDefault();
-          event.stopPropagation();
-          console.log("href", href);
+      
+      if (!link) return;
 
-          // Set the nextPath to the actual href for proper navigation
-          if (href.includes("orders") && href.includes("dashboard")) {
-            setNextPath("https://partscentral.us/dashboard/orders");
-          } else if (href.includes("leads") && href.includes("dashboard")) {
-            setNextPath("https://partscentral.us/dashboard/leads");
-          } else if (
-            href.includes("production") &&
-            href.includes("dashboard")
-          ) {
-            setNextPath("https://partscentral.us/dashboard/production");
-          } else if (href.includes("dashboard")) {
-            setNextPath("https://partscentral.us/dashboard");
-          } else {
-            setNextPath(href);
-          }
-          setIsOpen(true);
-          return;
-        }
-      }
-
-      // Check for buttons that might trigger navigation
-      const button = target.closest("button") as HTMLButtonElement;
-      if (button && hasUnsavedChanges && !isNavigating) {
-        // Check if button has navigation-related attributes or classes
-        const buttonText = button.textContent?.toLowerCase() || "";
-        const buttonClass = button.className || "";
-
-        // Common navigation button patterns
-        const isNavigationButton =
-          buttonText.includes("orders") ||
-          buttonText.includes("leads") ||
-          buttonText.includes("production") ||
-          buttonText.includes("dashboard") ||
-          buttonText.includes("home") ||
-          buttonClass.includes("nav") ||
-          buttonClass.includes("menu");
-
-        if (isNavigationButton) {
-          // Try to find the intended destination from button context
-          const parentLink = button.closest("a[href]");
-          console.log("parentLink", parentLink);
-          if (parentLink) {
-            const href = parentLink.getAttribute("href");
-            console.log("href1", href);
-            if (href && href !== window.location.pathname) {
-              event.preventDefault();
-              event.stopPropagation();
-              setNextPath(href);
-              setIsOpen(true);
-            }
-          }
-        }
+      const href = link.getAttribute("href");
+      if (
+        href &&
+        href !== pathname &&
+        !href.startsWith("#") &&
+        !link.target
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
+        setNextPath(href);
+        setIsSaveDialogOpen(true);
       }
     };
 
-    // Handle programmatic navigation (router.push, router.replace)
     const originalPush = router.push;
     const originalReplace = router.replace;
+    const originalBack = router.back;
 
-    router.push = (href: string) => {
+    (router as any).push = (href: string, options?: any) => {
       if (hasUnsavedChanges && !isNavigating) {
-        console.log("href2", href);
         setNextPath(href);
-        setIsOpen(true);
+        setIsSaveDialogOpen(true);
         return Promise.resolve(false);
       }
-      return originalPush.call(router, href);
+      return originalPush.call(router, href, options);
     };
 
-    router.replace = (href: string) => {
+    (router as any).replace = (href: string, options?: any) => {
       if (hasUnsavedChanges && !isNavigating) {
-        console.log("href3", href);
         setNextPath(href);
-        setIsOpen(true);
+        setIsSaveDialogOpen(true);
         return Promise.resolve(false);
       }
-      return originalReplace.call(router, href);
+      return originalReplace.call(router, href, options);
     };
 
-    // Handle hash changes (for single-page app navigation)
-    const handleHashChange = (event: HashChangeEvent) => {
+    (router as any).back = () => {
       if (hasUnsavedChanges && !isNavigating) {
-        event.preventDefault();
-        setIsOpen(true);
-        // Restore the current hash
-        window.location.hash = window.location.hash;
+        setNextPath("back");
+        setIsSaveDialogOpen(true);
+        return;
       }
+      return originalBack.call(router);
     };
 
-    // Handle direct URL changes (when user types in address bar)
-    const handleLocationChange = () => {
-      if (hasUnsavedChanges && !isNavigating) {
-        setIsOpen(true);
-        const shouldLeave = true;
-        if (!shouldLeave) {
-          // Try to restore the previous URL
-          window.history.pushState(null, "", window.location.pathname);
-        }
-      }
-    };
-
-    // Handle keyboard navigation (Alt+Left, Alt+Right, etc.)
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (hasUnsavedChanges && !isNavigating) {
-        // Alt + Left Arrow (Back)
-        if (event.altKey && event.key === "ArrowLeft") {
-          event.preventDefault();
-          event.stopPropagation();
-          setIsOpen(true);
-          setNextPath("back");
-        }
-        // Alt + Right Arrow (Forward)
-        if (event.altKey && event.key === "ArrowRight") {
-          event.preventDefault();
-          event.stopPropagation();
-          setIsOpen(true);
-          setNextPath("forward");
-        }
-      }
-    };
-
-    // Add event listeners
     window.addEventListener("popstate", handlePopState);
-    window.addEventListener("hashchange", handleHashChange);
-    document.addEventListener("click", handleLinkClick, true); // Use capture phase
-    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("click", handleLinkClick, true);
 
     return () => {
       window.removeEventListener("popstate", handlePopState);
-      window.removeEventListener("hashchange", handleHashChange);
       document.removeEventListener("click", handleLinkClick, true);
-      document.removeEventListener("keydown", handleKeyDown);
-      router.push = originalPush;
-      router.replace = originalReplace;
-
-      // Clean up the history state if it exists
-      if (window.history.state?.preventNavigation) {
-        window.history.replaceState(null, "", window.location.href);
-      }
+      (router as any).push = originalPush;
+      (router as any).replace = originalReplace;
+      (router as any).back = originalBack;
     };
-  }, [hasUnsavedChanges, isNavigating, setIsOpen, router]);
+  }, [hasUnsavedChanges, isNavigating, router, pathname]);
 
-  // Clean up history state when hasUnsavedChanges becomes false
-  useEffect(() => {
-    if (!hasUnsavedChanges && window.history.state?.preventNavigation) {
-      window.history.replaceState(null, "", window.location.href);
-    }
-  }, [hasUnsavedChanges]);
+  const handleSave = async (saveCallback: () => Promise<boolean>) => {
+    try {
+      const success = await saveCallback();
+      
+      if (success) {
+        // Update the baseline with current data after successful save
+        initialDataRef.current = JSON.stringify(dependencies);
+        setHasUnsavedChanges(false);
+        setIsSaveDialogOpen(false);
 
-  const handleSave = async () => {
-    const success = await onSave();
-    if (success) {
-      setIsOpen(false);
-      if (nextPath) {
-        setIsNavigating(true);
-        // Use setTimeout to ensure state is updated before navigation
-        setTimeout(() => {
-          if (nextPath === "back") {
-            // Go back by removing our dummy state and going back twice
-            window.history.go(-1);
-          } else if (nextPath === "forward") {
-            // Go forward by removing our dummy state and going forward
-            window.history.go(1);
-          } else {
-            router.push(nextPath);
-          }
-          setNextPath(null);
-          setIsNavigating(false);
-        }, 500);
+        if (nextPath) {
+          setIsNavigating(true);
+          setTimeout(() => {
+            if (nextPath === "back") {
+              window.history.back();
+            } else {
+              router.push(nextPath);
+            }
+            setNextPath(null);
+            setIsNavigating(false);
+          }, 100);
+        }
       }
+      return success;
+    } catch (error) {
+      console.error("Error saving changes:", error);
+      return false;
     }
   };
 
   const handleDiscard = () => {
-    onDiscard();
-    setIsOpen(false);
+    setHasUnsavedChanges(false);
+    setIsSaveDialogOpen(false);
+
     if (nextPath) {
       setIsNavigating(true);
-      // Use setTimeout to ensure state is updated before navigation
       setTimeout(() => {
         if (nextPath === "back") {
-          // Go back by removing our dummy state and going back twice
           window.history.go(-2);
-        } else if (nextPath === "forward") {
-          // Go forward by removing our dummy state and going forward
-          window.history.go(1);
         } else {
           router.push(nextPath);
         }
@@ -286,27 +175,91 @@ export default function SaveChangesPopUp({
     }
   };
 
-  // Simple modal implementation that works without shadcn/ui
+  const handleCancel = () => {
+    setIsSaveDialogOpen(false);
+    setNextPath(null);
+  };
+
+  // Function to manually reset the baseline (call after successful save)
+  const markAsSaved = () => {
+    initialDataRef.current = JSON.stringify(dependencies);
+    setHasUnsavedChanges(false);
+  };
+
+  return {
+    hasUnsavedChanges,
+    isSaveDialogOpen,
+    handleSave,
+    handleDiscard,
+    handleCancel,
+    markAsSaved, // Export this so you can call it after save
+  };
+}
+
+// Dialog Component
+interface SaveChangesDialogProps {
+  isOpen: boolean;
+  onSave: () => void;
+  onDiscard: () => void;
+  onCancel: () => void;
+}
+
+export function SaveChangesDialog({
+  isOpen,
+  onSave,
+  onDiscard,
+  onCancel,
+}: SaveChangesDialogProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-        <h2 className="text-xl font-semibold mb-2">Unsaved Changes</h2>
-        <p className="text-gray-600 mb-6">{message}</p>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
+        <div className="flex items-start gap-4 mb-4">
+          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
+            <svg
+              className="w-6 h-6 text-yellow-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Unsaved Changes
+            </h2>
+            <p className="text-gray-600 text-sm">
+              You have unsaved changes that will be lost if you leave this page.
+              Would you like to save your changes before continuing?
+            </p>
+          </div>
+        </div>
 
-        <div className="flex justify-end space-x-3">
+        <div className="flex justify-end space-x-3 mt-6">
           <button
-            onClick={handleDiscard}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            onClick={onCancel}
+            className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            {discardButtonText}
+            Cancel
           </button>
           <button
-            onClick={handleSave}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            onClick={onDiscard}
+            className="px-4 py-2 text-sm font-medium border border-red-300 rounded-md text-red-700 hover:bg-red-50 transition-colors"
           >
-            {saveButtonText}
+            Discard Changes
+          </button>
+          <button
+            onClick={onSave}
+            className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Save Changes
           </button>
         </div>
       </div>

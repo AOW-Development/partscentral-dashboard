@@ -78,6 +78,8 @@ export type OrderFormData = {
   yardMiles: string | number;
   yardShipping: string;
   yardCost: string;
+  yardCharge: string;
+  yardChangedAmount: string;
   yardtotalBuy: string | number;
   pictureStatus: string;
   pictureUrl: string;
@@ -125,7 +127,10 @@ import { getCardType, isValidCardNumber } from "@/utils/cardValidator";
 import { MAKES, MODELS } from "@/vehicleData-dashboard";
 import { fetchYears } from "@/utils/vehicleApi";
 import { getProductVariants, GroupedVariant } from "@/utils/productApi";
-import SaveChangesPopUp from "@/app/components/SaveChangesPopUp";
+import {
+  useSaveChangesDetection,
+  SaveChangesDialog,
+} from "@/app/components/SaveChangesPopUp";
 import MoveYardPopUp from "@/app/components/MoveYardPopUp";
 import YardInfo from "@/app/components/YardInfo";
 import MerchantInfo from "@/app/components/MerchantInfo";
@@ -270,7 +275,6 @@ const OrderDetails = () => {
           setPreviousYards(yardHistory);
 
           const payments = Array.isArray(data.payments) ? data.payments : [];
-          console.log("DEBUG: Raw payments from API:", payments);
 
           const mappedPaymentEntries = payments.map(
             (p: any, index: number) => ({
@@ -462,6 +466,8 @@ const OrderDetails = () => {
             handlingYardPrice: yard.yardHandlingFee?.toString() || "",
             processingYardPrice: yard.yardProcessingFee?.toString() || "",
             coreYardPrice: yard.yardCorePrice?.toString() || "",
+            yardCharge: yard.yardCharge || "",
+            yardChangedAmount: yard.yardChangedAmount || "",
             customerNotes: customerNotesArray,
             yardNotes: yardNotesArray,
             invoiceSentAt: data.invoiceSentAt
@@ -471,6 +477,7 @@ const OrderDetails = () => {
               ? new Date(data.invoiceConfirmedAt).toISOString().split("T")[0]
               : "",
             poStatus: dataPoStatus,
+            invoiceStatus: dataInvoiceStatus,
             poSentAt: data.poSentAt
               ? new Date(data.poSentAt).toISOString().split("T")[0]
               : "",
@@ -507,7 +514,6 @@ const OrderDetails = () => {
                 Array.isArray(parsedCustomerNotes) ? parsedCustomerNotes : []
               );
             } catch (error) {
-              console.error("Failed to parse customer notes:", error);
               setCustomerNotes([]);
             }
           }
@@ -519,7 +525,6 @@ const OrderDetails = () => {
                 Array.isArray(parsedYardNotes) ? parsedYardNotes : []
               );
             } catch (error) {
-              console.error("Failed to parse yard notes:", error);
               setYardNotes([]);
             }
           }
@@ -653,6 +658,8 @@ const OrderDetails = () => {
     yardShipping: "",
     yardCost: "",
     yardtotalBuy: "",
+    yardCharge: "",
+    yardChangedAmount: "",
     pictureStatus: "",
     pictureUrl: "",
     carrierName: "",
@@ -759,7 +766,7 @@ const OrderDetails = () => {
     if (!loadingOrder) {
       const newVisibleFields = { ...visiblePriceFields };
 
-      let shouldUpdate = false; 
+      let shouldUpdate = false;
       // Check each product individually for additional price fields
       formData.products.forEach((product, index) => {
         if (!newVisibleFields[index]) {
@@ -797,13 +804,13 @@ const OrderDetails = () => {
           shouldUpdate = true;
         }
       });
-      if (shouldUpdate){
-          setVisiblePriceFields(newVisibleFields);
+      if (shouldUpdate) {
+        setVisiblePriceFields(newVisibleFields);
       }
     }
   }, [loadingOrder]);
 
-  const handleYardMoved = (reason: string, yardCharge: string) => {
+  const handleYardMoved = (reason: string) => {
     addYardNote(`Yard Removed. Reason: ${reason}`, "By Agent");
 
     const currentYard = {
@@ -822,7 +829,7 @@ const OrderDetails = () => {
       yardShipping: formData.yardShipping,
       yardCost: formData.yardCost.toString(),
       reason: reason.trim(),
-      yardCharge: yardCharge.trim(),
+      // yardCharge: yardCharge.trim(),
       yardtotalBuy: formData.yardtotalBuy.toString(),
     };
 
@@ -847,6 +854,8 @@ const OrderDetails = () => {
       yardShipping: "",
       yardCost: "",
       yardtotalBuy: "",
+      yardCharge: "",
+      yardChangedAmount: "",
     }));
   };
 
@@ -854,25 +863,17 @@ const OrderDetails = () => {
   // The popup should only show when user tries to navigate away
   const [saveState, setSaveState] = useState(false);
   // Handle save changes for unsaved changes popup
+  // Handle save changes for unsaved changes popup
   const handleSaveChanges = async (): Promise<boolean> => {
     try {
       // Call the existing handleSave function
-      if (saveState) {
-        setHasUnsavedChanges(false);
-        // Update initial data to current data after successful save
-        setInitialFormData(JSON.parse(JSON.stringify(formData)));
-        setInitialPaymentEntries(JSON.parse(JSON.stringify(paymentEntries)));
-        return true;
-      } else {
-        await handleSave();
-        setHasUnsavedChanges(false);
-        // Update initial data to current data after successful save
-        setInitialFormData(JSON.parse(JSON.stringify(formData)));
-        setInitialPaymentEntries(JSON.parse(JSON.stringify(paymentEntries)));
-        return true;
-      }
+      await handleSave();
+      setHasUnsavedChanges(false);
+      // Update initial data to current data after successful save
+      setInitialFormData(JSON.parse(JSON.stringify(formData)));
+      setInitialPaymentEntries(JSON.parse(JSON.stringify(paymentEntries)));
+      return true;
     } catch (error) {
-      console.error("Error saving changes:", error);
       toast.error("Error saving changes");
       return false;
     }
@@ -1395,7 +1396,6 @@ const OrderDetails = () => {
           }
         }
       } catch (error) {
-        console.error("Error fetching product variants:", error);
         setVariantError("Failed to load product variants. Please try again.");
         handleProductInputChange(index, "productVariants", []);
       } finally {
@@ -1419,10 +1419,6 @@ const OrderDetails = () => {
       const key = `${make}-${model}-${year}-${parts}`;
 
       if (lastVariantKeys.current[index] !== key) {
-        console.log(
-          `DEBUG 4: Fields change detected for index ${index}, loadingOrder: ${loadingOrder}`
-        );
-
         // Only reset dependent fields if this is NOT the initial load AND the key actually changed
         // This prevents resetting fields when loading existing order data
         if (lastVariantKeys.current[index]) {
@@ -1997,7 +1993,6 @@ const OrderDetails = () => {
           trackingNumber: formData.trackingNumber,
         },
       };
-      console.log("invoiceData issssss:", invoiceData);
 
       // API call to send invoice
       const response = await fetch(`${URL}api/send-invoice`, {
@@ -2188,6 +2183,7 @@ const OrderDetails = () => {
     } else {
       await handleCreateOrder();
     }
+    saveChanges.markAsSaved();
   };
 
   const handleUpdateOrder = async () => {
@@ -2236,16 +2232,6 @@ const OrderDetails = () => {
         cardChargedDate: firstPaymentEntry?.cardChargedDate || "",
         paymentAmount: firstPaymentEntry?.totalPrice || "",
       };
-
-      console.log(
-        "DEBUG: Payment Entries being sent for update:",
-        paymentEntries
-      );
-      console.log(
-        "DEBUG: Form Data being sent for update:",
-        updatedFormDataWithPayment
-      );
-
       const result = await updateOrderFromAdmin(
         orderId,
         updatedFormDataWithPayment,
@@ -2268,6 +2254,7 @@ const OrderDetails = () => {
       setHasUnsavedChanges(false);
       setInitialFormData(JSON.parse(JSON.stringify(formData)));
       setInitialPaymentEntries(JSON.parse(JSON.stringify(paymentEntries)));
+      saveChanges.markAsSaved();
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -2370,18 +2357,12 @@ const OrderDetails = () => {
         paymentAmount: firstPaymentEntry?.totalPrice || "",
       };
 
-      console.log("DEBUG: Payment Entries being sent:", paymentEntries);
-      console.log("DEBUG: Form Data being sent:", finalFormDataWithPayment);
-
       const result = await createOrderFromAdmin(
         finalFormDataWithPayment,
         cartItems,
         paymentEntries,
         previousYards
       );
-
-      console.log("DEBUG: Order creation result:", result);
-      console.log("DEBUG: Created order ID:", result?.id);
 
       // setMessage({
       //   type: "success",
@@ -2395,6 +2376,7 @@ const OrderDetails = () => {
       setHasUnsavedChanges(false);
       setInitialFormData(JSON.parse(JSON.stringify(formData)));
       setInitialPaymentEntries(JSON.parse(JSON.stringify(paymentEntries)));
+      saveChanges.markAsSaved();
     } catch (error) {
       // setMessage({
       //   type: "error",
@@ -2448,7 +2430,7 @@ const OrderDetails = () => {
     }
   }, [message]);
 
-  console.log(setIsProcessing);
+  // console.log(setIsProcessing);
 
   useEffect(() => {
     if (formData.yardShipping == "Own Shipping") {
@@ -2517,7 +2499,6 @@ const OrderDetails = () => {
   const [showPreviousYard, setShowPreviousYard] = useState(false);
   const [previousYards, setPreviousYards] = useState<PreviousYard[]>([]);
   const [selectedPrevYardIdx, setSelectedPrevYardIdx] = useState(0);
-  console.log(setPreviousYards, setShowPreviousYard);
 
   // Add state for uploaded picture file
   const [uploadedPicture, setUploadedPicture] = useState<File | null>(null);
@@ -2536,7 +2517,6 @@ const OrderDetails = () => {
   const [yardNoteInput, setYardNoteInput] = useState("");
 
   const addCustomerNote = (message: string, actor?: string) => {
-    console.log("Adding customer note:", { message, actor });
     const newNote = {
       id: Date.now() + Math.floor(Math.random() * 1000000),
       timestamp: new Date(),
@@ -2554,8 +2534,6 @@ const OrderDetails = () => {
   };
 
   const addYardNote = (message: string, actor?: string) => {
-    console.log("Adding yard note:", { message, actor });
-
     const newNote = {
       id: Date.now() + Math.floor(Math.random() * 1000000),
       timestamp: new Date(),
@@ -2583,6 +2561,14 @@ const OrderDetails = () => {
       hour: "numeric",
       minute: "2-digit",
     });
+  };
+
+  const formatDateDDMMYYYY = (d: Date | string | number) => {
+    const date = d instanceof Date ? d : new Date(d);
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
   };
 
   const handleManualAddCustomerNote = () => {
@@ -2686,64 +2672,80 @@ const OrderDetails = () => {
         }));
 
         // If we have an orderId, update database
-      if (orderId && orderId !== "create" && orderId !== "new") {
-        await updateOrderWithPicture(orderId, "Yes", s3Key);
+        if (orderId && orderId !== "create" && orderId !== "new") {
+          await updateOrderWithPicture(orderId, "Yes", s3Key);
+        }
+        addCustomerNote(
+          `Picture Uploaded – ${uploadedPicture.name} sent to customer.`,
+          "By Agent"
+        );
+        toast.success("Picture uploaded successfully!");
+      } catch (error) {
+        console.error("Error uploading picture:", error);
+        toast.error("failed to uplaod picture !");
       }
-      addCustomerNote(
-        `Picture Uploaded – ${uploadedPicture.name} sent to customer.`,
-        "By Agent"
-      );
-      toast.success("Picture uploaded successfully!");
-    } catch(error) {
-      console.error("Error uploading picture:", error);
-      toast.error("failed to uplaod picture !")
-    } 
-  return;
-  }
-    if (uploadedPicture && formData.pictureUrl && orderId && orderId !== "create" && orderId !== "new") {
-          try { 
-            // Upload new picture to backend
-              const formDataToSend = new FormData();
-              formDataToSend.append("file", uploadedPicture);
-            
-            const res = await fetch(`${API_URL}/upload-single`, {
-              method: "POST",
-                body: formDataToSend,
-              });
-              const data = await res.json();
-              const s3Key = data.file.key;
-
-              // Update form data with new picture information
-              setFormData((prev) => ({
-              ...prev,
-              pictureUrl: s3Key,
-                pictureStatus: "Yes",
-              }));
-
-            // Update database with new picture
-              await updateOrderWithPicture(orderId, "Yes", s3Key);
-              addCustomerNote(
-                `Picture Updated – ${uploadedPicture.name} sent to customer.`,
-                "By Agent"
-              );
-              toast.success("Picture updated successfully!");
-            } catch(error) {
-              console.error("Error updating picture:", error);
-              toast.error("Failed to update picture!");
-            } 
-            return;
-  }
-  
-  // Handle case where we have an orderId and picture but no upload
-  if (orderId && orderId !== "create" && orderId !== "new" && formData.pictureUrl) {
-    try {
-      await updateOrderWithPicture(orderId, formData.pictureStatus, formData.pictureUrl);
-      toast.success("Picture status updated!");
-    } catch (error) {
-      console.error("Error updating picture status:", error);
-      toast.error("Failed to update picture status");
+      return;
     }
-  } };
+    if (
+      uploadedPicture &&
+      formData.pictureUrl &&
+      orderId &&
+      orderId !== "create" &&
+      orderId !== "new"
+    ) {
+      try {
+        // Upload new picture to backend
+        const formDataToSend = new FormData();
+        formDataToSend.append("file", uploadedPicture);
+
+        const res = await fetch(`${API_URL}/upload-single`, {
+          method: "POST",
+          body: formDataToSend,
+        });
+        const data = await res.json();
+        const s3Key = data.file.key;
+
+        // Update form data with new picture information
+        setFormData((prev) => ({
+          ...prev,
+          pictureUrl: s3Key,
+          pictureStatus: "Yes",
+        }));
+
+        // Update database with new picture
+        await updateOrderWithPicture(orderId, "Yes", s3Key);
+        addCustomerNote(
+          `Picture Updated – ${uploadedPicture.name} sent to customer.`,
+          "By Agent"
+        );
+        toast.success("Picture updated successfully!");
+      } catch (error) {
+        console.error("Error updating picture:", error);
+        toast.error("Failed to update picture!");
+      }
+      return;
+    }
+
+    // Handle case where we have an orderId and picture but no upload
+    if (
+      orderId &&
+      orderId !== "create" &&
+      orderId !== "new" &&
+      formData.pictureUrl
+    ) {
+      try {
+        await updateOrderWithPicture(
+          orderId,
+          formData.pictureStatus,
+          formData.pictureUrl
+        );
+        toast.success("Picture status updated!");
+      } catch (error) {
+        console.error("Error updating picture status:", error);
+        toast.error("Failed to update picture status");
+      }
+    }
+  };
 
   // Initialize a base note once
   const initRef = useRef(false);
@@ -2844,6 +2846,7 @@ const OrderDetails = () => {
   //   formData.ownShippingInfo?.price,
   //   formData.shippingAddressType,
   // ]);
+  const saveChanges = useSaveChangesDetection([formData, paymentEntries]);
 
   return (
     <ProtectRoute>
@@ -2971,6 +2974,7 @@ const OrderDetails = () => {
                         }
                       >
                         <option value="">Source</option>
+                        <option value="ecommerce">Ecommerce</option>
                         <option value="Inbound Call">Inbound Call</option>
                         <option value="meta ads">Meta Ads</option>
                         <option value="meta organic">Meta Organic</option>
@@ -4116,10 +4120,10 @@ const OrderDetails = () => {
                                 " Rendering specs for product:",
                                 product
                               );
-                              console.log(
-                                " ProductVariants:",
-                                product.productVariants
-                              );
+                              // console.log(
+                              //   " ProductVariants:",
+                              //   product.productVariants
+                              // );
                               return product.productVariants?.map(
                                 (variant, idx) => (
                                   <option
@@ -4703,11 +4707,29 @@ const OrderDetails = () => {
                               Invoice Sent
                             </span>
 
-                            <span className="text-white/60 text-xs">
-                              {/* 27Jun25 7:11pm */}
-                              {invoiceDate &&
-                                `${formatDay(TIME)} ${formatTime(TIME)}`}
-                            </span>
+                            {/* <span className="text-white/60 text-md"> */}
+                            {/* 23-10-2025 */}
+                            {/* {invoiceDate && formatDateDDMMYYYY(TIME)}
+                            </span> */}
+                            <div className="relative">
+                              <input
+                                type="date"
+                                className="text-white text-sm placeholder:text-white"
+                                value={
+                                  !isLoadingInvoice
+                                    ? formData.invoiceSentAt
+                                    : ""
+                                  // : new Date(TIME).toISOString().split("T")[0]
+                                }
+                                onChange={(e) =>
+                                  handleInputChange(
+                                    "invoiceSentAt",
+                                    e.target.value
+                                  )
+                                }
+                                // disabled={!invoiceButtonState}
+                              />
+                            </div>
                           </div>
                         )}
                         {invoiceButtonState && (
@@ -4797,6 +4819,8 @@ const OrderDetails = () => {
                       yardMiles: formData.yardMiles,
                       yardShipping: formData.yardShipping,
                       yardCost: formData.yardCost,
+                      yardCharge: formData.yardCharge,
+                      yardChangedAmount: formData.yardChangedAmount,
                       yardtotalBuy:
                         formData.yardCost +
                         formData.yardPrice +
@@ -4875,11 +4899,25 @@ const OrderDetails = () => {
                               PO Sent
                             </span>
 
-                            <span className="text-white/60 text-xs">
-                              {/* 27Jun25 7:11pm */}
-                              {poDate &&
-                                `${formatDay(TIME1)} ${formatTime(TIME1)}`}
-                            </span>
+                            {/* <span className="text-white/60 text-md"> */}
+                            {/* {poDate && formatDateDDMMYYYY(TIME1)} */}
+                            {/* </span> */}
+                            <div className="relative">
+                              <input
+                                type="date"
+                                className="text-white text-sm placeholder:text-white"
+                                value={
+                                  !isLoadingPo ? formData.poSentAt : ""
+                                  // : new Date(TIME1)
+                                  //     .toISOString()
+                                  //     .split("T")[0]
+                                }
+                                onChange={(e) =>
+                                  handleInputChange("poSentAt", e.target.value)
+                                }
+                                // disabled={!poButtonState}
+                              />
+                            </div>
                           </div>
                         )}
                         {poButtonState && (
@@ -5132,13 +5170,54 @@ const OrderDetails = () => {
           </main>
         </div>
       </div>
+      {/* {isSaveDialogOpen && (
+        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h2 className="text-xl font-semibold mb-2">Unsaved Changes</h2>
+            <p className="text-gray-600 mb-6">
+              You have unsaved changes. Are you sure you want to leave this page?
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={handleDiscard}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                Discard Changes
+              </button>
+              <button
+                onClick={handleSaveChanges}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )} */}
 
-      <SaveChangesPopUp
+      {/* <SaveChangesPopUp
         hasUnsavedChanges={hasUnsavedChanges && isInitialized}
         onSave={handleSaveChanges}
         onDiscard={handleDiscard}
         isOpen={isSaveDialogOpen}
         setIsOpen={setIsSaveDialogOpen}
+      /> */}
+
+      <SaveChangesDialog
+        isOpen={saveChanges.isSaveDialogOpen}
+        onSave={async () => {
+          await saveChanges.handleSave(async () => {
+            try {
+              await handleSave();
+              return true;
+            } catch (error) {
+              console.error("Error saving:", error);
+              return false;
+            }
+          });
+        }}
+        onDiscard={saveChanges.handleDiscard}
+        onCancel={saveChanges.handleCancel}
       />
     </ProtectRoute>
   );
