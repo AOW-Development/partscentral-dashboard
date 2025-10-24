@@ -81,7 +81,7 @@ const ProductForm: React.FC = () => {
               🔗
             </button>
             <button className="p-1 hover:bg-gray-600 rounded text-white">
-              📷
+              📷  
             </button>
             <button className="p-1 hover:bg-gray-600 rounded text-white">
               📹

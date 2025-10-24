@@ -47,16 +47,14 @@ const DamagedProductForm = () => {
       // Fetch existing problematic parts for this order
       fetchExistingData(currentOrderId);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty array - only run once on mount
+  }, []); 
+
 
   const fetchExistingData = async (orderId: string) => {
     try {
       setIsLoadingExisting(true);
       const existingParts = await getProblematicPartsByOrderId(orderId);
-
-      // Get the first problematic part (regardless of type)
-      // One order can only have ONE problematic part
+  
       if (existingParts.length > 0) {
         const existingPart = existingParts[0];
         console.log("Loading existing problematic part:", existingPart);
@@ -129,7 +127,7 @@ const DamagedProductForm = () => {
         await fetchExistingData(orderId);
       }
 
-      router.refresh(); // Refresh the current page
+      router.refresh(); 
     } catch (error: any) {
       console.error("Error submitting problematic part:", error);
       setSubmitError(error.message || "Failed to save problematic part");
@@ -160,8 +158,9 @@ const DamagedProductForm = () => {
             accept="image/*"
             buttonLabel="Upload Photos"
             buttonClass="bg-blue-700 hover:bg-blue-600"
-            showPreview={true}
+            showPreview={false}
             folder="damaged-photos"
+            showToast={true}
           />
         </div>
 
@@ -214,7 +213,7 @@ const DamagedProductForm = () => {
                 />
               </div>
             </div>
-            {/* Conditional Return Shipping Fields */}
+            
             {(common.returnShipping === "Own Shipping" ||
               common.returnShipping === "Yard Shipping") && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:col-span-2">
@@ -225,6 +224,7 @@ const DamagedProductForm = () => {
                   sendLabel="Send"
                   sendButtonClass="bg-blue-600 hover:bg-blue-700"
                   folder="damaged-bol"
+                  showToast={true}
                 />
                 <div className="flex items-end gap-4">
                   <div className="flex-1">

@@ -1,7 +1,4 @@
-/**
- * S3 Upload Service
- * Handles all S3 file upload operations for the application
- */
+
 export class S3UploadService {
   private readonly API_URL: string;
 
@@ -9,12 +6,6 @@ export class S3UploadService {
     this.API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
   }
 
-  /**
-   * Upload a file to S3
-   * @param file - The file to upload
-   * @param folder - Optional folder path in S3
-   * @returns Promise with the S3 key
-   */
   async uploadFile(file: File, folder?: string): Promise<string> {
     try {
       const formData = new FormData();
@@ -42,11 +33,7 @@ export class S3UploadService {
     }
   }
 
-  /**
-   * Get a presigned URL for accessing a file in S3
-   * @param s3Key - The S3 key of the file
-   * @returns Promise with the presigned URL
-   */
+ 
   async getPresignedUrl(s3Key: string): Promise<string> {
     try {
       const response = await fetch(
@@ -66,13 +53,18 @@ export class S3UploadService {
     }
   }
 
-  /**
-   * Upload multiple files to S3 and return their keys
-   * @param files - Array of files to upload
-   * @returns Promise with array of S3 keys
-   */
+  
   async uploadMultipleFiles(files: File[], folder?: string): Promise<string[]> {
     const uploadPromises = files.map(file => this.uploadFile(file, folder));
     return Promise.all(uploadPromises);
+  }
+
+    // Copy url to clipboard
+    copyToClipboard(text: string): void {
+      navigator.clipboard.writeText(text).then(() => {
+        console.log('URL copied to clipboard');
+      }).catch(err => {
+      console.error('Could not copy text: ', err);
+    });
   }
 }

@@ -10,6 +10,7 @@ interface BOLUploadSectionProps {
   sendButtonClass?: string;
   folder?: string;
   accept?: string;
+  showToast?: boolean;
 }
 
 const BOLUploadSection = ({
@@ -20,10 +21,12 @@ const BOLUploadSection = ({
   sendButtonClass = 'bg-blue-600 hover:bg-blue-700',
   folder = 'bol-uploads',
   accept = '.pdf,.jpg,.jpeg,.png',
+  showToast = true,
 }: BOLUploadSectionProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [fileS3Key, setFileS3Key] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const s3Service = new S3UploadService();
 
@@ -36,12 +39,20 @@ const BOLUploadSection = ({
       setUploadError(null);
       
       const file = files[0];
-      const url = await s3Service.uploadFile(file, folder);
-      setFileUrl(url);
-      onFileUploaded?.(url);
+      const key = await s3Service.uploadFile(file, folder);
+      setFileS3Key(key);
+      setFileUrl(key);
+      onFileUploaded?.(key);
+      
+      if (showToast) {
+        console.log('BOL file uploaded successfully');
+      }
     } catch (error) {
       console.error('Upload error:', error);
       setUploadError(error instanceof Error ? error.message : 'Upload failed');
+      if (showToast) {
+        console.log('BOL upload failed!');
+      }
     } finally {
       setIsUploading(false);
     }
@@ -84,6 +95,19 @@ const BOLUploadSection = ({
       
       {uploadError && (
         <span className="text-red-500 text-sm">{uploadError}</span>
+      )}
+      
+      {/* Show file key and copy button when uploaded */}
+      {fileS3Key && (
+        <div className="flex items-center gap-2">
+          <span className="text-white text-sm truncate max-w-xs">{fileS3Key}</span>
+          <button
+            onClick={() => s3Service.copyToClipboard(fileS3Key)}
+            className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm"
+          >
+            Copy URL
+          </button>
+        </div>
       )}
       
       <button

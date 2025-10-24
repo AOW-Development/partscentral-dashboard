@@ -15,6 +15,7 @@ interface UploadSectionProps {
   fileLimit?: number;
   showPreview?: boolean;
   folder?: string;
+  showToast?: boolean;
 }
 
 const UploadSection = ({
@@ -30,6 +31,7 @@ const UploadSection = ({
   fileLimit = 1,
   showPreview = false,
   folder = 'uploads',
+  showToast = true,
 }: UploadSectionProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -37,7 +39,7 @@ const UploadSection = ({
   const [uploadedFileUrls, setUploadedFileUrls] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const s3Service = new S3UploadService();
-
+  const [fileS3Keys, setFileS3Keys] = useState<String[]>([]);
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -46,35 +48,42 @@ const UploadSection = ({
       setIsUploading(true);
       setUploadError(null);
       
-      // Validate file count
       if (multiple && files.length > fileLimit) {
         throw new Error(`Maximum ${fileLimit} files allowed`);
       }
       
-      // If multiple files, upload all of them
       if (multiple && files.length > 1) {
         const urls = await s3Service.uploadMultipleFiles(Array.from(files), folder);
         setUploadedFileUrls(urls);
         onFilesUploaded?.(urls);
         
-        // Generate previews if requested
+        
         if (showPreview && preview) {
           const previews = Array.from(files).map(file => {
             return URL.createObjectURL(file);
           });
           setFilePreviews(previews);
         }
+
+        if(showToast){
+          console.log(`${urls.length} files uploaded successfully.`);
+        }
       } else {
-        // Single file upload
-        const file = files[0];
-        const url = await s3Service.uploadFile(file, folder);
-        setUploadedFileUrls([url]);
-        onFileUploaded?.(url);
         
-        // Generate preview if requested
+        const file = files[0];
+        const key = await s3Service.uploadFile(file, folder);
+        setFileS3Keys([key]);
+        setUploadedFileUrls([key]);
+        onFileUploaded?.(key);
+        
+        
         if (showPreview && preview) {
           const previewUrl = URL.createObjectURL(file);
           setFilePreviews([previewUrl]);
+        }
+
+        if(showToast){
+          console.log(`File uploaded successfully: ${key}`);
         }
       }
     } catch (error) {
@@ -125,8 +134,24 @@ const UploadSection = ({
           <span className="text-red-500 text-sm">{uploadError}</span>
         )}
       </div>
-      
-      {/* Preview section */}
+        // Display uploaded file URLs with copy button for single file upload
+        {uploadedFileUrls.length > 0 && !showPreview && (
+        <div className="mt-4">
+          {uploadedFileUrls.map((fileUrl, index) => (
+            <div key={index} className="text-sm text-green-400">
+            <span className="text-white text-sm truncate max-w-xs">{fileUrl}</span>
+              <button 
+              onClick={() => s3Service.copyToClipboard(fileUrl)}
+                className="ml-2 bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm"
+              >
+              Copy
+              </button>
+            </div>
+          ))}
+          </div>
+      )}
+
+  
       {showPreview && filePreviews.length > 0 && (
         <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-2">
           {filePreviews.map((preview, index) => (

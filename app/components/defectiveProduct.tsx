@@ -9,6 +9,8 @@ import {
 } from "@/utils/problematicPartApi";
 import { useParams, useRouter } from "next/navigation";
 
+import UploadSection from "./shared/UploadSection";
+import BOLUploadSection from "./shared/BOLUploadSection";
 const DefectiveProductForm = () => {
   // Connect to Zustand store
   const {
